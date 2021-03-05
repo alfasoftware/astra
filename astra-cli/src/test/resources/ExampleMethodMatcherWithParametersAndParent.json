@@ -1,0 +1,15 @@
+ {
+   "methodMatcher": {
+      "fullyQualifiedDeclaringType":"org.joda.time.LocalDate",
+      "methodName":"parse",
+      "isVarargs":"false",
+      "fullyQualifiedParameters": [
+        "java.lang.String",
+        "org.joda.time.format.DateTimeFormatter"
+        ],
+        "parentContext": {
+          "fullyQualifiedDeclaringType":"org.foo.myPackage.FooBar",
+          "methodName":"someMethod",
+          "isVarargs":"true" }
+          }
+ }

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.alfasoftware</groupId>
+  <artifactId>astra</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  
+  <name>astra</name>
+  <description>Astra is a Java tool for analysing and refactoring Java source code.</description>
+  <url>https://github.com/alfasoftware/astra</url>
+  
+  <organization>
+    <name>Alfa Financial Software Limited</name>
+    <url>https://alfasystems.com</url>
+  </organization>
+  
+  <modules>
+    <module>astra-core</module>
+    <module>astra-example</module>
+    <module>astra-cli</module>
+  </modules>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    
+    <!-- plugin versions -->
+    <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+    
+    <!-- dependency versions -->
+    <log4j.version>1.2.16</log4j.version>
+    <junit.version>4.11</junit.version>
+  </properties>
+  
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.alfasoftware</groupId>
+        <artifactId>astra-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+          
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
+  <dependencies>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+        
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  
+  <developers>
+    <developer>
+      <name>Joseph Hoare</name>
+      <email>joseph.hoare@alfasystems.com</email>
+      <organization>Alfa Financial Software Limited</organization>
+      <organizationUrl>http://alfasystems.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Oyvind Woller</name>
+      <email>oyvind.woller@alfasystems.com</email>
+      <organization>Alfa Financial Software Limited</organization>
+      <organizationUrl>http://alfasystems.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Richard Harris</name>
+      <email>richard.harris@alfasystems.com</email>
+      <organization>Alfa Financial Software Limited</organization>
+      <organizationUrl>http://alfasystems.com</organizationUrl>
+    </developer>
+  </developers>
+  
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/alfasoftware/astra/issues</url>
+  </issueManagement>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>${maven-resources-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes/META-INF</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>${project.basedir}/..</directory>
+                  <includes>
+                    <include>LICENSE</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>        
+    </plugins>
+  </build>
+</project>

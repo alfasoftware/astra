@@ -1,0 +1,8 @@
+/target/
+log/*
+.svn*
+.project*
+.settings/org.eclipse.core.resources.prefs
+*.classpath
+*.prefs
+*.iml

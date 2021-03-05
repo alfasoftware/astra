@@ -1,0 +1,6 @@
+ {
+   "methodMatcher": {
+      "fullyQualifiedDeclaringType":"org.joda.time.LocalDate",
+      "methodName":"fromDateFields",
+      "isVarargs":"true" }
+ }

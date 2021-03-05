@@ -1,0 +1,25 @@
+{
+"refactors": [
+   {
+     "type":"org.alfasoftware.astra.core.refactoring.operations.annotations.AnnotationChangeRefactor", 
+     "properties": {
+        "from": {
+          "fullyQualifiedName": "com.google.inject.Inject"
+        } ,      
+        "to":"javax.inject.Inject" }
+   },
+   {
+     "type":"org.alfasoftware.astra.core.refactoring.operations.annotations.AnnotationChangeRefactor", 
+     "properties": {
+        "from": {
+          "fullyQualifiedName": "com.google.inject.name.Named"
+        },
+        "to":"javax.inject.Named" }
+   }
+  ],
+"additionalClassPaths": 
+  [
+  "C:/Users/richardh/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar",
+  "C:/Users/richardh/.m2/repository/com/google/inject/guice/4.2.2/guice-4.2.2.jar"
+  ]
+}

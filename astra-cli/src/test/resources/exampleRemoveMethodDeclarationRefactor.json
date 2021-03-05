@@ -1,0 +1,18 @@
+{
+"refactors": [
+   {
+     "type":"org.alfasoftware.astra.core.refactoring.operations.methods.RemoveMethodDeclarationRefactor", 
+     "properties": {
+       "matcher": {
+          "fullyQualifiedDeclaringType":"org.joda.time.LocalDate",
+          "methodName":"fromDateFields",
+          "isVarargs":"false",
+          "fullyQualifiedParameters": ["java.util.Date"] 
+            }   
+         }
+      }
+  ],
+"additionalClassPaths": 
+  [
+  ]
+}
