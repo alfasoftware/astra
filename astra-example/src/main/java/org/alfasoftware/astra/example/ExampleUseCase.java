@@ -22,10 +22,8 @@ public class ExampleUseCase implements UseCase {
               .withMethodName("doFoo")
               .build())
           .to(
-              new MethodInvocationRefactor.Changes().toNewMethodName("doBar")
-          )
-        )
+            new MethodInvocationRefactor.Changes().toNewMethodName("doBar"))
+      )
     );
   }
 }
-
