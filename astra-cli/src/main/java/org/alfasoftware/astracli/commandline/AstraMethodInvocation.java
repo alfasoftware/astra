@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.log4j.Logger;
 
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.refactoring.UseCase;
@@ -28,6 +29,7 @@ import picocli.CommandLine;
         description = "Finds method invocations matching given criteria, and performs a refactoring.")
 class AstraMethodInvocation implements Runnable {
 
+    static Logger log = Logger.getLogger(AstraMethodInvocation.class.getName());
 
     @CommandLine.Option(
       names = {"-t", "--fqType"},
@@ -94,7 +96,7 @@ class AstraMethodInvocation implements Runnable {
         methodbuilder = methodbuilder.isVarargs(isVarargs);
       }
 
-      System.out.println("Starting [method] refactor: [" + methodbuilder.build() + "]");
+      log.debug("Starting [method] refactor: [" + methodbuilder.build() + "]");
 
       MethodInvocationRefactor.Changes changes = new MethodInvocationRefactor.Changes();
 
