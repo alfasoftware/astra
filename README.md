@@ -12,6 +12,7 @@ For example:
 Astra has been developed and tested at Alfa to improve the velocity at which large scale refactors may be performed.
 
 ## How do I use Astra?
+* First, please see [the Wiki!](https://github.com/alfasoftware/astra/wiki)
 * Astra can be run as part of a Java application, using `astra-core` as a dependency and using the refactors it provides. For an illustration of how to do this, please see the [README in astra-core](./astra-core/README.md). The code can be found in [astra-example](./astra-example).
 * For cases needing a more bespoke approach, [astra-core](./astra-core/README.md) also provides an SPI for writing your own custom `ASTOperation`s. See the `astra-core` README for further details.
 * For very simple cases, there is also a command line interface which exposes a small subset of Astra's refactoring operations. Please see [astra-cli](./astra-cli/README.md) for more information.
