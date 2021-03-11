@@ -25,20 +25,7 @@ The same issues apply to many other refactors, such as renaming a type.
 Astra can be used to make changes like these easily, and on a massive scale.
 
 ## How does Astra work?
-Astra compiles source code into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), a construct that gives the tool useful information about the structure of the code. Astra then allows you to analyse or refactor your source code based on information from the AST.
-
-Here's a sequence diagram explaining how it works:
-
-![Astra logo](images/astraSequence.png)
-
-`AstraCore` iterates through all the Java source files in the input directory. 
-File-by-file, an AST is compiled - from the source file, plus any additional classpaths supplied. 
-Each individual construct, such as a name, type, expression, statement, or declaration, is represented in this AST by an `ASTNode`.
-It also builds an `ASTRewriter`, to record any changes to be made to the AST. 
-
-Astra then visits every `ASTNode` in the AST, passing every node through a set of `ASTOperations`. If an operation is applicable to that node, (e.g. is this an invocation of method A?) the `ASTOperation` records relevant changes in the `ASTRewriter` (e.g. invoke method B instead)
-
-When all `ASTNodes` in a source file's AST have been visited, any changes recorded in the `ASTRewriter` are written back to the original source file. At this stage, Astra will also organise imports in a similar way to an IDE, removing duplicates and unused imports, and sorting.
+Please see [How does Astra work?](https://github.com/alfasoftware/astra/wiki/How-does-Astra-work%3F) in the Wiki.
 
 ## Technologies
 * Java 8
