@@ -13,7 +13,7 @@ Please raise a [GitHub Pull Request](http://help.github.com/pull-requests/) with
 # How to contribute issues
 Please raise the issue as a [GitHub issue](https://guides.github.com/features/issues/) (if one hasn't already been raised!) explaining the problem and providing details to help with reproduction:
 * **A clear and descriptive title**
-* **The exact steps which reproduce the problem** The more details the better! 
+* **The exact steps which reproduce the problem**. The more details the better! 
 * **Provide specific examples**. This can be in any form, but ideally would include actual example files in a unit test for Astra's [test framework](https://github.com/alfasoftware/astra/wiki/Start-with-tests!) - then reproducing the issue is as simple as running the test!
 
 Thank you!
