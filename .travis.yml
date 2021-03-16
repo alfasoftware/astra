@@ -2,13 +2,13 @@ language: java
 jobs:
   include:
    - if: repo = alfasoftware/astra AND head_repo = alfasoftware/astra AND type = pull_request
-      name: "Test"
-      script:
+     name: "Test"
+     script:
         - git fetch --unshallow --quiet
         - mvn clean verify sonar:sonar -Pcoverage -B -U -Dsonar.pullrequest.key=$TRAVIS_PULL_REQUEST -Dsonar.pullrequest.branch=$TRAVIS_PULL_REQUEST_BRANCH -Dsonar.pullrequest.base=$TRAVIS_BRANCH
    - if: repo = alfasoftware/astra AND (branch = main OR tag IS present) AND NOT type = pull_request
-      name: "Deploy"
-      script:
+     name: "Deploy"
+     script:
         - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
         - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
         - mvn clean deploy --settings .maven-settings.xml -B -U -Prelease
