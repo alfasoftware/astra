@@ -1,5 +1,7 @@
 ![Astra logo](images/AlfaAstra-01.png)
 
+[![Build Status](https://travis-ci.com/alfasoftware/astra.svg?branch=main)](https://travis-ci.com/alfasoftware/astra)
+
 ## What is Astra?
 **Astra** is a tool for analysing and refactoring Java source code, using Java language constructs. 
 
@@ -12,6 +14,7 @@ For example:
 Astra has been developed and tested at Alfa to improve the velocity at which large scale refactors may be performed.
 
 ## How do I use Astra?
+* First, please see [the Wiki!](https://github.com/alfasoftware/astra/wiki)
 * Astra can be run as part of a Java application, using `astra-core` as a dependency and using the refactors it provides. For an illustration of how to do this, please see the [README in astra-core](./astra-core/README.md). The code can be found in [astra-example](./astra-example).
 * For cases needing a more bespoke approach, [astra-core](./astra-core/README.md) also provides an SPI for writing your own custom `ASTOperation`s. See the `astra-core` README for further details.
 * For very simple cases, there is also a command line interface which exposes a small subset of Astra's refactoring operations. Please see [astra-cli](./astra-cli/README.md) for more information.
@@ -32,3 +35,6 @@ Please see [How does Astra work?](https://github.com/alfasoftware/astra/wiki/How
 * Eclipse JDT
 * JUnit
 * log4j
+
+## License
+Astra is released under the [Apache 2.0 License](https://github.com/alfasoftware/astra/blob/main/LICENSE). Contributions are also made under this license, as per the GitHub [terms of service](https://docs.github.com/en/github/site-policy/github-terms-of-service#6-contributions-under-repository-license).
