@@ -1,5 +1,7 @@
 ![Astra logo](images/AlfaAstra-01.png)
 
+[![Build Status](https://travis-ci.com/alfasoftware/astra.svg?branch=main)](https://travis-ci.com/alfasoftware/astra)
+
 ## What is Astra?
 **Astra** is a tool for analysing and refactoring Java source code, using Java language constructs. 
 
