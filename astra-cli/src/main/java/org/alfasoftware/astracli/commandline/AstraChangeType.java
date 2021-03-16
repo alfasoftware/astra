@@ -10,6 +10,7 @@ import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.types.TypeReferenceRefactor;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
+import org.apache.log4j.Logger;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -21,6 +22,8 @@ import picocli.CommandLine.Option;
   description = "Changes all references of a given fully qualified type to another type"
 )
 class AstraChangeType implements Runnable {
+	
+	private static final Logger log = Logger.getLogger(AstraChangeType.class);
 
   @CommandLine.Parameters(
     arity = "2",
@@ -42,7 +45,7 @@ class AstraChangeType implements Runnable {
 
     @Override
     public void run() {
-      System.out.println("Starting [changetype] refactor: [" + types[0] + "] to [" + types[1] + "]");
+      log.info("Starting [changetype] refactor: [" + types[0] + "] to [" + types[1] + "]");
       AstraCore.run(directory.getAbsolutePath(), new UseCase() {
 
         @Override
