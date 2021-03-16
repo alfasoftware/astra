@@ -19,7 +19,7 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
    */
   @Test
   public void testChangeTypes() {
-    assertRefactor(ChangeTypeExample.class,
+    assertRefactor(TypeReferenceExample.class,
         new HashSet<>(Arrays.asList(
           TypeReferenceRefactor.builder()
             .fromType(A.class.getName())

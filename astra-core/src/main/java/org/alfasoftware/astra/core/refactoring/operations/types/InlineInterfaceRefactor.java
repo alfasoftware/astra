@@ -1,14 +1,12 @@
 package org.alfasoftware.astra.core.refactoring.operations.types;
 
 import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
-import static org.alfasoftware.astra.core.utils.AstraUtils.getSimpleName;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +17,11 @@ import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParameterizedType;
-import org.eclipse.jdt.core.dom.PrimitiveType;
-import org.eclipse.jdt.core.dom.PrimitiveType.Code;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -189,153 +182,6 @@ public class InlineInterfaceRefactor implements ASTOperation {
         }
 
         log.info("Inlining interface [" + interfaceName + "] onto [" + typeDeclaration.getName().toString() + "]");
-      }
-    }
-
-    //refactorUsingTypeBinding(compilationUnit, node, rewriter);
-  }
-
-  @SuppressWarnings("unused")
-  private void refactorUsingTypeBinding(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) {
-    if (node instanceof TypeDeclaration) {
-      TypeDeclaration typeDeclaration = (TypeDeclaration) node;
-      Type interfaceType = findMatch(typeDeclaration);
-      if (interfaceType != null) {
-        ITypeBinding interfaceTypeBinding = interfaceType.resolveBinding();
-        IMethodBinding[] declaredMethods = interfaceTypeBinding.getDeclaredMethods();
-
-        final ListRewrite bodyRewriter = rewriter.getListRewrite(typeDeclaration, TypeDeclaration.BODY_DECLARATIONS_PROPERTY);
-        for (IMethodBinding methodBinding : declaredMethods) {
-
-          // skip if name and parameters match existing method
-
-          /*
-           * Attempt to get parameter names.
-           * Actual type is org.eclipse.jdt.core.dom.MethodBinding
-           * MethodBinding.binding.parameterNames exists. Possible?
-           */
-
-          // Name
-          MethodDeclaration newMethod = typeDeclaration.getAST().newMethodDeclaration();
-          newMethod.setName(typeDeclaration.getAST().newSimpleName(methodBinding.getName()));
-
-          // Parameters
-          List<ITypeBinding> parameterTypeBindings = new ArrayList<>(
-              Arrays.asList(methodBinding.getParameterTypes()));
-          if (parameterTypeBindings != null) {
-            final ListRewrite paramList = rewriter.getListRewrite(newMethod, MethodDeclaration.PARAMETERS_PROPERTY);
-            int paramIndex = 0;
-            for (ITypeBinding parameterTypeBinding : parameterTypeBindings) {
-              String parameterTypeName = parameterTypeBinding.getName();
-              ASTNode parameter;
-              Type type;
-              String identifier;
-
-              parameterTypeBinding.getTypeParameters();
-
-              if (Character.isLowerCase(parameterTypeName.charAt(0))) {
-                parameter = node.getAST().newSingleVariableDeclaration();
-                type = node.getAST().newPrimitiveType(PrimitiveType.toCode(parameterTypeName));
-                identifier = parameterTypeName;
-              } else {
-                parameter = node.getAST().newSingleVariableDeclaration();
-                String parameterQualifiedName = parameterTypeBinding.getQualifiedName().toString();
-                if (parameterTypeName.contains("[")) {
-
-                  parameterTypeName = parameterTypeName.replace("[]", "");
-                  parameterQualifiedName = parameterQualifiedName.replace("[]", "");
-
-                  // Identify whether actually varargs
-                  boolean isLast = parameterTypeBindings.indexOf(parameterTypeBinding) == parameterTypeBindings.size() - 1;
-                  if (methodBinding.isVarargs() && isLast) {
-                    rewriter.set(parameter, SingleVariableDeclaration.VARARGS_PROPERTY, true, null);
-                    type = node.getAST().newSimpleType(node.getAST().newSimpleName(parameterTypeName));
-                  } else {
-                    type = node.getAST().newArrayType(node.getAST().newSimpleType(node.getAST().newSimpleName(parameterTypeName)));
-                  }
-                } else {
-                  type = node.getAST().newSimpleType(node.getAST().newSimpleName(parameterTypeName));
-                }
-                identifier = Character.toLowerCase(parameterTypeName.charAt(0)) + parameterTypeName.substring(1);
-                addImport(compilationUnit, parameterQualifiedName, rewriter);
-              }
-              rewriter.set(parameter, SingleVariableDeclaration.TYPE_PROPERTY, type, null);
-              rewriter.set(parameter, SingleVariableDeclaration.NAME_PROPERTY, node.getAST().newName(identifier + paramIndex), null);
-              paramList.insertLast(parameter, null);
-              paramIndex++;
-            }
-          }
-
-          // Return type
-          ITypeBinding returnTypeBinding = methodBinding.getReturnType();
-          if (returnTypeBinding != null) {
-            String returnTypeName = returnTypeBinding.getName();
-            ASTNode returnType;
-            if (Character.isLowerCase(returnTypeName.charAt(0))) {
-              Code code = PrimitiveType.toCode(returnTypeName);
-              returnType = node.getAST().newPrimitiveType(code);
-            } else {
-              if (returnTypeName.contains("$")) {
-                String justReturnTypeName = getSimpleName(returnTypeBinding.getBinaryName());
-                returnType = node.getAST().newName(justReturnTypeName);
-                String[] enclosingSplit = returnTypeName.split("\\$");
-                String enclosingType = enclosingSplit[0];
-                Name enclosingName = node.getAST().newName(enclosingType);
-                IPackageBinding packageOfEnclosingType = returnTypeBinding.getPackage();
-                String fullImport = packageOfEnclosingType.getName() + "." + enclosingName.toString() + "." + justReturnTypeName;
-                addImport(compilationUnit, fullImport, rewriter);
-              } else {
-                if (returnTypeBinding.isParameterizedType()) {
-                  String baseTypeName = getSimpleName(returnTypeBinding.getBinaryName());
-                  returnType = node.getAST().newParameterizedType(node.getAST().newSimpleType(node.getAST().newName(baseTypeName)));
-
-                  String[] enclosingSplit = returnTypeName.replaceAll(">", "").split("\\<");
-
-                  final ListRewrite paramRewriter = rewriter.getListRewrite(returnType, ParameterizedType.TYPE_ARGUMENTS_PROPERTY);
-                  Type param;
-                  if (enclosingSplit[1].contains("[")) {
-                    param = node.getAST().newArrayType(node.getAST().newSimpleType(
-                        node.getAST().newName(enclosingSplit[1].replace("[]", ""))));
-                  } else {
-                    param = node.getAST().newSimpleType(node.getAST().newName(enclosingSplit[1]));
-                  }
-                  paramRewriter.insertLast(
-                      param, null);
-
-
-                  IPackageBinding packageOfEnclosingType = returnTypeBinding.getPackage();
-                  String fullImport = packageOfEnclosingType.getName() + "." + baseTypeName;
-                  addImport(compilationUnit, fullImport, rewriter);
-                } else {
-                  returnType = node.getAST().newName(returnTypeName);
-                  addImport(compilationUnit, returnTypeBinding.getQualifiedName().toString(), rewriter);
-                }
-              }
-            }
-            rewriter.set(newMethod, MethodDeclaration.RETURN_TYPE2_PROPERTY, returnType, null);
-          }
-
-          // Modifiers
-          // Skipped, because it's an interface
-
-          // This approach doesn't get variable names or javadoc
-
-          bodyRewriter.insertLast(newMethod, null);
-        }
-
-        // Remove the interface extension
-        final ListRewrite interfaceList = rewriter.getListRewrite(typeDeclaration, TypeDeclaration.SUPER_INTERFACE_TYPES_PROPERTY);
-        interfaceList.remove(interfaceType, null);
-
-        // Remove the import for the interface
-        final ListRewrite importList = rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY);
-        @SuppressWarnings("unchecked")
-        List<ImportDeclaration> currentList = importList.getRewrittenList();
-        for (ImportDeclaration existingImport : currentList) {
-          if (existingImport.getName().getFullyQualifiedName().equals(interfaceName)) {
-            importList.remove(existingImport, null);
-          }
-        }
       }
     }
   }

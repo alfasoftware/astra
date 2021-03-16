@@ -7,9 +7,9 @@ import org.alfasoftware.astra.exampleTypes.B;
 /**
  * {@link B}
  */
-public class ChangeTypeExampleAfter extends B {
-	B[] aArr = new B[0];
-	B a = new B();
+public class TypeReferenceExampleAfter extends B {
+  B field = new B();
+	B[] fieldArray = new B[0];
 
   @SuppressWarnings({ "unused", "rawtypes" })
   public <T extends B> T generic(T n, List<? super B> in) {
@@ -20,7 +20,7 @@ public class ChangeTypeExampleAfter extends B {
 		return n;
 	}
 
-  public B parameter(B a) {
-    return a;
+  public B parameter(B param) {
+    return param;
   }
 }
