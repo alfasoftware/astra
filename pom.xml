@@ -221,6 +221,13 @@
     </profile>
   </profiles>
   
+  <scm>
+    <connection>scm:git:https://github.com/alfasoftware/astra.git</connection>
+    <developerConnection>scm:git:git@github.com:alfasoftware/astra.git</developerConnection>
+    <url>https://github.com/alfasoftware/astra</url>
+    <tag>HEAD</tag>
+  </scm>
+  
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
