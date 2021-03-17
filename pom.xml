@@ -20,6 +20,7 @@
     <module>astra-core</module>
     <module>astra-example</module>
     <module>astra-cli</module>
+    <module>astra-testing</module>
   </modules>
 
   <properties>
@@ -40,6 +41,12 @@
       <dependency>
         <groupId>org.alfasoftware</groupId>
         <artifactId>astra-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.alfasoftware</groupId>
+        <artifactId>astra-testing</artifactId>
         <version>${project.version}</version>
       </dependency>
       
