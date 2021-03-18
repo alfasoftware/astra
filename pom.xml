@@ -121,6 +121,7 @@
             <version>${maven-javadoc-plugin.version}</version>
             <configuration>
                <failOnError>true</failOnError>
+               <doclint>none</doclint>
                <quiet>true</quiet>
             </configuration>
             <executions>
