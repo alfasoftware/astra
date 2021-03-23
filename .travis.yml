@@ -1,17 +1,11 @@
 language: java
-install: true
-addons:
-  sonarcloud:
-    organization: "alfasoftware"
-    token:
-      secure: "AxMpzJvvs/dj3O5crQRqAbDxC7EyPllWCdqUY7N6asA8huRFpruUF/Mv4H99qFqXE43LVZQ5lN7f9Ob60lc40i2GShNLQIfqxDw7o+S5WIHj4Td/hC8vvgNeZNvNdMu78IdYWcz/ZtDsT7KwfzvTdMflgIi7hpZnOsLsSL4rm3qaNHtcbad7tj5nzbf8EYJuqAQWJIQAnfxoZamXVOFOR7TAjNwwhbfL8eBSp02yAn2eaoTzJBEjtBmUMHanJ++52k8iFilR8p/cg+LIyMMDHBEZmwdTcBzfQYbD//MU5doAfKoDPY3H9KclWv2mJXyMl1m5esoOBzDbKnZLXni7aCr9zBYp+MpHVCwC8VBtb/gVHFnO8f6Y7Nzpax6hrgK5KhSPcuQSM6vuIdLgAkPPO8zKl34lXU5/AmQxn6pTSmMHv3pv2paajIUhW46glztAaVoT8BueBgONPUfPVgCOkaJpTVn+5zcSUhlXrPbVNj7qKQ9MSjjMqOMoFYdIEX4aSHPYdayLpleLk97DF0JUp7Lecjuo/perIGGLEsezVogXITCjubCX2NAToEQHd5rK+qzmI0Vz9l/ovq7xNbn8FIXXE2C5AIbVF3ED+Mhpjg/7PPWXcQyyi8bt7YhE2RF3sPk9qAKCS+as56Xgbkn7lqqdOuFGg5sOQjAufNOIfTo="
 jobs:
   include:
    - if: repo = alfasoftware/astra AND head_repo = alfasoftware/astra AND type = pull_request
      name: "Test"
      script:
         - git fetch --quiet
-        - mvn clean verify sonar:sonar -Pcoverage
+        - mvn clean verify
    - if: repo = alfasoftware/astra AND (branch = main OR tag IS present) AND NOT type = pull_request
      name: "Deploy"
      script:
