@@ -38,6 +38,7 @@
     <junit.version>4.11</junit.version>
     
     <!-- sonar properties -->
+    <sonar.projectKey>astra</sonar.projectKey>
     <sonar.organization>alfasoftware</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
