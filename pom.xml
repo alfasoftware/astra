@@ -29,12 +29,19 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     
     <!-- plugin versions -->
+    <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
 
     <!-- dependency versions -->
     <log4j.version>1.2.16</log4j.version>
     <junit.version>4.11</junit.version>
+    
+    <!-- sonar properties -->
+    <sonar.projectKey>alfasoftware_astra</sonar.projectKey>
+    <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
+    <sonar.organization>alfasoftware</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
   
   <dependencyManagement>
@@ -114,6 +121,24 @@
   
   <build>
     <plugins>
+      <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <configuration>
+               <failOnError>true</failOnError>
+               <doclint>none</doclint>
+               <quiet>true</quiet>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>attach-javadocs</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
