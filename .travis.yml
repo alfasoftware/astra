@@ -10,7 +10,7 @@ jobs:
      name: "Test"
      script:
         - git fetch --quiet
-        - mvn clean verify sonar:sonar -Pcoverage -B -U -Dsonar.pullrequest.key=$TRAVIS_PULL_REQUEST -Dsonar.pullrequest.branch=$TRAVIS_PULL_REQUEST_BRANCH -Dsonar.pullrequest.base=$TRAVIS_BRANCH
+        - mvn clean verify sonar:sonar -Pcoverage
    - if: repo = alfasoftware/astra AND (branch = main OR tag IS present) AND NOT type = pull_request
      name: "Deploy"
      script:
