@@ -1,11 +1,15 @@
 package org.alfasoftware.astra.core.refactoring.imports;
 
+import static org.alfasoftware.astra.exampleTypes.A.STRING_VALUE_A;
+
+import org.alfasoftware.astra.core.refactoring.imports.UnusedImportExample.InnerClassExample;
 import org.alfasoftware.astra.exampleTypes.A;
-import org.alfasoftware.astra.exampleTypes.B;
 import org.alfasoftware.astra.exampleTypes.C;
 import org.alfasoftware.astra.exampleTypes.D;
+import org.junit.experimental.categories.Category;
 
 @SuppressWarnings("unused")
+@Category(InnerClassExample.class)
 public class UnusedImportExample {
 
   A a = new A();
@@ -13,7 +17,12 @@ public class UnusedImportExample {
    * {@link C}
    * {@link D#one()}
    */
-  private void foo() {
+  private String foo() {
+    return STRING_VALUE_A;
+  }
+
+  static class InnerClassExample {
+
   }
 }
 

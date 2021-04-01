@@ -42,13 +42,13 @@ public class UnusedImportRefactor implements ASTOperation {
       // Only remove imports for top-level types
       TypeDeclaration typeDeclaration = (TypeDeclaration) node;
       if (! typeDeclaration.resolveBinding().isNested()) {
-        ClassVisitor visitor = new ClassVisitor();
+        ClassVisitor visitor = new ClassVisitor(typeDeclaration.resolveBinding().getQualifiedName());
         compilationUnit.accept(visitor);
         Set<String> existingImports = new HashSet<>();
 
         for (Object obj : compilationUnit.imports()) {
           ImportDeclaration importDeclaration = (ImportDeclaration) obj;
-          
+
           // remove duplicates
           if (existingImports.contains(importDeclaration.getName().toString())) {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
@@ -56,7 +56,7 @@ public class UnusedImportRefactor implements ASTOperation {
           } else {
             existingImports.add(importDeclaration.getName().toString());
           }
-          
+
           // remove unused imports
           // TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
           // (can be multiple methods with same name)
@@ -64,14 +64,15 @@ public class UnusedImportRefactor implements ASTOperation {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
             continue;
           }
-          
+
           // remove imports for types in the same package
           if (compilationUnit.getPackage().getName().toString().equals(
-            AstraUtils.getPackageName(importDeclaration.getName().toString()))) {
+            AstraUtils.getPackageName(importDeclaration.getName().toString()))
+            && !visitor.innerTypes.contains(importDeclaration.getName().toString())) {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
             continue;
-          }          
-          
+          }
+
           // remove non-static imports from java.lang - they don't need to be imported
           if (! importDeclaration.isStatic() && importDeclaration.getName().toString().startsWith("java.lang")) {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
@@ -141,13 +142,32 @@ public class UnusedImportRefactor implements ASTOperation {
     }
   }
 
+  /**
+   * Tracks any
+   *
+   * @author Copyright (c) Alfa Financial Software Limited. 2021
+   */
   private class ClassVisitor extends ASTVisitor {
     private final Set<String> types = new HashSet<>();
+    private final Set<String> innerTypes = new HashSet<>();
+    private final String outerClassName;
+
+    ClassVisitor(String outerClassName) {
+      this.outerClassName = outerClassName;
+    }
 
     @Override
     public boolean visit(SimpleName node) {
       if (! isInImport(node)) {
         types.add(AstraUtils.getSimpleName(node.toString()));
+      }
+      return super.visit(node);
+    }
+
+    @Override
+    public boolean visit(TypeDeclaration node) {
+      if (node.resolveBinding().isNested()) {
+        innerTypes.add(outerClassName + "." + node.getName().getFullyQualifiedName());
       }
       return super.visit(node);
     }

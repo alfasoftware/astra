@@ -2,6 +2,8 @@ package org.alfasoftware.astra.exampleTypes;
 
 public class C {
 
+  public static final String STRING_VALUE_C = "static string: C";
+
 	public void one() {
 
 	}
