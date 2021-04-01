@@ -42,7 +42,7 @@ public class UnusedImportRefactor implements ASTOperation {
       // Only remove imports for top-level types
       TypeDeclaration typeDeclaration = (TypeDeclaration) node;
       if (! typeDeclaration.resolveBinding().isNested()) {
-        ClassVisitor visitor = new ClassVisitor(typeDeclaration.resolveBinding().getQualifiedName());
+        ClassVisitor visitor = new ClassVisitor();
         compilationUnit.accept(visitor);
         Set<String> existingImports = new HashSet<>();
 
@@ -68,7 +68,7 @@ public class UnusedImportRefactor implements ASTOperation {
           // remove imports for types in the same package
           if (compilationUnit.getPackage().getName().toString().equals(
             AstraUtils.getPackageName(importDeclaration.getName().toString()))
-            && !visitor.innerTypes.contains(importDeclaration.getName().toString())) {
+            && !AstraUtils.isImportOfInnerType(importDeclaration)) {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
             continue;
           }
@@ -149,25 +149,11 @@ public class UnusedImportRefactor implements ASTOperation {
    */
   private class ClassVisitor extends ASTVisitor {
     private final Set<String> types = new HashSet<>();
-    private final Set<String> innerTypes = new HashSet<>();
-    private final String outerClassName;
-
-    ClassVisitor(String outerClassName) {
-      this.outerClassName = outerClassName;
-    }
 
     @Override
     public boolean visit(SimpleName node) {
       if (! isInImport(node)) {
         types.add(AstraUtils.getSimpleName(node.toString()));
-      }
-      return super.visit(node);
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration node) {
-      if (node.resolveBinding().isNested()) {
-        innerTypes.add(outerClassName + "." + node.getName().getFullyQualifiedName());
       }
       return super.visit(node);
     }

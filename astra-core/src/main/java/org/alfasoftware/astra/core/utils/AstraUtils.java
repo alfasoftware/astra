@@ -177,7 +177,7 @@ public class AstraUtils {
   public static String getFullyQualifiedName(Type type) {
     Optional<ITypeBinding> typeBinding = Optional.ofNullable(type)
         .map(Type::resolveBinding);
-    
+
     if (typeBinding
         .filter(tb -> tb.isRecovered())
         .isPresent()) {
@@ -242,6 +242,14 @@ public class AstraUtils {
   }
 
 
+  /**
+   * @return true if the import is for an inner type e.g. import com.Foo.Bar
+   */
+  public static boolean isImportOfInnerType(ImportDeclaration importDeclaration) {
+    return !importDeclaration.isOnDemand() && importDeclaration.getName().isQualifiedName();
+  }
+
+
   public static ITypeBinding resolveGenericTypeArgumentsForSimpleName(SimpleName variableName) {
     IBinding resolveBinding = variableName.resolveBinding();
     if (resolveBinding instanceof IVariableBinding) {
@@ -299,8 +307,8 @@ public class AstraUtils {
     final ListRewrite modifiersList = rewriter.getListRewrite(nodeToAnnotate, modifiersProperty);
     modifiersList.insertFirst(annotation, null);
   }
-  
-  
+
+
   /**
    * Builds an annotation with a single 'value' content.
    *
@@ -333,12 +341,12 @@ public class AstraUtils {
    * @param rewriter AST re-writer to apply changes.
    */
   public static void addImport(CompilationUnit compilationUnit, String importPath, ASTRewrite rewriter) {
-    
+
     // If the type to import is a parameterized type, only import the base type
     if (importPath.contains("<")) {
       importPath = importPath.substring(0, importPath.indexOf("<"));
     }
-    
+
     addImport(compilationUnit, importPath, rewriter, false);
   }
 
@@ -363,7 +371,7 @@ public class AstraUtils {
       // We'd likely get here due to missing classpaths
       return;
     }
-    
+
     final ListRewrite importList = rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY);
     @SuppressWarnings("unchecked")
     List<ImportDeclaration> currentList = importList.getRewrittenList();
