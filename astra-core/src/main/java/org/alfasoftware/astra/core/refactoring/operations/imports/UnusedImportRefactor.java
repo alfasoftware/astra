@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -14,11 +15,10 @@ import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.IDocElement;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodRef;
-import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.MethodRefParameter;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -172,33 +172,29 @@ public class UnusedImportRefactor implements ASTOperation {
     @Override
     @SuppressWarnings("unchecked")
     public boolean visit(Javadoc node) {
-      Set<TagElement> tagElements = new HashSet<>();
-      List<TagElement> tags = node.tags();
-      for (TagElement tag : tags) {
-        tagElements.add(tag);
+      Stack<TagElement> tagElements = new Stack<>();
+      tagElements.addAll(node.tags());
 
-        List<IDocElement> fragments = tag.fragments();
-        for (IDocElement fragment : fragments) {
+      while (!tagElements.isEmpty()) {
+        TagElement element = tagElements.pop();
+        for (Object fragment : element.fragments()) {
           if (fragment instanceof TagElement) {
-            tagElements.add((TagElement) fragment);
-          }
-        }
-      }
-
-      Set<TagElement> fragmentElements = new HashSet<>();
-      for (TagElement te : tagElements) {
-        for (Object f : te.fragments()) {
-          if (f instanceof TagElement) {
-            fragmentElements.add((TagElement) f);
-          } else if (f instanceof SimpleName) {
-            types.add(AstraUtils.getSimpleName(((SimpleName) f).toString()));
-          } else if (f instanceof MethodRef) {
-            Name qualifier = ((MethodRef) f).getQualifier();
-            if (qualifier != null) {
-              types.add(AstraUtils.getSimpleName(qualifier.toString()));
+            tagElements.push((TagElement) fragment);
+          } else if (fragment instanceof SimpleName) {
+            types.add(AstraUtils.getSimpleName(((SimpleName) fragment).toString()));
+          } else if (fragment instanceof MethodRef) {
+            MethodRef methodRef = (MethodRef) fragment;
+            if (methodRef.getQualifier() != null) {
+              types.add(AstraUtils.getSimpleName(methodRef.getQualifier().toString()));
+            }
+            for (Object param : methodRef.parameters()) {
+              if (param instanceof MethodRefParameter) {
+                types.add(((MethodRefParameter) param).getType().toString());
+              }
             }
           }
         }
+
       }
       return super.visit(node);
     }
