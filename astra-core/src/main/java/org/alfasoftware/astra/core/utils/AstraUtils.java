@@ -246,7 +246,7 @@ public class AstraUtils {
    * @return true if the import is for an inner type e.g. import com.Foo.Bar
    */
   public static boolean isImportOfInnerType(ImportDeclaration importDeclaration) {
-    return !importDeclaration.isOnDemand() && importDeclaration.getName().isQualifiedName();
+    return !importDeclaration.isOnDemand() && importDeclaration.getName().toString().split("\\.[A-Z]").length > 2;
   }
 
 
