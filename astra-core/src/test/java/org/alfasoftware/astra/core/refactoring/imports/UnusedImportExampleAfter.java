@@ -2,6 +2,8 @@ package org.alfasoftware.astra.core.refactoring.imports;
 
 import static org.alfasoftware.astra.exampleTypes.A.STRING_VALUE_A;
 
+import java.lang.Thread.State;
+
 import org.alfasoftware.astra.core.refactoring.imports.ExampleTypeSamePackage.OtherInnerClass;
 import org.alfasoftware.astra.core.refactoring.imports.UnusedImportExampleAfter.InnerClassExample;
 import org.alfasoftware.astra.exampleTypes.A;
@@ -15,6 +17,7 @@ public class UnusedImportExampleAfter {
 
   A a = new A();
   OtherInnerClass inner = new OtherInnerClass();
+  State baseState = State.RUNNABLE;
 
   /**
    * {@link C}

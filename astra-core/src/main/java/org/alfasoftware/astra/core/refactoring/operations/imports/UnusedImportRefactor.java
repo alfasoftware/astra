@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +41,7 @@ public class UnusedImportRefactor implements ASTOperation {
       // Only remove imports for top-level types
       TypeDeclaration typeDeclaration = (TypeDeclaration) node;
       if (! typeDeclaration.resolveBinding().isNested()) {
-        ClassVisitor visitor = new ClassVisitor();
+        ReferenceTrackingVisitor visitor = new ReferenceTrackingVisitor();
         compilationUnit.accept(visitor);
         Set<String> existingImports = new HashSet<>();
 
@@ -74,7 +73,8 @@ public class UnusedImportRefactor implements ASTOperation {
           }
 
           // remove non-static imports from java.lang - they don't need to be imported
-          if (! importDeclaration.isStatic() && importDeclaration.getName().toString().startsWith("java.lang")) {
+          if (! importDeclaration.isStatic() && importDeclaration.getName().toString().startsWith("java.lang")
+              && !AstraUtils.isImportOfInnerType(importDeclaration)) {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
             continue;
           }
@@ -142,12 +142,8 @@ public class UnusedImportRefactor implements ASTOperation {
     }
   }
 
-  /**
-   * Tracks any
-   *
-   * @author Copyright (c) Alfa Financial Software Limited. 2021
-   */
-  private class ClassVisitor extends ASTVisitor {
+
+  private class ReferenceTrackingVisitor extends ASTVisitor {
     private final Set<String> types = new HashSet<>();
 
     @Override
@@ -172,31 +168,32 @@ public class UnusedImportRefactor implements ASTOperation {
     @Override
     @SuppressWarnings("unchecked")
     public boolean visit(Javadoc node) {
-      Stack<TagElement> tagElements = new Stack<>();
-      tagElements.addAll(node.tags());
-
-      while (!tagElements.isEmpty()) {
-        TagElement element = tagElements.pop();
-        for (Object fragment : element.fragments()) {
-          if (fragment instanceof TagElement) {
-            tagElements.push((TagElement) fragment);
-          } else if (fragment instanceof SimpleName) {
-            types.add(AstraUtils.getSimpleName(((SimpleName) fragment).toString()));
-          } else if (fragment instanceof MethodRef) {
-            MethodRef methodRef = (MethodRef) fragment;
-            if (methodRef.getQualifier() != null) {
-              types.add(AstraUtils.getSimpleName(methodRef.getQualifier().toString()));
-            }
-            for (Object param : methodRef.parameters()) {
-              if (param instanceof MethodRefParameter) {
-                types.add(((MethodRefParameter) param).getType().toString());
-              }
-            }
-          }
-        }
-
+      for(TagElement element : (List<TagElement>)node.tags()) {
+        visitTagElement(element);
       }
       return super.visit(node);
+    }
+
+    private void visitTagElement(TagElement element) {
+      for (Object fragment : element.fragments()) {
+        if (fragment instanceof TagElement) {
+          visitTagElement((TagElement) fragment);
+        } else if (fragment instanceof SimpleName) {
+          types.add(AstraUtils.getSimpleName(((SimpleName) fragment).toString()));
+        } else if (fragment instanceof MethodRef) {
+          visitJavadocMethodRef((MethodRef) fragment);
+        }
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void visitJavadocMethodRef(MethodRef methodRef) {
+      if (methodRef.getQualifier() != null) {
+        types.add(AstraUtils.getSimpleName(methodRef.getQualifier().toString()));
+      }
+      for (MethodRefParameter param : (List<MethodRefParameter>)methodRef.parameters()) {
+        types.add(param.getType().toString());
+      }
     }
   }
 }
