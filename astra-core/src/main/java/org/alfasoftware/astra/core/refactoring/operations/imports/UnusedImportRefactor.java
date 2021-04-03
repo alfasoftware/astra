@@ -30,6 +30,8 @@ import org.eclipse.text.edits.MalformedTreeException;
  * Removes unused imports.
  *
  * This refactor can be run standalone, but will also be run as part of cleanup after any operation has altered a file.
+ *
+ * This refactor currently loses comments that are on the import lines e.g. // NOPMD.
  */
 public class UnusedImportRefactor implements ASTOperation {
 
@@ -73,7 +75,7 @@ public class UnusedImportRefactor implements ASTOperation {
           }
 
           // remove non-static imports from java.lang - they don't need to be imported
-          if (! importDeclaration.isStatic() && importDeclaration.getName().toString().startsWith("java.lang")
+          if (! importDeclaration.isStatic() && importDeclaration.getName().toString().split("java\\.lang\\.[A-Z]").length > 1
               && !AstraUtils.isImportOfInnerType(importDeclaration)) {
             AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
             continue;
