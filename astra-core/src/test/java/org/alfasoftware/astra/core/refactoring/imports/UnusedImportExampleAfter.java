@@ -11,6 +11,7 @@ import org.alfasoftware.astra.core.refactoring.imports.UnusedImportExampleAfter.
 import org.alfasoftware.astra.exampleTypes.A;
 import org.alfasoftware.astra.exampleTypes.C;
 import org.alfasoftware.astra.exampleTypes.D;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 
 @SuppressWarnings("unused")
@@ -30,6 +31,7 @@ public class UnusedImportExampleAfter {
     staticTwo();
     ExampleTypeSamePackage example = new ExampleTypeSamePackage();
     int r = Math.abs(-12);
+    Assert.assertEquals(12, r);
     return STRING_VALUE_A;
   }
 

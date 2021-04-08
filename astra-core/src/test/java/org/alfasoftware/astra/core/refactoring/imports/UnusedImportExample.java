@@ -5,6 +5,7 @@ import static org.alfasoftware.astra.exampleTypes.C.STRING_VALUE_C; // not refer
 import static org.alfasoftware.astra.exampleTypes.C.staticTwo;
 import static org.alfasoftware.astra.exampleTypes.D.staticOne; // not referenced
 
+
 import java.lang.Math; // not needed - directly in java.lang
 import java.lang.Thread.State;
 import java.lang.reflect.Method;
@@ -16,6 +17,7 @@ import org.alfasoftware.astra.exampleTypes.A;
 import org.alfasoftware.astra.exampleTypes.B; // not referenced
 import org.alfasoftware.astra.exampleTypes.C;
 import org.alfasoftware.astra.exampleTypes.D;
+import org.junit.*; 
 import org.junit.experimental.categories.Category;
 
 @SuppressWarnings("unused")
@@ -35,6 +37,7 @@ public class UnusedImportExample {
     staticTwo();
     ExampleTypeSamePackage example = new ExampleTypeSamePackage();
     int r = Math.abs(-12);
+    Assert.assertEquals(12, r);
     return STRING_VALUE_A;
   }
 

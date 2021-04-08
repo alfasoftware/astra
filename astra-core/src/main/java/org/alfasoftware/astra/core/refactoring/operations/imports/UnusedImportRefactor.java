@@ -58,6 +58,11 @@ public class UnusedImportRefactor implements ASTOperation {
             existingImports.add(importDeclaration.getName().toString());
           }
 
+          // Can't easily tell if on-demand imports are actually needed so best to leave them in place.
+          if (importDeclaration.isOnDemand()) {
+            continue;
+          }
+
           // remove unused imports
           // TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
           // (can be multiple methods with same name)
