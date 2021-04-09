@@ -23,6 +23,8 @@ There are now two ways to use Astra. You can:
 ## Sounds good, let's take it for a spin!
 We've initially added support for two common Astra refactors to this CLI. We think they're probably the most widely useful - the `MethodInvocationRefactor` and the `TypeReferenceRefactor`.
 
+| Refactor | Description |
+| -------- | ----------- |
 | Method invocation refactor | Find uses of method A, and instead, use method B |
 | Type reference refactor | Find uses of type A, and instead, use type B |
 
