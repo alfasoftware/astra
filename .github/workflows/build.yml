@@ -2,11 +2,12 @@ name: Build
 on:
   push:
     branches:
-      -'alfasoftware/astra**'
+      - main
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'alfasoftware'
     steps:
       - uses: actions/checkout@v2
         with:
