@@ -3,6 +3,8 @@ package org.alfasoftware.astra.exampleTypes;
 @SuppressWarnings("unused")
 public class A implements Fooable {
 
+  public static final String STRING_VALUE_A = "static string: A";
+
 	public void one() {
 
 	}
@@ -38,6 +40,6 @@ public class A implements Fooable {
 
   @Override
   public void doFoo() {
-    
+
   }
 }
