@@ -2,7 +2,7 @@ name: Build
 on:
   push:
     branches:
-      -'alfasoftware/main'
+      -'alfasoftware/astra/**'
 jobs:
   build:
     name: Build
