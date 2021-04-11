@@ -1,5 +1,6 @@
 target/
 log/*
+.idea
 .svn*
 .project*
 .settings/org.eclipse.core.resources.prefs

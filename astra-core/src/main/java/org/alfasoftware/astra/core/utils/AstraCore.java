@@ -94,14 +94,14 @@ public class AstraCore {
       // TODO AstUtils.getClassFilesForSource(f.toString()); - attempt to get only relevant classpaths for a given source file?
       // TODO Naively we can multi-thread here (i.e. per file) but simple testing indicated that this slowed us down.
       applyOperationsAndSave(new File(f.toString()), useCase.getOperations(), useCase.getSources(), useCase.getClassPath());
-      long newPercentage = currentFileIndex.incrementAndGet() * 100 / javaFilesInDirectory.size();
+      long newPercentage = currentFileIndex.incrementAndGet() * 100 / filteredJavaFiles.size();
       if (newPercentage != currentPercentage.get()) {
         currentPercentage.set(newPercentage);
-        logProgress(currentFileIndex.get(), currentPercentage.get(), startTime, javaFilesInDirectory.size());
+        logProgress(currentFileIndex.get(), currentPercentage.get(), startTime, filteredJavaFiles.size());
       }
     }
     
-    log.info(getPrintableDuration(Duration.between(startTime, Instant.now())).toString());
+    log.info(getPrintableDuration(Duration.between(startTime, Instant.now())));
   }
 
 
