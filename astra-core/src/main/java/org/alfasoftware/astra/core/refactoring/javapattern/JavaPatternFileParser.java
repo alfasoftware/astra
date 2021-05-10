@@ -23,29 +23,33 @@ import java.util.stream.Collectors;
 
 /**
  * Reads a Java Matcher file and extracts the
- * - @Substitution method placeholders
- * - @JavaPattern expression matchers
- * - @JavaPatternReplacement the expression to replace the matches with
+ * - @Substitution methods to capture from the java pattern for substitution in the replacement
+ * - @JavaPattern a java pattern to match, expressed through a method, with parameters and @Substitute methods specifying elements to capture
+ * - @JavaPatternReplacement the expression to replace matches with, specifying how the parameters and @Substitute methods should be used
  *
  */
 public class JavaPatternFileParser {
 
-  private final Collection<SingleASTNodePatternMatcher> nodesToMatch = new ArrayList<>();
-  private final Collection<MethodDeclaration> placeHolderMethods = new ArrayList<>();
-  private ASTNode nodeToRefactorTo;
+  private final Collection<SingleASTNodePatternMatcher> patternsToMatch = new ArrayList<>();
+  private final Collection<MethodDeclaration> substituteMethods = new ArrayList<>();
+  private ASTNode patternToRefactorTo;
 
   public void buildMatchers(File javaFile) throws IOException {
+    buildMatchersWithClassPath(javaFile, new String[]{});
+  }
+
+  public void buildMatchersWithClassPath(File javaFile, String[] sources) throws IOException {
     String matcherFile = new String(Files.readAllBytes(Paths.get(javaFile.getAbsolutePath())));
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(matcherFile, new String[]{}, new String[]{});
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(matcherFile, sources, new String[]{});
 
     MethodDeclarationVisitor visitor = new MethodDeclarationVisitor();
     compilationUnit.accept(visitor);
 
-    placeHolderMethods.addAll(parseSubstituteMethods(visitor));
+    substituteMethods.addAll(parseSubstituteMethods(visitor));
 
-    nodesToMatch.addAll(parseJavaPatternsToMatch(visitor));
+    patternsToMatch.addAll(parseJavaPatternsToMatch(visitor));
 
-    nodeToRefactorTo = parsePatternToRefactorTo(visitor);
+    patternToRefactorTo = parsePatternToRefactorTo(visitor);
   }
 
   private MethodDeclaration parseMethodAnnotatedWithJavaPatternReplacement(MethodDeclarationVisitor visitor) {
@@ -116,12 +120,12 @@ public class JavaPatternFileParser {
   }
 
 
-  public ASTNode getNodeToRefactorTo() {
-    return nodeToRefactorTo;
+  public ASTNode getPatternToRefactorTo() {
+    return patternToRefactorTo;
   }
 
   public JavaPatternASTMatcher getParsedExpressionMatchers() {
-    return new JavaPatternASTMatcher(nodesToMatch, placeHolderMethods);
+    return new JavaPatternASTMatcher(patternsToMatch, substituteMethods);
   }
 
   /**

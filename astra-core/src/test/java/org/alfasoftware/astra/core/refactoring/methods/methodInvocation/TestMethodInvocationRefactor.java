@@ -2,6 +2,7 @@ package org.alfasoftware.astra.core.refactoring.methods.methodInvocation;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -316,8 +317,10 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
   public void testInvocationChangeWithTransformMatcher() throws IOException {
     assertRefactor(InvocationTransformExample.class,
         new HashSet<>(Collections.singletonList(
-            new JavaPatternASTOperation(new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodinvocation/transform/InvocationTransformExampleMatcher.java"))
-        )
+            new JavaPatternASTOperation(
+                new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodinvocation/transform/InvocationTransformExampleMatcher.java"),
+                new String[]{Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java")}) // TODO figure out how to integrate this more cleanly with the testing framework)
+          )
         )
     );
   }

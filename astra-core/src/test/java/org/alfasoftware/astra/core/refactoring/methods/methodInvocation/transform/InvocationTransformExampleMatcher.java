@@ -6,12 +6,12 @@ import org.alfasoftware.astra.core.refactoring.javapattern.JavaPatternReplacemen
 public class InvocationTransformExampleMatcher {
 
   @JavaPattern
-  ReturnsObject matcher(ReturnsObject returnsObject){
-    return (ReturnsObject) returnsObject.get();
+  ReturnsObject matcher(ReturnsObject toReturn){
+    return (ReturnsObject) toReturn.get();
   }
 
   @JavaPatternReplacement
-  ReturnsObject replacement(ReturnsObject returnsObject){
-    return returnsObject;
+  ReturnsObject replacement(ReturnsObject toReturn){
+    return toReturn;
   }
 }

@@ -6,11 +6,11 @@ import java.util.Map;
 
 /**
  * Contains information about a matched ASTNode and the pattern captures such as
- * - The simpleName parameters that have been captured
- * - The substitute methods that have been captured
- * - The Parameterized types the parameterized types that have been captured
+ * - The ASTNodes that have been captured to replace simpleName parameters
+ * - The ASTNodes captured to replace @Substitute methods
+ * - The resolved TypeParameters for parameterized types that have been captured
  *
- * This information will be used when rewriting the AST
+ * This information is used by the {@link JavaPatternASTOperation} when rewriting a compilation unit
  */
 public class ASTNodeMatchInformation {
   private final ASTNode nodeThatWasMatched;
