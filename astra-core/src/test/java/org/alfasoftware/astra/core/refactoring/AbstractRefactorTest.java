@@ -1,20 +1,18 @@
 package org.alfasoftware.astra.core.refactoring;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.alfasoftware.astra.core.utils.ASTOperation;
+import org.alfasoftware.astra.core.utils.AstraCore;
+import org.eclipse.jface.text.BadLocationException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.alfasoftware.astra.core.utils.ASTOperation;
-import org.alfasoftware.astra.core.utils.AstraCore;
-import org.eclipse.jface.text.BadLocationException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class AbstractRefactorTest {
 
@@ -36,7 +34,7 @@ public class AbstractRefactorTest {
   }
 
   protected void assertRefactorWithClassPath(Class<?> beforeClass, Set<? extends ASTOperation> refactors, String[] classPath) {
-    assertRefactorWithSourcesAndClassPath(beforeClass, refactors, new HashSet<>(Arrays.asList(TEST_SOURCE)).toArray(new String[0]), classPath);
+    assertRefactorWithSourcesAndClassPath(beforeClass, refactors, new String[]{TEST_SOURCE}, classPath);
   }
 
   protected Function<String, String> changesToApplyToBefore = a -> a;

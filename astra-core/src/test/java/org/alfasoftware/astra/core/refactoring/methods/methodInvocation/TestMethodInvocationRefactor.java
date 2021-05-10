@@ -13,6 +13,7 @@ import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
 import org.alfasoftware.astra.core.refactoring.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.edge.UnknownTypeInLambdaExample;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.InvocationTransformExample;
+import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.InvocationTransformExampleMatcher;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.ReturnsObject;
 import org.alfasoftware.astra.core.refactoring.operations.methods.ChainedMethodInvocationRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.methods.MethodInvocationRefactor;
@@ -318,9 +319,8 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
     assertRefactor(InvocationTransformExample.class,
         new HashSet<>(Collections.singletonList(
             new JavaPatternASTOperation(
-                new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodinvocation/transform/InvocationTransformExampleMatcher.java"),
-                new String[]{Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java")}) // TODO figure out how to integrate this more cleanly with the testing framework)
-          )
+                new File(TEST_EXAMPLES + "/" + InvocationTransformExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
+                new String[]{TEST_SOURCE}))
         )
     );
   }
