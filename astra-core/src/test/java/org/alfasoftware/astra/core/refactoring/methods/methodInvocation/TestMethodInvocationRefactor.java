@@ -2,7 +2,6 @@ package org.alfasoftware.astra.core.refactoring.methods.methodInvocation;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,7 +9,7 @@ import java.util.Objects;
 
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
-import org.alfasoftware.astra.core.refactoring.javapattern.JavaPatternASTOperation;
+import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.edge.UnknownTypeInLambdaExample;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.InvocationTransformExample;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.InvocationTransformExampleMatcher;

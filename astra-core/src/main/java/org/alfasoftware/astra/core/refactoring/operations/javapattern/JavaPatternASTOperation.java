@@ -1,4 +1,4 @@
-package org.alfasoftware.astra.core.refactoring.javapattern;
+package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.ClassVisitor;

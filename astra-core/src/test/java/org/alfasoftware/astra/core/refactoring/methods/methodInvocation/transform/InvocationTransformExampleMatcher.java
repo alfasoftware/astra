@@ -1,7 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform;
 
-import org.alfasoftware.astra.core.refactoring.javapattern.JavaPattern;
-import org.alfasoftware.astra.core.refactoring.javapattern.JavaPatternReplacement;
+import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPattern;
+import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 
 public class InvocationTransformExampleMatcher {
 

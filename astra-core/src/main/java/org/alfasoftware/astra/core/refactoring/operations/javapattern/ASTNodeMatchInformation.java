@@ -1,4 +1,4 @@
-package org.alfasoftware.astra.core.refactoring.javapattern;
+package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 
