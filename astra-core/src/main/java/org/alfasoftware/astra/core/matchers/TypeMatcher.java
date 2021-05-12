@@ -288,10 +288,16 @@ public class TypeMatcher implements Matcher {
     if (matches && typeBuilder.isFinal != null) {
       matches = checkIsFinal(typeDeclaration);
     }
-    if (matches) {
+    if (matches && typeBuilder.superClass != null) {
       Type superclassType = typeDeclaration.getSuperclassType();
-      if (superclassType != null) {
-        matches = AstraUtils.getFullyQualifiedName(superclassType).equals(typeBuilder.superClass);
+      // If the actual supertype is a parameterized type, and we're not specifically looking for a given parameterized type, then only look at the raw type
+      if (! typeBuilder.superClass.contains("<")) {
+        if (! typeDeclaration.getSuperclassType().resolveBinding().getBinaryName().equals(typeBuilder.superClass)) {
+          matches = false;
+        }
+        // Or if we do care about the parameterized type, then match on that too
+      } else if (! typeDeclaration.getSuperclassType().resolveBinding().getQualifiedName().equals(typeBuilder.superClass)) {
+        matches = false;
       }
     }
 
