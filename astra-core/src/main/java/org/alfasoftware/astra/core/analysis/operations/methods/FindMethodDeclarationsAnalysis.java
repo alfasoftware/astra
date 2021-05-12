@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,11 +51,11 @@ public class FindMethodDeclarationsAnalysis implements AnalysisOperation<MethodA
 
   public Collection<String> getPrintableResults() {
     List<String> results = new LinkedList<>();
-    for (MethodMatcher method : matchedNodes.keySet()) {
+    for (Map.Entry<MethodMatcher, List<MatchedMethodResult>> methodEntry : matchedNodes.entrySet()) {
       StringBuilder sb = new StringBuilder();
       sb.append("\r\n");
-      sb.append(method);
-      for (MatchedMethodResult result : matchedNodes.get(method)) {
+      sb.append(method.getKey());
+      for (MatchedMethodResult result : methodEntry.getValue()) {
         sb.append("\r\n");
         sb.append(result.toString());
       }
