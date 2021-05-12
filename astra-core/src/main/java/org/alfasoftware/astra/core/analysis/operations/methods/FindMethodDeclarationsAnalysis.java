@@ -54,7 +54,7 @@ public class FindMethodDeclarationsAnalysis implements AnalysisOperation<MethodA
     for (Map.Entry<MethodMatcher, List<MatchedMethodResult>> methodEntry : matchedNodes.entrySet()) {
       StringBuilder sb = new StringBuilder();
       sb.append("\r\n");
-      sb.append(method.getKey());
+      sb.append(methodEntry.getKey());
       for (MatchedMethodResult result : methodEntry.getValue()) {
         sb.append("\r\n");
         sb.append(result.toString());
