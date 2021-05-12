@@ -36,9 +36,7 @@ public class FindMethodDeclarationsAnalysis implements AnalysisOperation<MethodA
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) throws IOException, MalformedTreeException, BadLocationException {
     if (node instanceof MethodDeclaration) {
       matchers.stream()
-        .filter(m -> {
-          return m.matches((MethodDeclaration) node);
-        })
+        .filter(m -> m.matches((MethodDeclaration) node))
         .findAny()
         .ifPresent(method -> {
           matchedNodes.computeIfAbsent(method, m -> new ArrayList<>()).add(
