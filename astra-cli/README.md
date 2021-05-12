@@ -38,4 +38,4 @@ We've initially added support for two common Astra refactors to this CLI. We thi
 ## What are its limitations?
 The CLI currently only supports these two refactors, and even then are very simplified versions. The standard astra-core SPI offers far more options for these refactors, like changing the method parameters, offering predicate and pattern matching (like "does the method name start with *get"), and defining custom changes. 
 
-We hope that this bare-bones version of the CLI will help us gauge interest, collect early feedback, and make sure we focus effort on the things that provide the most value.
+We hope that this bare-bones version of the CLI will help us gauge interest, collect early feedback, and make sure we focus our efforts on things that provide the most value.
