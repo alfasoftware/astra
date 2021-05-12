@@ -6,7 +6,7 @@ Here are some important resources:
 * [Issues](https://github.com/alfasoftware/astra/issues) - our list of known issues.
 
 # How to contribute code
-Please raise a [GitHub Pull Request](http://help.github.com/pull-requests/) with a clear description of your changes:
+Please raise a [GitHub Pull Request](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) with a clear description of your changes:
 * If applicable, please include the relevant issue number.
 * If updating a refactor, please use Astra's [test framework](https://github.com/alfasoftware/astra/wiki/Start-with-tests!) to add test coverage.
 
