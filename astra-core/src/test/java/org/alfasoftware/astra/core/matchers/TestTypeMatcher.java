@@ -603,6 +603,25 @@ public class TestTypeMatcher {
     assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
     assertFalse(incorrectParameterizedTypeMatcher.matches(typeDeclarations.get(0)));
   }
+  
+  
+  @Test
+  public void testTypeMatcherExtendingWhereNoSupertypePresent() {
+    // Given
+    String extendsMatcher = "package x;\r\n" +
+        "public class Y{}";
+    
+    Matcher parameterizedTypeMatcher = TypeMatcher.builder()
+        .extending("java.util.List")
+        .build();
+    
+    // When
+    ClassVisitor visitor = parse(extendsMatcher);
+    
+    // Then
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertFalse(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
+  }
 
 
   private ClassVisitor parse(String source) {
