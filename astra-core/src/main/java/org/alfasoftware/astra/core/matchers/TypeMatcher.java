@@ -290,15 +290,15 @@ public class TypeMatcher implements Matcher {
     }
     if (matches && typeBuilder.superClass != null) {
       Type superclassType = typeDeclaration.getSuperclassType();
-      // If the actual supertype is a parameterized type, and we're not specifically looking for a given parameterized type, then only look at the raw type
-      if(superclassType == null) {
+      if (superclassType == null || superclassType.resolveBinding() == null) {
         matches = false;
-      } else if (! typeBuilder.superClass.contains("<")) {
-        if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getBinaryName())) {
+      // If we have specified a parameterized supertype, match on the qualified name
+      } else if (typeBuilder.superClass.contains("<")) {
+        if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getQualifiedName())) {
           matches = false;
         }
-        // Or if we do care about the parameterized type, then match on that too
-      } else if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getQualifiedName())) {
+      // If we have not specified a paramaterized supertype, then only match on binary type name
+      } else if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getBinaryName())) {
         matches = false;
       }
     }
