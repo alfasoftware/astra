@@ -45,6 +45,9 @@ public class AbstractRefactorTest {
 
     File before = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
     File after = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.java");
+    if (! after.exists()) {
+      after = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.txt");
+    }
 
     try {
       String fileContentBefore = new String(Files.readAllBytes(before.toPath()));

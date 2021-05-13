@@ -23,7 +23,7 @@ import org.eclipse.text.edits.MalformedTreeException;
  * <pre>com.google.inject.util.Providers.of(foo)</pre>
  *
  * becomes
- * <pre>() -> foo</pre>
+ * <pre>() -&gt; foo</pre>
  */
 public class MethodWithSingleArgumentToSupplier implements ASTOperation {
 

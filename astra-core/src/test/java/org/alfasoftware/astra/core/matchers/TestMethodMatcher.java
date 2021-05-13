@@ -369,5 +369,17 @@ public class TestMethodMatcher {
     assertEquals("Parameters", new ArrayList<>(Arrays.asList("int", "com.Bar")), paramsNoSpaces.getFullyQualifiedParameterNames().get());
     assertEquals("Parameters", new ArrayList<>(Arrays.asList("int", "com.Bar")), paramsWithSpaces.getFullyQualifiedParameterNames().get());
   }
+  
+  
+  @Test
+  public void testMethodMatcherGivenClassReferenceAsParamMatchesSameClassReference() {
+    MethodMatcher classReferenceMatcher = MethodMatcher.builder()
+        .withFullyQualifiedDeclaringType(ExampleUsedClass.class.getName())
+        .withMethodName("methodWithClassArg")
+        .withFullyQualifiedParameters(new ArrayList<>(Arrays.asList(Class.class.getName())))
+        .build();
+    
+    checkMethodMatchFoundInClass(classReferenceMatcher, ExampleClassUsingMethodWithClassParameter.class);
+  }
 }
 
