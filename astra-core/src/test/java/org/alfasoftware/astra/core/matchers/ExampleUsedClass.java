@@ -1,5 +1,7 @@
 package org.alfasoftware.astra.core.matchers;
 
+import java.util.Collection;
+
 class ExampleUsedClass {
 
   String baseMethod(){
@@ -24,6 +26,16 @@ class ExampleUsedClass {
 
   static String staticMethod(char arg1, Integer arg2) {
     return String.copyValueOf(String.valueOf(arg1).toCharArray(), 0, arg2);
+  }
+  
+  @SuppressWarnings("unused")
+  static <T> Collection<T> methodWithClassArg(java.lang.Class<T> clazz) {
+    return null;
+  }
+  
+  @SuppressWarnings("unused")
+  static Collection methodWithCollectionClassArg(java.lang.Class<? extends Collection> clazz) {
+    return null;
   }
 }
 
