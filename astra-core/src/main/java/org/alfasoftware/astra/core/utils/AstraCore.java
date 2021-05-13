@@ -76,11 +76,14 @@ public class AstraCore {
     AtomicLong currentPercentage = new AtomicLong();
     log.info("Counting files (this may take a few seconds)");
     Instant startTime = Instant.now();
-    List<Path> javaFilesInDirectory = Files.walk(Paths.get(directoryPath))
-        .filter(Files::isRegularFile)
-        .filter(f -> f.getFileName().toString().endsWith("java"))
-        .collect(Collectors.toList());
-
+    
+    List<Path> javaFilesInDirectory;
+    try (Stream<Path> walk = Files.walk(Paths.get(directoryPath))) {
+      javaFilesInDirectory = walk
+          .filter(Files::isRegularFile)
+          .filter(f -> f.getFileName().toString().endsWith("java"))
+          .collect(Collectors.toList());
+    }
     log.info(javaFilesInDirectory.size() + " .java files in directory to review");
 
     log.info("Applying prefilters to files in directory");
