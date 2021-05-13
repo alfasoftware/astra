@@ -118,7 +118,7 @@ public class TypeMatcher implements Matcher {
     /**
      * Specifies the type must have the exact name provided
      *
-     * @param typeName the type name to match
+     * @param typeNamePredicate a predicate for matching on the type name
      * @return the builder
      */
     public TypeBuilder withNamePredicate(final Predicate<String> typeNamePredicate) {

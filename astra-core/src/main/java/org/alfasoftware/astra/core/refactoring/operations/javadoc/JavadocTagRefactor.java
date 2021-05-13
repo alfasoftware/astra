@@ -14,7 +14,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
 
 /**
- * Simple swap of a Javadoc tag, like {@link @link} to {@linkplain @linkplain}.
+ * Simple swap of a Javadoc tag, like <pre>@link</pre> to <pre>@linkplain</pre>.
  * Input should include the @ symbol.
  * Example inputs include TagElement.TAG_LINK and TagElement.TAG_LINKPLAIN.
  */

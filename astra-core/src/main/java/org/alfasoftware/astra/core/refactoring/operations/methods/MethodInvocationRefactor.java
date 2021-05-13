@@ -26,9 +26,9 @@ import org.eclipse.text.edits.MalformedTreeException;
  * Finds a method invocation, and applies some kind of transform.
  * Transforms may include:
  * <ul>
- *  <li>changing the name of the invoked method<ul>a.<b>foo</b>() -> a.<b>bar</b>()</ul></li>
- *  <li>changing the type on which the method is invoked<ul><b>a</b>.foo() -> <b>b</b>.foo()</ul></li>
- *  <li>changing the parameters with which the method is invoked<ul>a.foo(<b>x</b>) -> a.foo(<b>x, y</b>)</ul></li>
+ *  <li>changing the name of the invoked method<ul>a.<b>foo</b>() -&gt; a.<b>bar</b>()</ul></li>
+ *  <li>changing the type on which the method is invoked<ul><b>a</b>.foo() -&gt; <b>b</b>.foo()</ul></li>
+ *  <li>changing the parameters with which the method is invoked<ul>a.foo(<b>x</b>) -&gt; a.foo(<b>x, y</b>)</ul></li>
  * </ul>
  * Where a type is changed, imports will be handled. For static method invocations,
  * the original invocation type will be preserved.

@@ -317,8 +317,6 @@ public class AstraUtils {
    *          separately imported)
    * @param annotationContent Content of the annotation value.
    * @param rewriter AST re-writer to apply changes.
-   * @param modifiersProperty Access to the modifiers list property of the
-   *          entity to annotate.
    */
   public static SingleMemberAnnotation buildSingleMemberAnnotation(ASTNode nodeToAnnotate, String annotationClassName, String annotationContent, ASTRewrite rewriter) {
     // Create the annotation
