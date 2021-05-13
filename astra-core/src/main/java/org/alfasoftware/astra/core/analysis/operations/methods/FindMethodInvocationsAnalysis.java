@@ -3,6 +3,8 @@ package org.alfasoftware.astra.core.analysis.operations.methods;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,6 +66,12 @@ public class FindMethodInvocationsAnalysis implements AnalysisOperation<MethodAn
       }
       results.add(sb.toString());
     }
+    
+    results.add("\r\n ============ SUMMARY =========== ");
+    matchedNodes.entrySet().stream()
+        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue(Comparator.comparingInt(List::size))))
+        .forEach(e -> results.add("\r\n Usages: [" + e.getValue().size() + "], Method: [" + e.getKey() + "]"));
+    
     return results;
   }
 
