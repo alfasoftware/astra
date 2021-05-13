@@ -197,9 +197,11 @@ public class MethodMatcher {
     if (fullyQualifiedDeclaringTypePredicate.get().test(resolveTypeBinding.getBinaryName())) {
       return true;
     }
-    for (ITypeBinding interfaceCandidate : resolveTypeBinding.getInterfaces()) {
-      return methodInvocationMatchesInterface(interfaceCandidate);            
+    
+    if (Arrays.stream(resolveTypeBinding.getInterfaces()).anyMatch(i -> methodInvocationMatchesInterface(i))) {
+      return true;            
     }
+    
     return false;
   }
 
@@ -225,13 +227,29 @@ public class MethodMatcher {
       return false;
     }
 
+    // Check the parameters are as expected, and in the correct order
     for (int i = 0; i < mb.getParameterTypes().length; i++) {
-      // if any parameters, in order, don't match, return false
-      if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
-        return false;
+      
+      /// If we have specified a parameterized type, match on the qualified name
+      if (fullyQualifiedParameterNames.get().get(i).contains("<")) {
+        if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
+          return false;
+        }
+        
+      // If we have not specified a paramaterized supertype, then only match on binary type name
+      } else {
+        if (mb.getParameterTypes()[i].isPrimitive() || mb.getParameterTypes()[i].isArray()) {
+          if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
+            return false;
+          }
+        } else {
+          if (! mb.getParameterTypes()[i].getBinaryName().equals(fullyQualifiedParameterNames.get().get(i))) {
+            return false;
+          }
+        }
       }
     }
-    // otherwise the parameter types and order must match, so return true
+    // if we get here, all parameter types must match our expectations
     return true;
   }
 
