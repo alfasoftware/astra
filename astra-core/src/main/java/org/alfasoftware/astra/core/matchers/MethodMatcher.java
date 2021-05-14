@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.apache.log4j.Logger;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -35,7 +36,7 @@ public class MethodMatcher {
   private final Optional<Boolean> isVarargs;
   private final Optional<MethodMatcher> parentContextMatcher;
   private final Optional<DescribedPredicate<String>> returnTypePredicate;
-  private final Optional<DescribedPredicate<MethodInvocation>> customInvocationPredicate;
+  private final Optional<DescribedPredicate<? super ASTNode>> customPredicate;
 
 
   private MethodMatcher(Builder builder) {
@@ -47,7 +48,7 @@ public class MethodMatcher {
     this.isVarargs = builder.isVarargs;
     this.parentContextMatcher = builder.parentContext;
     this.returnTypePredicate = builder.returnTypePredicate; // only implemented for MethodDeclarations so far
-    this.customInvocationPredicate = builder.customInvocationPredicate; // only implemented for MethodInvocations so far
+    this.customPredicate = builder.customPredicate;
   }
 
   /**
@@ -70,7 +71,7 @@ public class MethodMatcher {
     private Optional<Boolean> isVarargs = Optional.empty();
     private Optional<MethodMatcher> parentContext = Optional.empty();
     private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
-    private Optional<DescribedPredicate<MethodInvocation>> customInvocationPredicate = Optional.empty();
+    private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
 
 
     /**
@@ -122,8 +123,8 @@ public class MethodMatcher {
       this.returnTypePredicate = Optional.of(describedPredicate("method return type is [" + fullyQualifiedReturnType + "]", Predicate.isEqual(fullyQualifiedReturnType)));
       return this;
     }
-    public Builder withCustomInvocationPredicate(DescribedPredicate<MethodInvocation> customInvocationPredicate) {
-      this.customInvocationPredicate = Optional.of(customInvocationPredicate);
+    public Builder withCustomPredicate(DescribedPredicate<? super ASTNode> customInvocationPredicate) {
+      this.customPredicate = Optional.of(customInvocationPredicate);
       return this;
     }
 
@@ -136,12 +137,12 @@ public class MethodMatcher {
   /**
    * For a method signature, returns a method matcher.
    * Example valid inputs:
-   * 
+   *
    * <ul>
    *  <li>com.Foo.doFoo()<li>
    *  <li>com.Foo.doFoo(int,com.Bar)<li>
    *  <li>com.Foo.doFoo(int, com.Bar)<li>
-   * </ul> 
+   * </ul>
    */
   public static MethodMatcher buildMethodMatcherForFQSignature(String fqSignature) {
     final String trimmed = fqSignature.trim();
@@ -176,8 +177,8 @@ public class MethodMatcher {
   private boolean isFQInvocationTypeNameMatch(MethodInvocation mi, CompilationUnit cu) {
     return ! fullyQualifiedDeclaringTypePredicate.isPresent() ||
             fullyQualifiedDeclaringTypePredicate.get().test(AstraUtils.getFullyQualifiedName(mi, cu)) ||
-            (mi.getExpression() != null &&  mi.getExpression().resolveTypeBinding() != null && 
-              (methodInvocationMatchesSuperType(mi.getExpression().resolveTypeBinding()) || 
+            (mi.getExpression() != null &&  mi.getExpression().resolveTypeBinding() != null &&
+              (methodInvocationMatchesSuperType(mi.getExpression().resolveTypeBinding()) ||
                methodInvocationMatchesInterface(mi.getExpression().resolveTypeBinding())));
   }
 
@@ -199,9 +200,8 @@ public class MethodMatcher {
     }
     
     if (Arrays.stream(resolveTypeBinding.getInterfaces()).anyMatch(i -> methodInvocationMatchesInterface(i))) {
-      return true;            
+      return true;
     }
-    
     return false;
   }
 
@@ -344,13 +344,15 @@ public class MethodMatcher {
             + "This may be a sign that classpaths for the operation need to be supplied. "
             + "Method invocation: [" + methodInvocation + "]");
       }
-      return binding
+      if(! binding
           .filter(mb -> ! isVarargs.isPresent() || isMethodVarargs(mb))
           .filter(this::isMethodParameterListMatch)
-          .isPresent();
+          .isPresent()) {
+        return false;
+      }
     }
 
-    if (customInvocationPredicate.isPresent() && ! customInvocationPredicate.get().test(methodInvocation)) {
+    if (customPredicate.isPresent() && ! customPredicate.get().test(methodInvocation)) {
       return false;
     }
 
@@ -371,6 +373,8 @@ public class MethodMatcher {
         .filter(cic -> {
           return ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding());
         })
+      // does the classInstanceCreation match the custom predicate
+        .filter(cic -> !customPredicate.isPresent() || customPredicate.get().test(cic))
         .isPresent();
   }
 
@@ -408,7 +412,11 @@ public class MethodMatcher {
           + "This may be a sign that classpaths for the operation need to be supplied. "
           + "Method declaration: [" + methodDeclaration + "]");
     }
-
+    
+    if(customPredicate.isPresent() && !customPredicate.get().test(methodDeclaration)) {
+      return false;
+    }
+    
     return binding
         // is that method declared on the type we're looking for?
         .filter(this::isFQDeclaringTypeNameMatch)

@@ -17,6 +17,7 @@ import org.alfasoftware.astra.core.matchers.predicates.ExamplePredicateReturnTyp
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -342,6 +343,15 @@ public class TestMethodMatcher {
         }
       }
     }
+    for (ClassInstanceCreation classInstanceCreation : visitor.getClassInstanceCreations()) {
+      if (methodMatcherToTest.matches(classInstanceCreation)) {
+        if (shouldFindMatch) {
+          return; // we're looking for a match and found one.
+        } else {
+          fail("Should be no matches in class [" + clazzToTest.getName() + "] but found one at [" + classInstanceCreation.toString() + "]");
+        }
+      }
+    }
     if (shouldFindMatch) {
       fail("Should have found a match for [" + methodMatcherToTest + "] within [" + fileContentBefore + "]");
     }
@@ -369,7 +379,7 @@ public class TestMethodMatcher {
     assertEquals("Parameters", new ArrayList<>(Arrays.asList("int", "com.Bar")), paramsNoSpaces.getFullyQualifiedParameterNames().get());
     assertEquals("Parameters", new ArrayList<>(Arrays.asList("int", "com.Bar")), paramsWithSpaces.getFullyQualifiedParameterNames().get());
   }
-  
+
   
   @Test
   public void testMethodMatcherGivenClassReferenceAsParamMatchesSameClassReference() {
@@ -381,5 +391,45 @@ public class TestMethodMatcher {
     
     checkMethodMatchFoundInClass(classReferenceMatcher, ExampleClassUsingMethodWithClassParameter.class);
   }
+  
+  
+  @Test
+  public void testMethodMatcherCustomPredicates() {
+    MethodMatcher methodDeclarationMatcher = MethodMatcher.builder()
+        .withMethodName("foo")
+        .withCustomPredicate(
+            DescribedPredicate.describedPredicate(
+                "Method with no arguments",
+                node -> node instanceof MethodDeclaration && ((MethodDeclaration)node).parameters().size() == 0))
+        .build();
+  
+    MethodMatcher methodInvocationMatcher = MethodMatcher.builder()
+        .withMethodName("foo")
+        .withCustomPredicate(
+            DescribedPredicate.describedPredicate(
+                "Method with no arguments",
+                node -> node instanceof MethodInvocation && ((MethodInvocation)node).arguments().size() == 0))
+        .build();
+  
+    MethodMatcher classInstanceCreationMatcher = MethodMatcher.builder()
+        .withMethodName("ExampleUsedClass")
+        .withCustomPredicate(
+            DescribedPredicate.describedPredicate(
+                "Method with no arguments",
+                node -> node instanceof ClassInstanceCreation && ((ClassInstanceCreation)node).arguments().size() == 0))
+        .build();
+  
+    MethodMatcher classInstanceCreationMatcherNoMatch = MethodMatcher.builder()
+        .withMethodName("ExampleUsedClass")
+        .withCustomPredicate(
+            DescribedPredicate.describedPredicate(
+                "Method with no arguments",
+                node -> node instanceof ClassInstanceCreation && ((ClassInstanceCreation)node).typeArguments().size() > 0))
+        .build();
+    
+    checkMethodMatchFoundInClass(methodDeclarationMatcher, ExampleClassUsingMethodWithClassParameter.class);
+    checkNoMethodMatchFoundInClass(methodInvocationMatcher, ExampleClassUsingMethodWithClassParameter.class);
+    checkMethodMatchFoundInClass(classInstanceCreationMatcher, ExampleClassUsingMultipleMethods.class);
+    checkNoMethodMatchFoundInClass(classInstanceCreationMatcherNoMatch, ExampleClassUsingMultipleMethods.class);
+  }
 }
-
