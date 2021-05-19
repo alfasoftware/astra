@@ -28,15 +28,15 @@ public class MethodMatcher {
 
   private static final Logger log = Logger.getLogger(MethodMatcher.class);
 
-  private final Optional<DescribedPredicate<String>> fullyQualifiedDeclaringTypePredicate;
-  private final Optional<String> fullyQualifiedDeclaringTypeExactName;
-  private final Optional<DescribedPredicate<String>> methodNamePredicate;
-  private final Optional<String> methodNameExactName;
-  private final Optional<List<String>> fullyQualifiedParameterNames;
-  private final Optional<Boolean> isVarargs;
-  private final Optional<MethodMatcher> parentContextMatcher;
-  private final Optional<DescribedPredicate<String>> returnTypePredicate;
-  private final Optional<DescribedPredicate<? super ASTNode>> customPredicate;
+  private Optional<DescribedPredicate<String>> fullyQualifiedDeclaringTypePredicate = Optional.empty();
+  private Optional<String> fullyQualifiedDeclaringTypeExactName = Optional.empty();
+  private Optional<DescribedPredicate<String>> methodNamePredicate = Optional.empty();
+  private Optional<String> methodNameExactName = Optional.empty();
+  private Optional<List<String>> fullyQualifiedParameterNames = Optional.empty();
+  private Optional<Boolean> isVarargs = Optional.empty();
+  private Optional<MethodMatcher> parentContextMatcher = Optional.empty();
+  private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
+  private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
 
 
   private MethodMatcher(Builder builder) {
@@ -470,11 +470,11 @@ public class MethodMatcher {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + (fullyQualifiedDeclaringTypePredicate == null ? 0 : fullyQualifiedDeclaringTypePredicate.hashCode());
-    result = prime * result + (fullyQualifiedParameterNames == null ? 0 : fullyQualifiedParameterNames.hashCode());
-    result = prime * result + (isVarargs == null ? 0 : isVarargs.hashCode());
-    result = prime * result + (methodNamePredicate == null ? 0 : methodNamePredicate.hashCode());
-    result = prime * result + (parentContextMatcher == null ? 0 : parentContextMatcher.hashCode());
+    result = prime * result + fullyQualifiedDeclaringTypePredicate.hashCode();
+    result = prime * result + fullyQualifiedParameterNames.hashCode();
+    result = prime * result + isVarargs.hashCode();
+    result = prime * result + methodNamePredicate.hashCode();
+    result = prime * result + parentContextMatcher.hashCode();
     return result;
   }
 
@@ -490,39 +490,19 @@ public class MethodMatcher {
       return false;
     }
     MethodMatcher other = (MethodMatcher) obj;
-    if (fullyQualifiedDeclaringTypePredicate == null) {
-      if (other.fullyQualifiedDeclaringTypePredicate != null) {
-        return false;
-      }
-    } else if (!fullyQualifiedDeclaringTypePredicate.get().equals(other.fullyQualifiedDeclaringTypePredicate.get())) {
+    if (!fullyQualifiedDeclaringTypePredicate.get().equals(other.fullyQualifiedDeclaringTypePredicate.get())) {
       return false;
     }
-    if (fullyQualifiedParameterNames == null) {
-      if (other.fullyQualifiedParameterNames != null) {
-        return false;
-      }
-    } else if (!fullyQualifiedParameterNames.equals(other.fullyQualifiedParameterNames)) {
+    if (!fullyQualifiedParameterNames.equals(other.fullyQualifiedParameterNames)) {
       return false;
     }
-    if (isVarargs == null) {
-      if (other.isVarargs != null) {
-        return false;
-      }
-    } else if (!isVarargs.equals(other.isVarargs)) {
+    if (!isVarargs.equals(other.isVarargs)) {
       return false;
     }
-    if (methodNamePredicate == null) {
-      if (other.methodNamePredicate != null) {
-        return false;
-      }
-    } else if (!methodNamePredicate.equals(other.methodNamePredicate)) {
+    if (!methodNamePredicate.equals(other.methodNamePredicate)) {
       return false;
     }
-    if (parentContextMatcher == null) {
-      if (other.parentContextMatcher != null) {
-        return false;
-      }
-    } else if (!parentContextMatcher.equals(other.parentContextMatcher)) {
+    if (!parentContextMatcher.equals(other.parentContextMatcher)) {
       return false;
     }
     return true;
