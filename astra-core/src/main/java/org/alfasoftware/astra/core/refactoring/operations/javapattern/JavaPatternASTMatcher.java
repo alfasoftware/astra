@@ -9,6 +9,7 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 
 import java.util.ArrayList;
@@ -18,12 +19,8 @@ import java.util.Map;
 import java.util.Optional;
 
 
-/**
- * This ASTMatcher sub-type has support for matching a Pattern against a single ASTNode
- * For matches found it collects the match information expressed by the Patterns parameters and @Substitute methods.
- *
- */
-public class JavaPatternASTMatcher extends ASTMatcher {
+
+public class JavaPatternASTMatcher {
 
   private final Collection<MethodDeclaration> substituteMethods;
   private final Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch;
@@ -58,8 +55,8 @@ public class JavaPatternASTMatcher extends ASTMatcher {
   }
 
   /**
-   * An extension of ASTMatcher for matching a JavaPattern against a single ASTNode.
-   * Handles
+   * This ASTMatcher sub-type has support for matching a Pattern against a single ASTNode
+   * For matches found it collects the match information expressed by the @JavaPattern's method parameters and the @Substitute methods.
    */
   class JavaPatternMatcher extends ASTMatcher {
     private final Map<String, ASTNode> substituteMethodToCapturedNode = new HashMap<>();
@@ -86,7 +83,7 @@ public class JavaPatternASTMatcher extends ASTMatcher {
      * - capture any TypeArguments from the matchCandidate
      * - return true to show that we have a match, and exit early from the matcher for this tree.
      *
-     * If the simpleName is not one of the specified parameters, we delegate to the default matching behaviour.
+     * If the simpleName is not one of the specified parameters we don't care about the name.
      *
      * @param simpleNameFromPatternMatcher the simpleName from the {@link JavaPattern} we are trying to match
      * @param matchCandidate the ASTNode we are testing for a match
@@ -100,26 +97,41 @@ public class JavaPatternASTMatcher extends ASTMatcher {
 
       if(patternParameter.isPresent() &&
           (isSubTypeCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              resolvedBindingIsEqual(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
+              typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
               simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable())) { // this should be more specific. Not just a type variable, but needs to match what the captured type is if there is one.
+        // we may need to resolve Type variables defined in the JavaPattern
         if(simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
           final ITypeBinding[] matchCandidateTypeParameters = ((Expression) matchCandidate).resolveTypeBinding().getTypeArguments();
           final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
           for (int i = 0; i < simpleTypesToMatch.length; i++) {
+            if(weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])){
+              return false;
+            }
             simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i].getName());
           }
-          simpleNameToCapturedNode.put(simpleNameFromPatternMatcher.toString(), (ASTNode) matchCandidate);
-          return true;
-        } else {
-          simpleNameToCapturedNode.put(simpleNameFromPatternMatcher.toString(), (ASTNode) matchCandidate);
-          return true;
         }
+        return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
       } else {
-        return super.match(simpleNameFromPatternMatcher, matchCandidate);
+        return true; // the names given to variables in the pattern don't matter.
       }
     }
 
-    private boolean resolvedBindingIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+    private boolean putSimpleNameAndCapturedNode(SimpleName simpleNameFromPatternMatcher, ASTNode matchCandidate) {
+      if(simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()) != null &&
+      !simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)){
+        return false;
+      } else {
+        simpleNameToCapturedNode.put(simpleNameFromPatternMatcher.toString(), matchCandidate);
+        return true;
+      }
+    }
+
+    private boolean weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(ITypeBinding matchCandidateTypeParameter, ITypeBinding simpleTypesToMatch) {
+      return simpleTypeToCapturedType.get(simpleTypesToMatch.getName()) != null
+          && !simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).equals(matchCandidateTypeParameter.getName());
+    }
+
+    private boolean typeOfSimpleNameIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
       return simpleNameFromPatternMatcher.resolveTypeBinding().getTypeDeclaration()
           .isEqualTo(matchCandidate.resolveTypeBinding().getTypeDeclaration());
     }
@@ -138,18 +150,41 @@ public class JavaPatternASTMatcher extends ASTMatcher {
      * Tests whether a MethodInvocation in the {@link JavaPattern} matches a given ASTNode.
      * If the MethodInvocation from the {@link JavaPattern} is an invocation of a {@link Substitute} annotated method,
      * verify that the matchCandidate is appropriate for the substitute and capture it.
-     * TODO this should also compare the return type of the MethodInvocation.
      * If the MethodInvocation is not from a {@link Substitute} annotated method, delegate to the default matching.
      */
     @Override
     public boolean match(MethodInvocation methodInvocationFromJavaPattern, Object matchCandidate) {
       if(methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) { // TODO investigate whether this handling of methods is adequate, and whether we need similar matches for other methodinvocationlikes, such as InfixExpression
-        if (matchCandidate instanceof MethodInvocation && safeSubtreeListMatch(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())) {
-          substituteMethodToCapturedNode.put(methodInvocationFromJavaPattern.getName().toString(), (ASTNode) matchCandidate);
+        if (matchCandidate instanceof MethodInvocation &&
+            returnTypeMatches(methodInvocationFromJavaPattern, (MethodInvocation) matchCandidate) &&
+            safeSubtreeListMatch(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())) {
+          return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern,  (ASTNode) matchCandidate);
         }
         return true;
       } else {
         return super.match(methodInvocationFromJavaPattern, matchCandidate);
+      }
+    }
+
+    private boolean returnTypeMatches(MethodInvocation methodInvocationFromJavaPattern, MethodInvocation matchCandidate) {
+      final ITypeBinding returnType = methodInvocationFromJavaPattern.resolveMethodBinding().getReturnType();
+      if(returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) != null) {
+        return simpleTypeToCapturedType.get(returnType.getName()).equals(matchCandidate.resolveMethodBinding().getReturnType().getName());
+      } else if (returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) == null){
+        simpleTypeToCapturedType.put(returnType.getName(), matchCandidate.resolveMethodBinding().getReturnType().getName());
+        return true;
+      } else {
+        return returnType.isEqualTo(matchCandidate.resolveMethodBinding().getReturnType());
+      }
+    }
+
+    private boolean putSubstituteNameAndCapturedNode(MethodInvocation methodInvocationFromJavaPattern, ASTNode matchCandidate) {
+      if(substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()) != null &&
+          !substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)){
+        return false;
+      } else {
+        substituteMethodToCapturedNode.put(methodInvocationFromJavaPattern.getName().toString(),  matchCandidate);
+        return true;
       }
     }
 
@@ -172,14 +207,32 @@ public class JavaPatternASTMatcher extends ASTMatcher {
           && safeSubtreeMatch(node.getName(), o.getName());
     }
 
-    private boolean methodInvocationMatchesSubstituteMethod(MethodInvocation o) {
-      for(MethodDeclaration methodDeclaration : substituteMethods){
-        if(methodDeclaration.getReturnType2().resolveBinding().isEqualTo(o.resolveMethodBinding().getReturnType())
-            && methodDeclaration.resolveBinding().getParameterTypes().length == o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
-          return true;
-        }
+    @Override
+    public boolean match(SimpleType node, Object other) {
+      if (!(other instanceof SimpleType)) {
+        return false;
       }
-      return false;
+      SimpleType o = (SimpleType) other;
+
+      if(node.resolveBinding().isTypeVariable() &&
+          weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(o.resolveBinding(), node.resolveBinding())) {
+        return false;
+      } else if (node.resolveBinding().isTypeVariable()) {
+        simpleTypeToCapturedType.put(node.resolveBinding().getName(), o.resolveBinding().getName());
+        return true;
+      } else {
+        return super.match(node, other);
+      }
+    }
+
+    /**
+     *
+     * @param o the methodinvocation to test
+     * @return true, if the method invocation matches the declaration of an @Substitute annotated method
+     */
+    private boolean methodInvocationMatchesSubstituteMethod(MethodInvocation o) {
+      return substituteMethods.stream().anyMatch(methodDeclaration ->
+              o.resolveMethodBinding().getMethodDeclaration().isEqualTo(methodDeclaration.resolveBinding()));
     }
 
 

@@ -1,6 +1,5 @@
 package org.alfasoftware.astra.core.utils;
 
-import org.apache.log4j.AsyncAppender;
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -11,6 +10,7 @@ import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CreationReference;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.ExpressionMethodReference;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -77,6 +77,7 @@ public class ClassVisitor extends ASTVisitor {
   private final List<InfixExpression> infixExpressions = new ArrayList<>();
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
   private final List<IfStatement> ifStatements = new ArrayList<>();
+  private final List<EnhancedForStatement> enhancedForStatements = new ArrayList<>();
   private final List<CastExpression> castExpressions = new ArrayList<>();
 
   private final List<ImportDeclaration> imports = new ArrayList<>();
@@ -224,6 +225,12 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
+  @Override
+  public boolean visit(EnhancedForStatement node) {
+    log.debug("Enhanced For Statement: " + node);
+    enhancedForStatements.add(node);
+    return super.visit(node);
+  }
 
   @Override
   public boolean visit(InfixExpression node) {
@@ -453,6 +460,10 @@ public class ClassVisitor extends ASTVisitor {
     return classInstanceCreations;
   }
 
+  public List<EnhancedForStatement> getEnhancedForStatements() {
+    return enhancedForStatements;
+  }
+
   /**
    * @return Methods which are called.
    */
@@ -523,7 +534,8 @@ public class ClassVisitor extends ASTVisitor {
       getFieldAccesses(),
       getIfStatements(),
       getInfixExpressions(),
-      getCastExpressions())
+      getCastExpressions(),
+      getEnhancedForStatements())
     .flatMap(Collection::stream)
     .collect(Collectors.toSet());
   }
