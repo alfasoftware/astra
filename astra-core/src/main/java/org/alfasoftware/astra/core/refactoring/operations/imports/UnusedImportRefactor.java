@@ -35,6 +35,11 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class UnusedImportRefactor implements ASTOperation {
 
+  private static final String JAVA = "java.";
+  private static final String JAVAX = "javax.";
+  private static final String ORG = "org.";
+
+
   @Override
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
       throws IOException, MalformedTreeException, BadLocationException {
@@ -107,9 +112,9 @@ public class UnusedImportRefactor implements ASTOperation {
           currentList.stream()
           .filter(i -> ! i.isStatic())
           .sorted(Comparator
-            .comparing((ImportDeclaration i) -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith("java."))
-            .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith("javax."))
-            .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith("org."))
+            .comparing((ImportDeclaration i) -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVA))
+            .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVAX))
+            .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(ORG))
             .thenComparing(i -> AstraUtils.getPackageName(i.getName().toString()))
             .thenComparing(i -> i.getName().toString()))
             )
@@ -133,7 +138,7 @@ public class UnusedImportRefactor implements ASTOperation {
         // - imports starting with java. and others
         // - imports starting with a different first letter
         if (sortedImports.get(i).isStatic() != sortedImports.get(i + 1).isStatic() ||
-            sortedImports.get(i).getName().toString().startsWith("java.") != sortedImports.get(i + 1).getName().toString().startsWith("java.") ||
+            sortedImports.get(i).getName().toString().startsWith(JAVA) != sortedImports.get(i + 1).getName().toString().startsWith(JAVA) ||
             sortedImports.get(i).getName().toString().charAt(0) != sortedImports.get(i + 1).getName().toString().charAt(0)) {
           ASTNode placeholder = rewriter.createStringPlaceholder("", ASTNode.IMPORT_DECLARATION);
           newList.add((ImportDeclaration) placeholder);
