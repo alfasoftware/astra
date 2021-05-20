@@ -52,7 +52,7 @@ public class UnusedImportRefactor implements ASTOperation {
 
           // remove duplicates
           if (existingImports.contains(importDeclaration.getName().toString())) {
-            AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
+            AstraUtils.removeImport(importDeclaration, rewriter);
             continue;
           } else {
             existingImports.add(importDeclaration.getName().toString());
@@ -67,7 +67,7 @@ public class UnusedImportRefactor implements ASTOperation {
           // TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
           // (can be multiple methods with same name)
           if (! visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString()))) {
-            AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
+            AstraUtils.removeImport(importDeclaration, rewriter);
             continue;
           }
 
@@ -75,14 +75,14 @@ public class UnusedImportRefactor implements ASTOperation {
           if (compilationUnit.getPackage().getName().toString().equals(
             AstraUtils.getPackageName(importDeclaration.getName().toString()))
             && !AstraUtils.isImportOfInnerType(importDeclaration)) {
-            AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
+            AstraUtils.removeImport(importDeclaration, rewriter);
             continue;
           }
 
           // remove non-static imports from java.lang - they don't need to be imported
           if (! importDeclaration.isStatic() && importDeclaration.getName().toString().split("java\\.lang\\.[A-Z]").length > 1
               && !AstraUtils.isImportOfInnerType(importDeclaration)) {
-            AstraUtils.removeImport(compilationUnit, importDeclaration, rewriter);
+            AstraUtils.removeImport(importDeclaration, rewriter);
             continue;
           }
         }
@@ -94,9 +94,7 @@ public class UnusedImportRefactor implements ASTOperation {
     List<ImportDeclaration> currentList = importListRewrite.getRewrittenList();
 
     // clear down existing list
-    currentList.forEach(i -> {
-      importListRewrite.remove(i, null);
-    });
+    currentList.forEach(i -> importListRewrite.remove(i, null));
 
     // Sort the imports
     List<ImportDeclaration> sortedImports =

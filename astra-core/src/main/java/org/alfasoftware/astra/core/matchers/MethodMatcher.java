@@ -156,7 +156,7 @@ public class MethodMatcher {
     List<String> fullyQualifiedParametersList = new ArrayList<>();
     // If this is just ")", then no parameters
     if (split[1].length() != 1) {
-      for (String parameterSplit : split[1].substring(0, split[1].indexOf(")")).split(",")) {
+      for (String parameterSplit : split[1].substring(0, split[1].indexOf(')')).split(",")) {
         fullyQualifiedParametersList.add(parameterSplit.trim());
       }
     }
@@ -310,17 +310,6 @@ public class MethodMatcher {
   }
 
 
-//  public boolean matches(ASTNode node, CompilationUnit compilationUnit) {
-//    if (node instanceof MethodInvocation) {
-//      matches((MethodInvocation) node, compilationUnit);
-//    } else if (node instanceof ClassInstanceCreation) {
-//      matches(node, compilationUnit);
-//    } else if (node instanceof MethodDeclaration) {
-//      matches(node, compilationUnit);
-//    }
-//  }
-
-
   public boolean matches(MethodInvocation methodInvocation, CompilationUnit compilationUnit) {
 
     if (! isMethodNameMatch(methodInvocation)) {
@@ -370,9 +359,9 @@ public class MethodMatcher {
       // do the parameters match?
         .filter(cic -> isMethodParameterListMatch(cic.resolveConstructorBinding()))
       // if we're checking whether it's varargs, does it match our expectation?
-        .filter(cic -> {
-          return ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding());
-        })
+        .filter(cic -> 
+          ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding())
+        )
       // does the classInstanceCreation match the custom predicate
         .filter(cic -> !customPredicate.isPresent() || customPredicate.get().test(cic))
         .isPresent();

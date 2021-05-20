@@ -12,7 +12,7 @@ import org.alfasoftware.astra.core.utils.ASTOperation;
 public class ExampleUseCase implements UseCase {
 
   @Override
-  public Set<? extends ASTOperation> getOperations() {
+  public Set<ASTOperation> getOperations() {
     return new HashSet<>(
       Arrays.asList(
         MethodInvocationRefactor

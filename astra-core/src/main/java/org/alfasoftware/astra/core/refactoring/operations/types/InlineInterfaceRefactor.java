@@ -56,7 +56,7 @@ public class InlineInterfaceRefactor implements ASTOperation {
       compilationUnit.accept(interfaceVisitor);
 
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error(e);
     }
   }
 

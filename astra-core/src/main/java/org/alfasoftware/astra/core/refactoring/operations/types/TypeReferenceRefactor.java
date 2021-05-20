@@ -174,17 +174,15 @@ public class TypeReferenceRefactor implements ASTOperation {
                 + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
             rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
           }
-        } else if (name instanceof QualifiedName) {
-          if (name.toString().equals(getFromType())) {
-            log.info("Refactoring qualified type in Javadoc [" + name.toString() + "] "
-                + "to [" + toType + "] "
-                + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
+        } else if (name instanceof QualifiedName && name.toString().equals(getFromType())) {
+          log.info("Refactoring qualified type in Javadoc [" + name.toString() + "] "
+              + "to [" + toType + "] "
+              + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
 
-            QualifiedName newQualifiedName = compilationUnit.getAST().newQualifiedName(
-              compilationUnit.getAST().newName(toType.replace("." + AstraUtils.getSimpleName(toType), "")),
-              compilationUnit.getAST().newSimpleName(AstraUtils.getSimpleName(toType)));
-            rewriter.replace(name, newQualifiedName, null);
-          }
+          QualifiedName newQualifiedName = compilationUnit.getAST().newQualifiedName(
+            compilationUnit.getAST().newName(toType.replace("." + AstraUtils.getSimpleName(toType), "")),
+            compilationUnit.getAST().newSimpleName(AstraUtils.getSimpleName(toType)));
+          rewriter.replace(name, newQualifiedName, null);
         }
       }
     }
