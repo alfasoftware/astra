@@ -20,7 +20,7 @@ import java.util.Optional;
 
 
 
-public class JavaPatternASTMatcher {
+class JavaPatternASTMatcher {
 
   private final Collection<MethodDeclaration> substituteMethods;
   private final Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch;
@@ -96,9 +96,10 @@ public class JavaPatternASTMatcher {
           .findAny();
 
       if(patternParameter.isPresent() &&
-          (isSubTypeCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
+          (isAssignmentCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
+              isSubTypeCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
               typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable())) { // this should be more specific. Not just a type variable, but needs to match what the captured type is if there is one.
+              simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable())) {
         // we may need to resolve Type variables defined in the JavaPattern
         if(simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
           final ITypeBinding[] matchCandidateTypeParameters = ((Expression) matchCandidate).resolveTypeBinding().getTypeArguments();
@@ -111,6 +112,8 @@ public class JavaPatternASTMatcher {
           }
         }
         return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
+      } else if (patternParameter.isPresent()) {
+        return false;
       } else {
         return true; // the names given to variables in the pattern don't matter.
       }
@@ -136,6 +139,10 @@ public class JavaPatternASTMatcher {
           .isEqualTo(matchCandidate.resolveTypeBinding().getTypeDeclaration());
     }
 
+    private boolean isAssignmentCompatible(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      return matchCandidate.resolveTypeBinding().isAssignmentCompatible(simpleNameFromPatternMatcher.resolveTypeBinding());
+    }
+
     /**
      * Checks whether the TypeDeclaration for the resolved type binding for the simpleName and the matchCandidate are sub-type compatible.
      * The TypeDeclaration for the resolved type binding will be the generic version of the Type, if it is parameterised.
@@ -147,6 +154,7 @@ public class JavaPatternASTMatcher {
     }
 
     /**
+     * Overridden matcher for MethodInvocation.
      * Tests whether a MethodInvocation in the {@link JavaPattern} matches a given ASTNode.
      * If the MethodInvocation from the {@link JavaPattern} is an invocation of a {@link Substitute} annotated method,
      * verify that the matchCandidate is appropriate for the substitute and capture it.
