@@ -9,6 +9,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,6 +77,7 @@ public class JavaPatternASTOperation implements ASTOperation {
           astNode.accept(visitor);
 
           replaceCapturedSimpleNames(rewriter, astNodeMatchInformation, visitor);
+          replaceCapturedVarArgs(rewriter, astNodeMatchInformation, visitor);
           replaceCapturedSubstituteMethods(rewriter, astNodeMatchInformation, visitor);
           replaceCapturedSimpleTypes(rewriter, astNodeMatchInformation, visitor);
 
@@ -115,6 +117,21 @@ public class JavaPatternASTOperation implements ASTOperation {
             }
         );
   }
+
+  private static void replaceCapturedVarArgs(ASTRewrite rewriter, ASTNodeMatchInformation astNodeMatchInformation, ClassVisitor visitor) {
+    visitor.getSimpleNames().stream().
+        filter(simpleName -> astNodeMatchInformation.getVarArgsToCapturedNodes().get(simpleName.toString()) != null)
+        .forEach(
+            simpleName -> {
+              ListRewrite argumentsList = rewriter.getListRewrite(simpleName.getParent(), MethodInvocation.ARGUMENTS_PROPERTY);
+              argumentsList.remove(simpleName, null);
+              for (Object object : astNodeMatchInformation.getVarArgsToCapturedNodes().get(simpleName.toString())) {
+                argumentsList.insertLast((Expression) object, null);
+              }
+            }
+        );
+  }
+
 
   /**
    * Replaces the references to @Substitute methods in the patternToRefactorTo with the ASTNodes captured during matching.
