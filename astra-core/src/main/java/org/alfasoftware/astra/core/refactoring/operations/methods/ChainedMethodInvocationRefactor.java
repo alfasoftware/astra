@@ -40,26 +40,25 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
       throws IOException, MalformedTreeException, BadLocationException {
     if (node instanceof MethodInvocation) {
-      handleMethodInvocation(compilationUnit, (MethodInvocation) node, rewriter);
+      handleMethodInvocation((MethodInvocation) node, rewriter);
     }
   }
 
 
-  private void handleMethodInvocation(@SuppressWarnings("unused") CompilationUnit compilationUnit, MethodInvocation node, ASTRewrite rewriter) {
+  private void handleMethodInvocation(MethodInvocation node, ASTRewrite rewriter) {
     // second
-    if (before.get(before.size() - 1).getMethodName().get().test(node.getName().toString())) {
+    if (before.get(before.size() - 1).getMethodName().filter(name -> name.test(node.getName().toString())).isPresent() &&
       // wrappedA.get().first()
-      if (node.getExpression() != null && node.getExpression() instanceof MethodInvocation) {
-        // first
-        MethodInvocation nextMethodInvocation = (MethodInvocation) node.getExpression();
-        if (before.get(before.size() - 2).getMethodName().get().test(nextMethodInvocation.getName().toString())) {
-          // TODO make this looped, so we can handle chains of arbitrary length
+       node.getExpression() != null && node.getExpression() instanceof MethodInvocation) {
+      // first
+      MethodInvocation nextMethodInvocation = (MethodInvocation) node.getExpression();
+      if (before.get(before.size() - 2).getMethodName().filter(name -> name.test(nextMethodInvocation.getName().toString())).isPresent()) {
+        // TODO make this looped, so we can handle chains of arbitrary length
 
-          // change the chain to the "after"
-          // TODO handle arbitrary "after" lengths
-          rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, nextMethodInvocation.getExpression(), null);
-          rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(0)), null);
-        }
+        // change the chain to the "after"
+        // TODO handle arbitrary "after" lengths
+        rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, nextMethodInvocation.getExpression(), null);
+        rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(0)), null);
       }
     }
   }

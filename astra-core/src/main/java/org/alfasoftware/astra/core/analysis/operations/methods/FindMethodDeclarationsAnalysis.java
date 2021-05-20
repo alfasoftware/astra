@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,12 +38,12 @@ public class FindMethodDeclarationsAnalysis implements AnalysisOperation<MethodA
       matchers.stream()
         .filter(m -> m.matches((MethodDeclaration) node))
         .findAny()
-        .ifPresent(method -> {
+        .ifPresent(method -> 
           matchedNodes.computeIfAbsent(method, m -> new ArrayList<>()).add(
             new MatchedMethodResult(node, AstraUtils.getNameForCompilationUnit(compilationUnit),
               compilationUnit.getLineNumber(compilationUnit.getExtendedStartPosition(node)))
-          );
-        });
+          )
+        );
     }
   }
 

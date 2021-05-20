@@ -1,11 +1,9 @@
 package org.alfasoftware.astra.core.utils;
 
-import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +56,7 @@ import org.eclipse.jface.text.BadLocationException;
 public class AstraUtils {
 
   private static final Logger log = Logger.getLogger(AstraUtils.class);
+  public static final String CLASSPATHS_MISSING_WARNING = "This may be a sign that classpaths for the operation need to be supplied. ";
 
   public static CompilationUnit readAsCompilationUnit(String fileSource, String[] sources, String[] classPath) {
     ASTParser parser = createParser(fileSource, sources, classPath);
@@ -79,7 +78,7 @@ public class AstraUtils {
     parser.setKind(ASTParser.K_COMPILATION_UNIT);
     parser.setSource(fileSource.toCharArray());
     parser.setUnitName("");
-    Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
+    HashMap<String, String> javaCoreOptions = new HashMap<>(JavaCore.getOptions());
     JavaCore.setComplianceOptions(JAVA_VERSION, javaCoreOptions);
 
     parser.setCompilerOptions(javaCoreOptions);
@@ -98,7 +97,7 @@ public class AstraUtils {
    * @param source Java source document.
    * @param rewriter AST re-writer which contains the modifications to apply to the document.
    */
-  public static String makeChangesFromAST(String source, ASTRewrite rewriter) throws BadLocationException, IOException {
+  public static String makeChangesFromAST(String source, ASTRewrite rewriter) throws BadLocationException {
     Map<String, String> formattingOptions = new HashMap<>();
     formattingOptions.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_FIELD, JavaCore.INSERT);
     formattingOptions.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.INSERT);
@@ -121,18 +120,18 @@ public class AstraUtils {
    * @return fully qualified class name.
    */
   public static String getFullyQualifiedName(final TypeDeclaration type) {
-    String fullName = type.getName().toString();
+    StringBuilder fullName = new StringBuilder(type.getName().toString());
     ASTNode parent = type.getParent();
     while (true) {
       if (parent instanceof CompilationUnit) {
-        fullName = ((CompilationUnit) parent).getPackage().getName().toString() + "." + fullName;
+        fullName.insert(0, ((CompilationUnit) parent).getPackage().getName().toString() + ".");
         break;
       } else if (parent instanceof TypeDeclaration) {
-        fullName = ((TypeDeclaration) parent).getName().toString() + "." + fullName;
+        fullName.insert(0, ((TypeDeclaration) parent).getName().toString() + ".");
         parent = parent.getParent();
       }
     }
-    return fullName;
+    return fullName.toString();
   }
 
 
@@ -142,10 +141,10 @@ public class AstraUtils {
         .map(Expression::resolveTypeBinding);
 
     if (typeBinding
-        .filter(tb -> tb.isRecovered())
+        .filter(ITypeBinding::isRecovered)
         .isPresent()) {
       log.error("Binding not found for type of method invocation. "
-          + "This may be a sign that classpaths for the operation need to be supplied. "
+          + CLASSPATHS_MISSING_WARNING
           + "Method invocation: [" + mi + "]");
       return "";
     }
@@ -154,19 +153,27 @@ public class AstraUtils {
     if (qualifiedNameNonStatic.isPresent()) {
       return qualifiedNameNonStatic.get();
     }
+    
+    Optional<String> resolvedMethodBindingName = Optional.of(mi)
+      .map(MethodInvocation::resolveMethodBinding)
+      .map(IMethodBinding::getDeclaringClass)
+      .map(ITypeBinding::getQualifiedName);
+    if (resolvedMethodBindingName.isPresent()) {
+      return resolvedMethodBindingName.get();
+    }
 
-    if (isMethodInvocationStatic(mi)) {
-      for (Object item : compilationUnit.imports()) {
-        if (item instanceof ImportDeclaration) {
-          ImportDeclaration importDeclaration = (ImportDeclaration) item;
-          if (!importDeclaration.isStatic()) {
-            continue;
-          }
-          String importName = importDeclaration.getName().toString();
-          if (importName.substring(importName.lastIndexOf(".") + 1).equals(mi.getName().toString())) {
-            return importName.substring(0, importName.lastIndexOf("."));
-          }
-        }
+    if (isMethodInvocationStatic(mi)) {     
+      @SuppressWarnings("unchecked")
+      List<ImportDeclaration> imports = compilationUnit.imports();
+      Optional<String> firstMatch = imports.stream()
+        .filter(ImportDeclaration::isStatic)
+        .map(ImportDeclaration::getName)
+        .map(Object::toString)
+        .filter(importName -> importName.substring(importName.lastIndexOf('.') + 1).equals(mi.getName().toString()))
+        .map(importName -> importName.substring(0, importName.lastIndexOf('.')))
+        .findFirst();
+      if (firstMatch.isPresent()) {
+        return firstMatch.get();
       }
     }
 
@@ -179,10 +186,10 @@ public class AstraUtils {
         .map(Type::resolveBinding);
 
     if (typeBinding
-        .filter(tb -> tb.isRecovered())
+        .filter(ITypeBinding::isRecovered)
         .isPresent()) {
       log.error("Binding not found for type. "
-          + "This may be a sign that classpaths for the operation need to be supplied. "
+          + CLASSPATHS_MISSING_WARNING
           + "Type: [" + type + "]");
       return "";
     } else {
@@ -275,7 +282,7 @@ public class AstraUtils {
    * @return
    */
   public static String getNameForCompilationUnit(CompilationUnit compilationUnit) {
-    if (compilationUnit.types().size() > 0) {
+    if (! compilationUnit.types().isEmpty()) {
       AbstractTypeDeclaration type = (AbstractTypeDeclaration) compilationUnit.types().get(0);
       if (compilationUnit.getPackage() != null) {
         return compilationUnit.getPackage().getName().toString() + "." + type.getName().toString();
@@ -399,12 +406,10 @@ public class AstraUtils {
       int index = 0;
       for (ImportDeclaration existingImport : currentList) {
         // Add imports alphabetically
-        if (existingImport.isStatic()) {
-          index++;
-        } else if (AstraUtils.getPackageName(importPath)
-            .compareTo(AstraUtils.getPackageName(existingImport.getName().toString())) < 0) {
-          index++;
-        } else if (importPath.compareTo(existingImport.getName().toString()) > 0) {
+        if (existingImport.isStatic() ||
+            AstraUtils.getPackageName(importPath)
+              .compareTo(AstraUtils.getPackageName(existingImport.getName().toString())) < 0 ||
+            importPath.compareTo(existingImport.getName().toString()) > 0) {
           index++;
         }
       }
@@ -455,7 +460,7 @@ public class AstraUtils {
   }
 
 
-  public static void removeImport(@SuppressWarnings("unused") CompilationUnit compilationUnit, ImportDeclaration importDeclaration,
+  public static void removeImport(ImportDeclaration importDeclaration,
       ASTRewrite rewriter) {
     // does import already
     rewriter.remove(importDeclaration, null);
@@ -463,25 +468,19 @@ public class AstraUtils {
 
 
   public static boolean isTypeBindingQualifiedNameEqual(ITypeBinding type, String typeToMatch) {
-    if (type == null) {
-      return false;
-    } else if (type.getQualifiedName() != null && type.getQualifiedName().equals(typeToMatch)) {
-      return true;
-    } else {
-      return false;
-    }
+    return Optional.ofNullable(type)
+        .map(ITypeBinding::getQualifiedName)
+        .filter(n -> n.equals(typeToMatch))
+        .isPresent();
   }
 
 
   public static boolean isMethodInvocationStatic(MethodInvocation methodInvocation) {
-    IMethodBinding iMethodBinding = methodInvocation.resolveMethodBinding();
-    if (iMethodBinding != null) {
-      if (Modifier.isStatic(iMethodBinding.getModifiers())) {
-        return true;
-      }
-    }
-    return false;
+    return Optional.ofNullable(methodInvocation.resolveMethodBinding())
+            .filter(mb -> Modifier.isStatic(mb.getModifiers()))
+            .isPresent();
   }
+  
 
   public enum MethodInvocationType {
     /*

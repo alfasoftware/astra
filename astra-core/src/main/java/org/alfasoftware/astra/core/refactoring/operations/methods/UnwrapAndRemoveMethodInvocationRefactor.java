@@ -231,10 +231,10 @@ public class UnwrapAndRemoveMethodInvocationRefactor implements ASTOperation {
         @SuppressWarnings("unchecked") List<Expression> arguments = methodInvocation.arguments();
         if (arguments.isEmpty()) {
           rewriter.replace(methodInvocation, methodInvocation.getExpression(), null);
-          System.out.println("Replaced methodinvocation with expression: " + methodInvocation + ", Expression: " + methodInvocation.getExpression());
+          log.info("Replaced methodinvocation with expression: " + methodInvocation + ", Expression: " + methodInvocation.getExpression());
         } else {
           rewriter.replace(methodInvocation, arguments.get(0), null);
-          System.out.println("Replaced methodinvocation with argument: " + methodInvocation + ", Argument: " + arguments.get(0));
+          log.info("Replaced methodinvocation with argument: " + methodInvocation + ", Argument: " + arguments.get(0));
         }
         break;
 

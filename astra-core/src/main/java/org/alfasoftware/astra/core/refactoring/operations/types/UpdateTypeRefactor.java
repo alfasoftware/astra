@@ -130,7 +130,7 @@ public class UpdateTypeRefactor implements ASTOperation {
       visitor.getQualifiedTypes()
     )
     .flatMap(Collection::stream)
-    .map(n -> AstraUtils.getFullyQualifiedName(n))
+    .map(AstraUtils::getFullyQualifiedName)
     .filter(n -> AstraUtils.getPackageName(n).equals(AstraUtils.getPackageName(fromType)))
     .forEach(n -> {
       log.info("Adding import [" + n + "] in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");

@@ -103,17 +103,17 @@ public class ConstructorToBuilderRefactor implements ASTOperation {
             + "to builder in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
 
         StringLiteral literal = node.getAST().newStringLiteral();
-        String builder = "";
+        StringBuilder builder = new StringBuilder();
         for (BuilderSection part : builderParts) {
-          builder += part.getStringValue(classInstanceCreation);
+          builder.append(part.getStringValue(classInstanceCreation));
         }
 
-        rewriter.set(literal, StringLiteral.ESCAPED_VALUE_PROPERTY, builder, null);
+        rewriter.set(literal, StringLiteral.ESCAPED_VALUE_PROPERTY, builder.toString(), null);
         rewriter.replace(node, literal, null);
 
-        newImport.ifPresent(newImport -> {
-          AstraUtils.addImport(compilationUnit, newImport, rewriter);
-        });
+        newImport.ifPresent(i -> 
+          AstraUtils.addImport(compilationUnit, i, rewriter)
+        );
       }
     }
   }
@@ -148,7 +148,7 @@ public class ConstructorToBuilderRefactor implements ASTOperation {
         List<String> args = (List<String>) classInstanceCreation.arguments()
           .subList(index, classInstanceCreation.arguments().size())
           .stream()
-          .map(a -> a.toString())
+          .map(Object::toString)
           .collect(Collectors.toList());
         return String.join(", ", args);
       }

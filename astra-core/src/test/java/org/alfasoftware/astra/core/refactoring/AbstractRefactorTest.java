@@ -16,7 +16,7 @@ import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
 import org.eclipse.jface.text.BadLocationException;
 
-public class AbstractRefactorTest {
+public abstract class AbstractRefactorTest {
 
   protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
   protected static final String TEST_EXAMPLES = "./src/test/java";

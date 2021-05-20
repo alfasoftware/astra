@@ -22,7 +22,7 @@ import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraCore;
 import org.eclipse.jface.text.BadLocationException;
 
-public class AbstractAnalysisTest {
+public abstract class AbstractAnalysisTest {
 
   protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
   protected static final String TEST_EXAMPLES = "./src/test/java";
