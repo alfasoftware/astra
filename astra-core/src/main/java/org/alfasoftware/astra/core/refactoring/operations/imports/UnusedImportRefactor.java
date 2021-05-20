@@ -44,6 +44,79 @@ public class UnusedImportRefactor implements ASTOperation {
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
       throws IOException, MalformedTreeException, BadLocationException {
 
+    final ListRewrite importListRewrite = rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY);
+    
+    // remove unnecessary imports
+    removeUnnecessaryImports(compilationUnit, node, rewriter);
+
+    @SuppressWarnings("unchecked")
+    List<ImportDeclaration> currentList = importListRewrite.getRewrittenList();
+
+    // clear down existing list
+    currentList.forEach(i -> importListRewrite.remove(i, null));
+
+    // Sort the imports
+    List<ImportDeclaration> sortedImports = sortImports(currentList);
+
+    // Add in blank line separators, if needed
+    List<ImportDeclaration> sortedImportsWithSeparators = addSeparatorsToImportList(rewriter, sortedImports);
+
+    // Write in the (now sorted) imports with blank line separators
+    for (int i = 0; i < sortedImportsWithSeparators.size(); i++) {
+      importListRewrite.insertAt(sortedImportsWithSeparators.get(i), i, null);
+    }
+  }
+
+
+  private List<ImportDeclaration> addSeparatorsToImportList(ASTRewrite rewriter, List<ImportDeclaration> sortedImports) {
+    List<ImportDeclaration> newList = new ArrayList<>();
+    for (int i = 0; i < sortedImports.size(); i++) {
+      newList.add(sortedImports.get(i));
+      if (sortedImports.size() > i + 1) {
+        // Don't put separators between static methods
+        if (sortedImports.get(i).isStatic() && sortedImports.get(i + 1).isStatic()) {
+          continue;
+        }
+
+        // Add blank line separators between:
+        // - the static and non-static imports
+        // - imports starting with java. and others
+        // - imports starting with a different first letter
+        if (sortedImports.get(i).isStatic() != sortedImports.get(i + 1).isStatic() ||
+            sortedImports.get(i).getName().toString().startsWith(JAVA) != sortedImports.get(i + 1).getName().toString().startsWith(JAVA) ||
+            sortedImports.get(i).getName().toString().charAt(0) != sortedImports.get(i + 1).getName().toString().charAt(0)) {
+          ASTNode placeholder = rewriter.createStringPlaceholder("", ASTNode.IMPORT_DECLARATION);
+          newList.add((ImportDeclaration) placeholder);
+        }
+      }
+    }
+    return newList;
+  }
+
+
+  private List<ImportDeclaration> sortImports(List<ImportDeclaration> currentList) {
+    return Stream.concat(
+        // Static imports are sorted by name alone
+        currentList.stream()
+        .filter(ImportDeclaration::isStatic)
+        .sorted(Comparator.comparing(i -> i.getName().toString())),
+        // Non-static imports are sorted with java, javax and org packages first, then package name, then simple name
+        currentList.stream()
+        .filter(i -> ! i.isStatic())
+        .sorted(Comparator
+          .comparing((ImportDeclaration i) -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVA))
+          .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVAX))
+          .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(ORG))
+          .thenComparing(i -> AstraUtils.getPackageName(i.getName().toString()))
+          .thenComparing(i -> i.getName().toString()))
+          )
+      // filter out blank line separators
+      .filter(i -> !i.getName().toString().equals("MISSING.MISSING"))
+      .collect(Collectors.toList());
+  }
+
+
+  private void removeUnnecessaryImports(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) {
     if (node instanceof TypeDeclaration) {
       // Only remove imports for top-level types
       TypeDeclaration typeDeclaration = (TypeDeclaration) node;
@@ -92,63 +165,6 @@ public class UnusedImportRefactor implements ASTOperation {
           }
         }
       }
-    }
-
-    final ListRewrite importListRewrite = rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY);
-    @SuppressWarnings("unchecked")
-    List<ImportDeclaration> currentList = importListRewrite.getRewrittenList();
-
-    // clear down existing list
-    currentList.forEach(i -> importListRewrite.remove(i, null));
-
-    // Sort the imports
-    List<ImportDeclaration> sortedImports =
-        Stream.concat(
-          // Static imports are sorted by name alone
-          currentList.stream()
-          .filter(ImportDeclaration::isStatic)
-          .sorted(Comparator.comparing(i -> i.getName().toString())),
-          // Non-static imports are sorted with java, javax and org packages first, then package name, then simple name
-          currentList.stream()
-          .filter(i -> ! i.isStatic())
-          .sorted(Comparator
-            .comparing((ImportDeclaration i) -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVA))
-            .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVAX))
-            .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(ORG))
-            .thenComparing(i -> AstraUtils.getPackageName(i.getName().toString()))
-            .thenComparing(i -> i.getName().toString()))
-            )
-        // filter out blank line separators
-        .filter(i -> !i.getName().toString().equals("MISSING.MISSING"))
-        .collect(Collectors.toList());
-
-
-    // Add in blank line separators, if needed
-    List<ImportDeclaration> newList = new ArrayList<>();
-    for (int i = 0; i < sortedImports.size(); i++) {
-      newList.add(sortedImports.get(i));
-      if (sortedImports.size() > i + 1) {
-        // Don't put separators between static methods
-        if (sortedImports.get(i).isStatic() && sortedImports.get(i + 1).isStatic()) {
-          continue;
-        }
-
-        // Add blank line separators between:
-        // - the static and non-static imports
-        // - imports starting with java. and others
-        // - imports starting with a different first letter
-        if (sortedImports.get(i).isStatic() != sortedImports.get(i + 1).isStatic() ||
-            sortedImports.get(i).getName().toString().startsWith(JAVA) != sortedImports.get(i + 1).getName().toString().startsWith(JAVA) ||
-            sortedImports.get(i).getName().toString().charAt(0) != sortedImports.get(i + 1).getName().toString().charAt(0)) {
-          ASTNode placeholder = rewriter.createStringPlaceholder("", ASTNode.IMPORT_DECLARATION);
-          newList.add((ImportDeclaration) placeholder);
-        }
-      }
-    }
-
-    // Write in the (now sorted) imports with blank line separators
-    for (int i = 0; i < newList.size(); i++) {
-      importListRewrite.insertAt(newList.get(i), i, null);
     }
   }
 

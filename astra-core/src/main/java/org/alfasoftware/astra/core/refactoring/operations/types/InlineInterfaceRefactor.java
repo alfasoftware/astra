@@ -117,7 +117,9 @@ public class InlineInterfaceRefactor implements ASTOperation {
           if (interfaceParamType != null && type.toString().equals(interfaceParamType.toString())) {
             type = parameterType;
           }
-          superTypeParamTypes.add(type.toString());
+          if (type != null) {
+            superTypeParamTypes.add(type.toString());            
+          }
         }
       }
       @SuppressWarnings("rawtypes")
