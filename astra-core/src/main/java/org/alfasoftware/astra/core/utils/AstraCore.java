@@ -90,10 +90,14 @@ public class AstraCore {
         .collect(Collectors.toList());
     log.info(filteredJavaFiles.size() + " files remain after prefiltering");
 
+    final Set<? extends ASTOperation> operations = useCase.getOperations();
+    final String[] sources = useCase.getSources();
+    final String[] classPath = useCase.getClassPath();
+
     for (Path f : filteredJavaFiles) {
       // TODO AstUtils.getClassFilesForSource(f.toString()); - attempt to get only relevant classpaths for a given source file?
       // TODO Naively we can multi-thread here (i.e. per file) but simple testing indicated that this slowed us down.
-      applyOperationsAndSave(new File(f.toString()), useCase.getOperations(), useCase.getSources(), useCase.getClassPath());
+      applyOperationsAndSave(new File(f.toString()), operations, sources, classPath);
       long newPercentage = currentFileIndex.incrementAndGet() * 100 / filteredJavaFiles.size();
       if (newPercentage != currentPercentage.get()) {
         currentPercentage.set(newPercentage);

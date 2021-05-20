@@ -86,10 +86,15 @@ public class TestConstructorToBuilderRefactor extends AbstractRefactorTest {
   public void testConstructorToInnerClassBuilderMatcher() throws IOException {
     assertRefactor(
         ConstructorToBuilderInnerClassBuilderExample.class,
-        Collections.singleton(
+        new HashSet<>(
+            Arrays.asList(
+            new JavaPatternASTOperation(
+                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcher1.class.getName().replaceAll("\\.", "/") + ".java")
+            ),
             new JavaPatternASTOperation(
                 new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcher2.class.getName().replaceAll("\\.", "/") + ".java")
             )
+          )
         )
     );
   }
