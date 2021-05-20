@@ -55,7 +55,10 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
     assertRefactor(InvocationChangeOutsideClassQualifiedExample.class,
         new HashSet<>(
             Arrays.asList(
-              new JavaPatternASTOperation(new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodinvocation/InvocationChangeOutsideClassQualifiedExampleMatcher.java"))
+              new JavaPatternASTOperation(
+                  new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodinvocation/InvocationChangeOutsideClassQualifiedExampleMatcher.java"),
+                  new String[]{TEST_SOURCE}
+              )
             )
         )
     );

@@ -1,7 +1,5 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
-import org.apache.felix.resolver.util.ArrayMap;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTMatcher;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -118,8 +116,12 @@ class JavaPatternASTMatcher {
         return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
       } else if (patternParameter.isPresent()) {
         return false;
+      } else if (simpleNameFromPatternMatcher.getParent() instanceof SingleVariableDeclaration
+      || simpleNameFromPatternMatcher.getLocationInParent().getId().equals("expression")) {
+        // don't care about it if it's the name of a variable only, rather than a
+        return true;
       } else {
-        return true; // the names given to variables in the pattern don't matter.
+        return super.match(simpleNameFromPatternMatcher, matchCandidate); // the names given to variables in the pattern don't matter.
       }
     }
 
@@ -181,7 +183,7 @@ class JavaPatternASTMatcher {
             safeSubtreeListMatch(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())) {
           return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern,  (ASTNode) matchCandidate);
         }
-        return true;
+        return true; // this is probably not quite right. should still check the type of the matchcandidate
       } else {
         if (!(matchCandidate instanceof MethodInvocation)) {
           return false;
@@ -192,13 +194,17 @@ class JavaPatternASTMatcher {
           return false;
         }
 
-        if(!argumentMatch(methodInvocationFromJavaPattern.arguments(), o.arguments())){
+        if(!(
+            safeSubtreeMatch(methodInvocationFromJavaPattern.getExpression(), o.getExpression())
+                && safeSubtreeMatch(methodInvocationFromJavaPattern.getName(), o.getName()))){
           return false;
         }
 
-        return (
-            safeSubtreeMatch(methodInvocationFromJavaPattern.getExpression(), o.getExpression())
-                && safeSubtreeMatch(methodInvocationFromJavaPattern.getName(), o.getName()));
+        if(!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())){
+          return false;
+        }
+
+        return true;
       }
     }
 
@@ -280,7 +286,7 @@ class JavaPatternASTMatcher {
         return false;
       }
 
-      if(!argumentMatch(node.arguments(), o.arguments())){
+      if(!matchAndCaptureArgumentList(node.arguments(), o.arguments())){
         return false;
       };
 
@@ -291,27 +297,55 @@ class JavaPatternASTMatcher {
               o.getAnonymousClassDeclaration());
     }
 
-    boolean argumentMatch(List argumentsFromPattern, List candidateArguments){
+    boolean matchAndCaptureArgumentList(List argumentsFromPattern, List candidateArguments){
+      int size1 = argumentsFromPattern.size();
+      int size2 = candidateArguments.size();
+
+      if (size1 != size2
+          && !lastPatternArgumentIsVarargs(argumentsFromPattern)) {
+        return false;
+      }
       for (Iterator it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
         ASTNode n1 = (ASTNode) it1.next();
-        ASTNode n2 = (ASTNode) it2.next();
+
         if(n1 instanceof SimpleName) {
           final Optional<SingleVariableDeclaration> patternParameterFromSimpleName = findPatternParameterFromSimpleName((SimpleName) n1);
           if(patternParameterFromSimpleName.isPresent() && patternParameterFromSimpleName.get().resolveBinding().getType().isArray()){
-            List<ASTNode> capturedArguments = new ArrayList<>();
-            capturedArguments.add(n2);
-            while(it2.hasNext()) {
-              capturedArguments.add((ASTNode) it2.next());
-            }
-            varArgsToCapturedNodes.put(n1.toString(), capturedArguments);
+            captureVarargs(it2, n1);
             return true;
+          } else {
+            ASTNode n2 = (ASTNode) it2.next();
+            if (!n1.subtreeMatch(this, n2)) {
+              return false;
+            }
           }
-        }
-        if (!n1.subtreeMatch(this, n2)) {
-          return false;
+        } else {
+          // default behaviour
+          ASTNode n2 = (ASTNode) it2.next();
+          if (!n1.subtreeMatch(this, n2)) {
+            return false;
+          }
         }
       }
       return true;
+    }
+
+    private void captureVarargs(Iterator it2, ASTNode n1) {
+      List<ASTNode> capturedArguments = new ArrayList<>();
+      while(it2.hasNext()) {
+        capturedArguments.add((ASTNode) it2.next());
+      }
+      varArgsToCapturedNodes.put(n1.toString(), capturedArguments);
+    }
+
+    private boolean lastPatternArgumentIsVarargs(List argumentsFromPattern) {
+      if (argumentsFromPattern.size() ==0) {
+        return false;
+      }
+      Object lastPatternArgument = argumentsFromPattern.get(argumentsFromPattern.size()-1);
+      return lastPatternArgument instanceof SimpleName &&
+          findPatternParameterFromSimpleName((SimpleName) lastPatternArgument).isPresent()
+          && findPatternParameterFromSimpleName((SimpleName) lastPatternArgument).get().resolveBinding().getType().isArray();
     }
 
     /**
