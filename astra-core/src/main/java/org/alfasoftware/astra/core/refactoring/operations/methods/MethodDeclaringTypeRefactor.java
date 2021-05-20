@@ -86,28 +86,27 @@ public class MethodDeclaringTypeRefactor implements ASTOperation {
     
     visitor.getMethodInvocations().stream()
       .filter(m -> methodMatcher.matches(m, compilationUnit))
-      .forEach(method -> {
+      .forEach(method -> 
 
         // Then we have a match
         // This is a pretty blunt tool. It's saying "look for all the times we used the old type name, and change them to the new"
         visitor.getSimpleTypes().stream()
-            .filter(st -> 
-              Optional.ofNullable(st)
-              .map(SimpleType::resolveBinding)
-              .map(ITypeBinding::getBinaryName)
-              .filter(n -> ! methodMatcher.getFullyQualifiedDeclaringType().isPresent() || methodMatcher.getFullyQualifiedDeclaringType().get().test(n))
-              .isPresent()
-            )
-            .forEach(simpleType -> {
-              log.info("Refactoring method declaration type of "
-                  + "method [" + method.getName().toString() + "] "
-                  + "from [" + getSimpleName(getFullyQualifiedName(method, compilationUnit)) + "] "
-                  + "to [" + getSimpleName(toType) + "] "
-                  + "in [" + getNameForCompilationUnit(compilationUnit) + "]");
-              
-              rewriter.set(simpleType, SimpleType.NAME_PROPERTY, node.getAST().newSimpleName(getSimpleName(toType)), null);
-              AstraUtils.addImport(compilationUnit, toType, rewriter);
-            });
-      });
+          .filter(st -> 
+            Optional.ofNullable(st)
+            .map(SimpleType::resolveBinding)
+            .map(ITypeBinding::getBinaryName)
+            .filter(n -> ! methodMatcher.getFullyQualifiedDeclaringType().isPresent() || methodMatcher.getFullyQualifiedDeclaringType().get().test(n))
+            .isPresent())
+          .forEach(simpleType -> {
+            log.info("Refactoring method declaration type of "
+                + "method [" + method.getName().toString() + "] "
+                + "from [" + getSimpleName(getFullyQualifiedName(method, compilationUnit)) + "] "
+                + "to [" + getSimpleName(toType) + "] "
+                + "in [" + getNameForCompilationUnit(compilationUnit) + "]");
+            
+            rewriter.set(simpleType, SimpleType.NAME_PROPERTY, node.getAST().newSimpleName(getSimpleName(toType)), null);
+            AstraUtils.addImport(compilationUnit, toType, rewriter);
+          })
+      );
   }
 }

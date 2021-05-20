@@ -282,9 +282,17 @@ public class TypeMatcher implements Matcher {
     if (! checkIsAbstract(typeDeclaration)) {
       return false;
     }
-    if (typeBuilder.isFinal != null && ! checkIsFinal(typeDeclaration)) {
+    if (! checkIsFinal(typeDeclaration)) {
       return false;
     }
+    if (! checkSuperclass(typeDeclaration)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean checkSuperclass(TypeDeclaration typeDeclaration) {
     if (typeBuilder.superClass != null) {
       Type superclassType = typeDeclaration.getSuperclassType();
       if (superclassType == null || superclassType.resolveBinding() == null) {
@@ -300,7 +308,6 @@ public class TypeMatcher implements Matcher {
         return false;
       }
     }
-
     return true;
   }
 

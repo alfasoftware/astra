@@ -195,12 +195,12 @@ public class MethodMatcher {
     return false;
   }
   
-  private boolean methodInvocationMatchesInterface(ITypeBinding resolveTypeBinding) {
-    if (fullyQualifiedDeclaringTypePredicate.get().test(resolveTypeBinding.getBinaryName())) {
+  private boolean methodInvocationMatchesInterface(ITypeBinding typeBinding) {
+    if (fullyQualifiedDeclaringTypePredicate.get().test(typeBinding.getBinaryName())) {
       return true;
     }
     
-    return Arrays.stream(resolveTypeBinding.getInterfaces()).anyMatch(i -> methodInvocationMatchesInterface(i));
+    return Arrays.stream(typeBinding.getInterfaces()).anyMatch(this::methodInvocationMatchesInterface);
   }
 
 
@@ -332,11 +332,7 @@ public class MethodMatcher {
       }
     }
 
-    if (customPredicate.isPresent() && ! customPredicate.get().test(methodInvocation)) {
-      return false;
-    }
-
-    return true;
+    return ! customPredicate.isPresent() || customPredicate.get().test(methodInvocation);
   }
 
 
@@ -482,9 +478,6 @@ public class MethodMatcher {
     if (!methodNamePredicate.equals(other.methodNamePredicate)) {
       return false;
     }
-    if (!parentContextMatcher.equals(other.parentContextMatcher)) {
-      return false;
-    }
-    return true;
+    return parentContextMatcher.equals(other.parentContextMatcher);
   }
 }

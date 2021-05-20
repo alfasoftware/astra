@@ -205,7 +205,7 @@ public class TypeReferenceRefactor implements ASTOperation {
             Optional.of(f)
               .map(MethodRef.class::cast)
               .map(MethodRef::getQualifier)
-              .ifPresent(qualifier -> types.add(qualifier));
+              .ifPresent(types::add);
           }
         }
       }
@@ -217,7 +217,7 @@ public class TypeReferenceRefactor implements ASTOperation {
       Set<TagElement> allTags = new HashSet<>();
       List<TagElement> tags = node.tags();
       for (TagElement tag : tags) {
-        allTags = getAllTagElementsFromTagElement(allTags, tag);
+        getAllTagElementsFromTagElement(allTags, tag);
       }
       return allTags;
     }
