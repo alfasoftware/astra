@@ -349,7 +349,7 @@ public class AstraUtils {
 
     // If the type to import is a parameterized type, only import the base type
     if (importPath.contains("<")) {
-      importPath = importPath.substring(0, importPath.indexOf("<"));
+      importPath = importPath.substring(0, importPath.indexOf('<'));
     }
 
     addImport(compilationUnit, importPath, rewriter, false);

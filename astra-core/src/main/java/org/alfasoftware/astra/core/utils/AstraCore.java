@@ -198,7 +198,7 @@ public class AstraCore {
    * @param fileContentBefore Source file content before any operations are applied
    * @param operations Operations to apply
    */
-  public String applyOperationsToFile(String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws IOException, BadLocationException {
+  public String applyOperationsToFile(String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws BadLocationException {
 
     String fileContentAfter = applyOperationsToSource(operations, sources, classpath, fileContentBefore);
 
