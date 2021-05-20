@@ -191,39 +191,47 @@ public class TypeReferenceRefactor implements ASTOperation {
   private class JavadocVisitor extends ASTVisitor {
     private final Set<Name> types = new HashSet<>();
     @Override
-    @SuppressWarnings("unchecked")
     public boolean visit(Javadoc node) {
-      Set<TagElement> tagElements = new HashSet<>();
-      List<TagElement> tags = node.tags();
-      for (TagElement tag : tags) {
-        tagElements.add(tag);
-
-        List<IDocElement> fragments = tag.fragments();
-        for (IDocElement fragment : fragments) {
-          if (fragment instanceof TagElement) {
-            tagElements.add((TagElement) fragment);
-          }
-        }
-      }
-
-      for (TagElement te : tagElements) {
+      for (TagElement te : getAllTagElementsFromJavadoc(node)) {
         for (Object f : te.fragments()) {
           if (f instanceof SimpleName) {
             Optional.of(f)
-            .map(SimpleName.class::cast)
-            .map(SimpleName::resolveTypeBinding)
-            .map(ITypeBinding::getQualifiedName)
-            .filter(n -> n.equals(getFromType()))
-            .ifPresent(t -> types.add((SimpleName) f));
+              .map(SimpleName.class::cast)
+              .map(SimpleName::resolveTypeBinding)
+              .map(ITypeBinding::getQualifiedName)
+              .filter(n -> n.equals(getFromType()))
+              .ifPresent(t -> types.add((SimpleName) f));
           } else if (f instanceof MethodRef) {
-            Name qualifier = ((MethodRef) f).getQualifier();
-            if (qualifier != null) {
-              types.add(qualifier);
-            }
+            Optional.of(f)
+              .map(MethodRef.class::cast)
+              .map(MethodRef::getQualifier)
+              .ifPresent(qualifier -> types.add(qualifier));
           }
         }
       }
       return super.visit(node);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private Set<TagElement> getAllTagElementsFromJavadoc(Javadoc node) {
+      Set<TagElement> allTags = new HashSet<>();
+      List<TagElement> tags = node.tags();
+      for (TagElement tag : tags) {
+        allTags = getAllTagElementsFromTagElement(allTags, tag);
+      }
+      return allTags;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private Set<TagElement> getAllTagElementsFromTagElement(Set<TagElement> tagElements, TagElement tagElement) {
+      tagElements.add(tagElement);
+      List<IDocElement> fragments = tagElement.fragments();
+      for (IDocElement fragment : fragments) {
+        if (fragment instanceof TagElement) {
+          getAllTagElementsFromTagElement(tagElements, (TagElement) fragment);
+        }
+      }
+      return tagElements;
     }
   }
 }

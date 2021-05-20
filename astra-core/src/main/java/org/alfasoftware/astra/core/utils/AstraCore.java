@@ -216,7 +216,7 @@ public class AstraCore {
    * Runs operations over the source file, and returns the result of running those operations
    */
   protected String applyOperationsToSource(Set<? extends ASTOperation> operations, String[] sources, String[] classpath, String source)
-      throws IOException, BadLocationException {
+      throws BadLocationException {
     CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, sources, classpath);
     ASTRewrite rewriter = runOperations(operations, compilationUnit);
     return makeChangesFromAST(source, rewriter);

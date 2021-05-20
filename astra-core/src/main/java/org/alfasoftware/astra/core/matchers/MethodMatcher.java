@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.matchers;
 
 import static org.alfasoftware.astra.core.matchers.DescribedPredicate.describedPredicate;
+import static org.alfasoftware.astra.core.utils.AstraUtils.CLASSPATHS_MISSING_WARNING;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -199,10 +200,7 @@ public class MethodMatcher {
       return true;
     }
     
-    if (Arrays.stream(resolveTypeBinding.getInterfaces()).anyMatch(i -> methodInvocationMatchesInterface(i))) {
-      return true;
-    }
-    return false;
+    return Arrays.stream(resolveTypeBinding.getInterfaces()).anyMatch(i -> methodInvocationMatchesInterface(i));
   }
 
 
@@ -230,23 +228,16 @@ public class MethodMatcher {
     // Check the parameters are as expected, and in the correct order
     for (int i = 0; i < mb.getParameterTypes().length; i++) {
       
-      /// If we have specified a parameterized type, match on the qualified name
-      if (fullyQualifiedParameterNames.get().get(i).contains("<")) {
+      /// If we have specified a parameterized type, or the type is a primitive or array, match on the qualified name
+      if (fullyQualifiedParameterNames.get().get(i).contains("<") || 
+          mb.getParameterTypes()[i].isPrimitive() || 
+          mb.getParameterTypes()[i].isArray()) {
         if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
           return false;
         }
-        
-      // If we have not specified a paramaterized supertype, then only match on binary type name
-      } else {
-        if (mb.getParameterTypes()[i].isPrimitive() || mb.getParameterTypes()[i].isArray()) {
-          if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
-            return false;
-          }
-        } else {
-          if (! mb.getParameterTypes()[i].getBinaryName().equals(fullyQualifiedParameterNames.get().get(i))) {
-            return false;
-          }
-        }
+      // Otherwise match on binary type name
+      } else if (! mb.getParameterTypes()[i].getBinaryName().equals(fullyQualifiedParameterNames.get().get(i))) {
+        return false;
       }
     }
     // if we get here, all parameter types must match our expectations
@@ -283,7 +274,7 @@ public class MethodMatcher {
 
     if (! binding.isPresent()) {
       log.debug("Binding not found for constructor of class instance creation. "
-          + "This may be a sign that classpaths for the operation need to be supplied. "
+          + CLASSPATHS_MISSING_WARNING
           + "Class instance creation: [" + cic + "]");
     }
 
@@ -330,7 +321,7 @@ public class MethodMatcher {
 
       if (! binding.isPresent()) {
         log.debug("Binding not found for method invocation. "
-            + "This may be a sign that classpaths for the operation need to be supplied. "
+            + CLASSPATHS_MISSING_WARNING
             + "Method invocation: [" + methodInvocation + "]");
       }
       if(! binding
@@ -398,7 +389,7 @@ public class MethodMatcher {
 
     if (method.isPresent() && ! binding.isPresent()) {
       log.debug("Binding not found for method declaration. "
-          + "This may be a sign that classpaths for the operation need to be supplied. "
+          + CLASSPATHS_MISSING_WARNING
           + "Method declaration: [" + methodDeclaration + "]");
     }
     

@@ -199,7 +199,6 @@ public class TestMethodMatcher {
 
     checkMethodMatchFoundInClass(correctCurrencyGetInstanceMethodMatcher, ExampleClassUsingMethodsWithStaticImport.class);
     checkNoMethodMatchFoundInClass(correctCurrencyGetInstanceMethodMatcher, ExampleClassUsingOneArgMethod.class);
-
     checkNoMethodMatchFoundInClass(incorrectLocaleGetInstanceMethodMatcher, ExampleClassUsingMethodsWithStaticImport.class);
   }
 

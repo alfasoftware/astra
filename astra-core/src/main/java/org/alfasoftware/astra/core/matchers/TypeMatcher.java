@@ -253,57 +253,56 @@ public class TypeMatcher implements Matcher {
       return false;
     }
     
-    boolean matches = true;
-    
-    if (matches && typeBuilder.isInterface != null) {
-      matches = typeBuilder.isInterface == typeDeclaration.isInterface();
+    if (typeBuilder.isInterface != null && typeBuilder.isInterface != typeDeclaration.isInterface()) {
+      return false;
     }
-    if (matches && typeBuilder.isClass != null) {
-      matches = typeBuilder.isClass == ! typeDeclaration.isInterface();
+    if (typeBuilder.isClass != null && typeBuilder.isClass == typeDeclaration.isInterface()) {
+      return false;
     }
-    if (matches && typeBuilder.typeName != null) {
-      matches = checkTypeName(typeDeclaration);
+    if (typeBuilder.typeName != null && ! checkTypeName(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.typeNameRegex != null) {
-      matches = checkClassNameRegex(typeDeclaration);
+    if (typeBuilder.typeNameRegex != null && ! checkClassNameRegex(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.typeNamePredicate != null) {
-      matches = checkTypeNamePredicate(typeDeclaration);
+    if (typeBuilder.typeNamePredicate != null && !checkTypeNamePredicate(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.interfaces != null) {
-      matches = checkInterfaces(typeDeclaration);
+    if (typeBuilder.interfaces != null && ! checkInterfaces(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.annotationBuilders != null) {
-      matches = checkAnnotations(typeDeclaration);
+    if (typeBuilder.annotationBuilders != null && ! checkAnnotations(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.visibility != null) {
-      matches = checkVisibility(typeDeclaration);
+    if (typeBuilder.visibility != null && ! checkVisibility(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isStatic != null) {
-      matches = checkIsStatic(typeDeclaration);
+    if (typeBuilder.isStatic != null && ! checkIsStatic(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isAbstract != null) {
-      matches = checkIsAbstract(typeDeclaration);
+    if (typeBuilder.isAbstract != null && ! checkIsAbstract(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isFinal != null) {
-      matches = checkIsFinal(typeDeclaration);
+    if (typeBuilder.isFinal != null && ! checkIsFinal(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.superClass != null) {
+    if (typeBuilder.superClass != null) {
       Type superclassType = typeDeclaration.getSuperclassType();
       if (superclassType == null || superclassType.resolveBinding() == null) {
-        matches = false;
+        return false;
+      }
       // If we have specified a parameterized supertype, match on the qualified name
-      } else if (typeBuilder.superClass.contains("<")) {
+      if (typeBuilder.superClass.contains("<")) {
         if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getQualifiedName())) {
-          matches = false;
+          return false;
         }
-      // If we have not specified a paramaterized supertype, then only match on binary type name
+      // If we have not specified a parameterized supertype, then only match on binary type name
       } else if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getBinaryName())) {
-        matches = false;
+        return false;
       }
     }
 
-    return matches;
+    return true;
   }
 
   /**
