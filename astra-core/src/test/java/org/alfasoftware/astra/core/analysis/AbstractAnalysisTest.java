@@ -37,7 +37,7 @@ public abstract class AbstractAnalysisTest {
    */
   protected <T extends AnalysisResult> void assertAnalysis(Class<?> fileToAnalyse, AnalysisOperation<T> analysisOperation, Collection<T> expectedResults) {
     // This just gets the java path.
-    assertAnalysisWithClassPath(fileToAnalyse, analysisOperation, expectedResults, UseCase.defaultClasspathEntries.toArray(new String[0]));
+    assertAnalysisWithClassPath(fileToAnalyse, analysisOperation, expectedResults, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
   }
 
   protected <T extends AnalysisResult> void assertAnalysisWithClassPath(Class<?> fileToAnalyse, AnalysisOperation<T> analysisOperation, Collection<T> expectedResults, String[] classPath) {

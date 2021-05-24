@@ -123,49 +123,58 @@ public class UnusedImportRefactor implements ASTOperation {
       if (! typeDeclaration.resolveBinding().isNested()) {
         ReferenceTrackingVisitor visitor = new ReferenceTrackingVisitor();
         compilationUnit.accept(visitor);
-        Set<String> existingImports = new HashSet<>();
+        @SuppressWarnings("unchecked")
+        List<ImportDeclaration> imports = compilationUnit.imports();
+        
+        Set<String> remainingImports = new HashSet<>();
 
-        for (Object obj : compilationUnit.imports()) {
-          ImportDeclaration importDeclaration = (ImportDeclaration) obj;
-
-          // remove duplicates
-          if (existingImports.contains(importDeclaration.getName().toString())) {
-            AstraUtils.removeImport(importDeclaration, rewriter);
-            continue;
-          } else {
-            existingImports.add(importDeclaration.getName().toString());
-          }
-
+        for (ImportDeclaration importDeclaration : imports) {
+          
+          // Remove unnecessary imports
           // Can't easily tell if on-demand imports are actually needed so best to leave them in place.
-          if (importDeclaration.isOnDemand()) {
-            continue;
-          }
-
-          // remove unused imports
-          // TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
-          // (can be multiple methods with same name)
-          if (! visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString()))) {
+          if (! isImportOnDemand(importDeclaration) && 
+              (isImportDuplicate(remainingImports, importDeclaration) ||
+               isImportUnused(visitor, importDeclaration) ||
+               isImportFromSamePackage(compilationUnit, importDeclaration) ||
+               isImportJavaLangAndNotStatic(importDeclaration))) {
             AstraUtils.removeImport(importDeclaration, rewriter);
-            continue;
           }
-
-          // remove imports for types in the same package
-          if (compilationUnit.getPackage().getName().toString().equals(
-            AstraUtils.getPackageName(importDeclaration.getName().toString()))
-            && !AstraUtils.isImportOfInnerType(importDeclaration)) {
-            AstraUtils.removeImport(importDeclaration, rewriter);
-            continue;
-          }
-
-          // remove non-static imports from java.lang - they don't need to be imported
-          if (! importDeclaration.isStatic() && importDeclaration.getName().toString().split("java\\.lang\\.[A-Z]").length > 1
-              && !AstraUtils.isImportOfInnerType(importDeclaration)) {
-            AstraUtils.removeImport(importDeclaration, rewriter);
-            continue;
-          }
+          
+          remainingImports.add(importDeclaration.getName().toString());
         }
       }
     }
+  }
+
+
+  private boolean isImportJavaLangAndNotStatic(ImportDeclaration importDeclaration) {
+    return ! importDeclaration.isStatic() && importDeclaration.getName().toString().split("java\\.lang\\.[A-Z]").length > 1
+        && !AstraUtils.isImportOfInnerType(importDeclaration);
+  }
+
+
+  private boolean isImportFromSamePackage(CompilationUnit compilationUnit, ImportDeclaration importDeclaration) {
+    return compilationUnit.getPackage().getName().toString().equals(
+      AstraUtils.getPackageName(importDeclaration.getName().toString()))
+      && !AstraUtils.isImportOfInnerType(importDeclaration);
+  }
+
+  /* 
+   * TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
+   * (can be multiple methods with same name)
+   */ 
+  private boolean isImportUnused(ReferenceTrackingVisitor visitor, ImportDeclaration importDeclaration) {
+    return ! visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString()));
+  }
+
+
+  private boolean isImportDuplicate(Set<String> existingImports, ImportDeclaration importDeclaration) {
+    return existingImports.contains(importDeclaration.getName().toString());
+  }
+
+
+  private boolean isImportOnDemand(ImportDeclaration importDeclaration) {
+    return importDeclaration.isOnDemand();
   }
 
 
