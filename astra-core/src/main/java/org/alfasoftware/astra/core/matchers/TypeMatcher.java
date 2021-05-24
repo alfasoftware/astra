@@ -285,11 +285,7 @@ public class TypeMatcher implements Matcher {
     if (! checkIsFinal(typeDeclaration)) {
       return false;
     }
-    if (! checkSuperclass(typeDeclaration)) {
-      return false;
-    }
-
-    return true;
+    return checkSuperclass(typeDeclaration);
   }
 
   private boolean checkSuperclass(TypeDeclaration typeDeclaration) {

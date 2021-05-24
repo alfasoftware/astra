@@ -32,7 +32,7 @@ public abstract class AbstractRefactorTest {
    */
   protected void assertRefactor(Class<?> beforeClass, Set<? extends ASTOperation> refactors) {
     // This just gets the java path.
-    assertRefactorWithClassPath(beforeClass, refactors, UseCase.defaultClasspathEntries.toArray(new String[0]));
+    assertRefactorWithClassPath(beforeClass, refactors, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
   }
 
   protected void assertRefactorWithClassPath(Class<?> beforeClass, Set<? extends ASTOperation> refactors, String[] classPath) {

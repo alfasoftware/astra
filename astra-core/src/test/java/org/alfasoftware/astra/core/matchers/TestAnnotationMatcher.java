@@ -221,7 +221,7 @@ public class TestAnnotationMatcher {
   }
 
   private ClassVisitor parse(String source) {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, new String[] {TEST_SOURCE}, UseCase.defaultClasspathEntries.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, new String[] {TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
     ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
     return visitor;

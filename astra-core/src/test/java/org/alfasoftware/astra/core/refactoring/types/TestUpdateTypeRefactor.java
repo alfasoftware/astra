@@ -57,7 +57,7 @@ public class TestUpdateTypeRefactor extends AbstractRefactorTest {
         fileContentBefore, 
         operations, 
         new HashSet<>(Arrays.asList(TEST_SOURCE)).toArray(new String[0]),
-        UseCase.defaultClasspathEntries.toArray(new String[0]));
+        UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
 
       expectedBefore = changesToApplyToBefore.apply(expectedBefore);
 
