@@ -93,6 +93,9 @@ public class TestConstructorToBuilderRefactor extends AbstractRefactorTest {
             ),
             new JavaPatternASTOperation(
                 new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcher2.class.getName().replaceAll("\\.", "/") + ".java")
+            ),
+            new JavaPatternASTOperation(
+                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcher3.class.getName().replaceAll("\\.", "/") + ".java")
             )
           )
         )

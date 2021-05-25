@@ -83,9 +83,23 @@ public class JavaPatternASTOperation implements ASTOperation {
 
           astNode = wrapASTNodeInStatementIfRequired(rewriter, astNodeMatchInformation, astNode);
 
+          CompilationUnit compilationUnit = getCompilationUnit(patternToRefactorTo);
+          final ListRewrite listRewrite = rewriter.getListRewrite(targetCompilationUnit, CompilationUnit.IMPORTS_PROPERTY);
+          compilationUnit.imports().stream().forEach(
+              importFromPattern -> listRewrite.insertLast((ASTNode) importFromPattern, null)
+          );
+
           rewriter.replace(astNodeMatchInformation.getNodeThatWasMatched(), astNode, null);
+
         }
     );
+  }
+
+  private static CompilationUnit getCompilationUnit(ASTNode patternToRefactorTo) {
+    if(patternToRefactorTo instanceof CompilationUnit){
+      return (CompilationUnit) patternToRefactorTo;
+    }
+    return getCompilationUnit(patternToRefactorTo.getParent());
   }
 
   /**

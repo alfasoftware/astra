@@ -200,6 +200,12 @@ class JavaPatternASTMatcher {
           return false;
         }
 
+        // check whether the number of parameters for the method matches the number of parameters in the method declaration
+        // for the method we are comparing to, to be able to compare varargs parameters.
+        if(methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
+            != o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
+          return false;
+        }
         if(!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())){
           return false;
         }
@@ -283,6 +289,11 @@ class JavaPatternASTMatcher {
         return false;
       }
       if (!safeSubtreeMatch(node.getType(), o.getType())) {
+        return false;
+      }
+
+      if(node.arguments().size()
+          != o.resolveConstructorBinding().getParameterTypes().length) {
         return false;
       }
 
