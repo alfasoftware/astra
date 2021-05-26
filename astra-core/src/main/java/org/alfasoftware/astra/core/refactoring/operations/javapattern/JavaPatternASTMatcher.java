@@ -65,7 +65,7 @@ class JavaPatternASTMatcher {
     private final Map<String, ASTNode> substituteMethodToCapturedNode = new HashMap<>();
     private final Map<String, ASTNode> simpleNameToCapturedNode = new HashMap<>();
     private final JavaPatternFileParser.SingleASTNodePatternMatcher patternToMatch;
-    private final Map<String, String> simpleTypeToCapturedType = new HashMap<>();
+    private final Map<String, ITypeBinding> simpleTypeToCapturedType = new HashMap<>();
     private final Map<String,List<ASTNode>> varArgsToCapturedNodes = new HashMap<>();
     private ASTNode astNodeToMatchAgainst;
 
@@ -113,7 +113,7 @@ class JavaPatternASTMatcher {
             if(weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])){
               return false;
             }
-            simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i].getName());
+            simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i]);
           }
         }
         return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
@@ -147,7 +147,7 @@ class JavaPatternASTMatcher {
 
     private boolean weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(ITypeBinding matchCandidateTypeParameter, ITypeBinding simpleTypesToMatch) {
       return simpleTypeToCapturedType.get(simpleTypesToMatch.getName()) != null
-          && !simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).equals(matchCandidateTypeParameter.getName());
+          && !simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).isEqualTo(matchCandidateTypeParameter);
     }
 
     private boolean typeOfSimpleNameIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
@@ -192,11 +192,13 @@ class JavaPatternASTMatcher {
     public boolean match(MethodInvocation methodInvocationFromJavaPattern, Object matchCandidate) {
       if(methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) { // TODO investigate whether this handling of methods is adequate, and whether we need similar matches for other methodinvocationlikes, such as InfixExpression
         if (matchCandidate instanceof MethodInvocation &&
-            returnTypeMatches(methodInvocationFromJavaPattern, (MethodInvocation) matchCandidate) &&
+            returnTypeMatches(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding()) &&
+            //TODO instead of just expecting safe arguments, store the arguments as well.
             safeSubtreeListMatch(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())) {
+
           return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern,  (ASTNode) matchCandidate);
         }
-        return true; // this is probably not quite right. should still check the type of the matchcandidate
+        return false;
       } else {
         if (!(matchCandidate instanceof MethodInvocation)) {
           return false;
@@ -227,15 +229,15 @@ class JavaPatternASTMatcher {
       }
     }
 
-    private boolean returnTypeMatches(MethodInvocation methodInvocationFromJavaPattern, MethodInvocation matchCandidate) {
+    private boolean returnTypeMatches(MethodInvocation methodInvocationFromJavaPattern, ITypeBinding matchCandidate) {
       final ITypeBinding returnType = methodInvocationFromJavaPattern.resolveMethodBinding().getReturnType();
       if(returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) != null) {
-        return simpleTypeToCapturedType.get(returnType.getName()).equals(matchCandidate.resolveMethodBinding().getReturnType().getName());
+        return matchCandidate.isAssignmentCompatible(simpleTypeToCapturedType.get(returnType.getName()));
       } else if (returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) == null){
-        simpleTypeToCapturedType.put(returnType.getName(), matchCandidate.resolveMethodBinding().getReturnType().getName());
+        simpleTypeToCapturedType.put(returnType.getName(), matchCandidate);
         return true;
       } else {
-        return returnType.isEqualTo(matchCandidate.resolveMethodBinding().getReturnType());
+        return returnType.isEqualTo(matchCandidate);
       }
     }
 
@@ -279,7 +281,7 @@ class JavaPatternASTMatcher {
           weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(o.resolveBinding(), node.resolveBinding())) {
         return false;
       } else if (node.resolveBinding().isTypeVariable()) {
-        simpleTypeToCapturedType.put(node.resolveBinding().getName(), o.resolveBinding().getName());
+        simpleTypeToCapturedType.put(node.resolveBinding().getName(), o.resolveBinding());
         return true;
       } else {
         return super.match(node, other);

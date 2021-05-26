@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.List;
 import java.util.Map;
@@ -17,10 +18,10 @@ public class ASTNodeMatchInformation {
   private final ASTNode nodeThatWasMatched;
   private final Map<String, ASTNode> substituteMethodToCapturedNode;
   private final Map<String, ASTNode> simpleNameToCapturedNode;
-  private final Map<String, String> simpleTypeToCapturedType;
+  private final Map<String, ITypeBinding> simpleTypeToCapturedType;
   private final Map<String, List<ASTNode>> varArgsToCapturedNodes;
 
-  public ASTNodeMatchInformation(ASTNode nodeThatWasMatched, Map<String, ASTNode> substituteMethodToCapturedNode, Map<String, ASTNode> simpleNameToCapturedNode, Map<String, String> simpleTypeToCapturedType, Map<String, List<ASTNode>> varArgsToCapturedNodes) {
+  public ASTNodeMatchInformation(ASTNode nodeThatWasMatched, Map<String, ASTNode> substituteMethodToCapturedNode, Map<String, ASTNode> simpleNameToCapturedNode, Map<String, ITypeBinding> simpleTypeToCapturedType, Map<String, List<ASTNode>> varArgsToCapturedNodes) {
     this.nodeThatWasMatched = nodeThatWasMatched;
     this.substituteMethodToCapturedNode = substituteMethodToCapturedNode;
     this.simpleNameToCapturedNode = simpleNameToCapturedNode;
@@ -40,7 +41,7 @@ public class ASTNodeMatchInformation {
     return simpleNameToCapturedNode;
   }
 
-  public final Map<String, String> getSimpleTypeToCapturedType() {
+  public final Map<String, ITypeBinding> getSimpleTypeToCapturedType() {
     return simpleTypeToCapturedType;
   }
 

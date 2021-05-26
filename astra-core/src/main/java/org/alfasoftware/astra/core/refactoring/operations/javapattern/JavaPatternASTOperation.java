@@ -173,7 +173,8 @@ public class JavaPatternASTOperation implements ASTOperation {
               methodInvocation.accept(methodVisitor);
               replaceCapturedSimpleNames(rewriter, ASTNodeMatchInformation, methodVisitor);
               rewriter.set(methodInvocation, MethodInvocation.NAME_PROPERTY,
-                  ((MethodInvocation) ASTNodeMatchInformation.getSubstituteMethodToCapturedNode().get(methodInvocation.getName().toString())).getName(), null);
+                  ((MethodInvocation) ASTNodeMatchInformation.getSubstituteMethodToCapturedNode()
+                      .get(methodInvocation.getName().toString())).getName(), null);
             }
         );
   }
@@ -187,7 +188,7 @@ public class JavaPatternASTOperation implements ASTOperation {
         .stream().filter(simpleType -> ASTNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()) != null)
         .forEach(simpleType ->
             rewriter.replace(simpleType, rewriter.getAST().newSimpleType(
-                rewriter.getAST().newSimpleName(ASTNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()))
+                rewriter.getAST().newSimpleName(ASTNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()).getName())
             ), null)
         );
   }
