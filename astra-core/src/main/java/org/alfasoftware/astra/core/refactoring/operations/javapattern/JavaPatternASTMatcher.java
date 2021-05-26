@@ -106,6 +106,9 @@ class JavaPatternASTMatcher {
         if(simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
           final ITypeBinding[] matchCandidateTypeParameters = ((Expression) matchCandidate).resolveTypeBinding().getTypeArguments();
           final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
+          if(matchCandidateTypeParameters.length != simpleTypesToMatch.length){
+            return false;
+          }
           for (int i = 0; i < simpleTypesToMatch.length; i++) {
             if(weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])){
               return false;
@@ -118,7 +121,7 @@ class JavaPatternASTMatcher {
         return false;
       } else if (simpleNameFromPatternMatcher.getParent() instanceof SingleVariableDeclaration
       || simpleNameFromPatternMatcher.getLocationInParent().getId().equals("expression")) {
-        // don't care about it if it's the name of a variable only, rather than a
+        // don't care about it if it's the name of a variable only
         return true;
       } else {
         return super.match(simpleNameFromPatternMatcher, matchCandidate); // the names given to variables in the pattern don't matter.
@@ -148,11 +151,18 @@ class JavaPatternASTMatcher {
     }
 
     private boolean typeOfSimpleNameIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      if(matchCandidate.resolveTypeBinding() == null) {
+        return false;
+      }
       return simpleNameFromPatternMatcher.resolveTypeBinding().getTypeDeclaration()
           .isEqualTo(matchCandidate.resolveTypeBinding().getTypeDeclaration());
     }
 
     private boolean isAssignmentCompatible(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      if(matchCandidate.resolveTypeBinding() == null) {
+        // log warning that we were unable to resolve a type binding here.
+        return false;
+      }
       return matchCandidate.resolveTypeBinding().isAssignmentCompatible(simpleNameFromPatternMatcher.resolveTypeBinding());
     }
 
@@ -163,6 +173,9 @@ class JavaPatternASTMatcher {
      * a generic Map.
      */
     private boolean isSubTypeCompatible(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      if(matchCandidate.resolveTypeBinding() == null) {
+        return false;
+      }
       return matchCandidate.resolveTypeBinding().getTypeDeclaration().isSubTypeCompatible(simpleNameFromPatternMatcher.resolveTypeBinding().getTypeDeclaration());
     }
 

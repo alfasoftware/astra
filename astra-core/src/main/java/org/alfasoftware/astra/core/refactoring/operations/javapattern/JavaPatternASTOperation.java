@@ -44,7 +44,21 @@ public class JavaPatternASTOperation implements ASTOperation {
    */
   public JavaPatternASTOperation(File refactorFile, String[] sources) throws IOException {
     javaPatternFileParser = new JavaPatternFileParser();
-    javaPatternFileParser.buildMatchersWithClassPath(refactorFile, sources);
+    javaPatternFileParser.buildMatchersWithSources(refactorFile, sources);
+  }
+
+  /**
+   * Takes a File reference to a Matcher file and parses it,
+   * as well as an array of Sources and an array of classpaths to use for resolving bindings.
+   *
+   * @param refactorFile the reference to the Matcher file to use
+   * @param sources the sources to use to resolve bindings
+   * @param classpath the classpath to use to resolve bindings
+   * @throws IOException
+   */
+  public JavaPatternASTOperation(File refactorFile, String[] sources, String[] classpath) throws IOException {
+    javaPatternFileParser = new JavaPatternFileParser();
+    javaPatternFileParser.buildMatchersWithSourcesAndClassPath(refactorFile, sources, classpath);
   }
 
   @Override

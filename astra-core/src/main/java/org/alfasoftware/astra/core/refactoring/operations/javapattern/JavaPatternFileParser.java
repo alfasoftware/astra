@@ -35,12 +35,16 @@ public class JavaPatternFileParser {
   private ASTNode patternToRefactorTo;
 
   public void buildMatchers(File javaFile) throws IOException {
-    buildMatchersWithClassPath(javaFile, new String[]{});
+    buildMatchersWithSourcesAndClassPath(javaFile, new String[]{}, new String[]{});
   }
 
-  public void buildMatchersWithClassPath(File javaFile, String[] sources) throws IOException {
+  public void buildMatchersWithSources(File javaFile, String[] sources) throws IOException {
+    buildMatchersWithSourcesAndClassPath(javaFile, sources, new String[]{});
+  }
+
+  public void buildMatchersWithSourcesAndClassPath(File javaFile, String[] sources, String[] classpath) throws IOException {
     String matcherFile = new String(Files.readAllBytes(Paths.get(javaFile.getAbsolutePath())));
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(matcherFile, sources, new String[]{});
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(matcherFile, sources, classpath);
 
     MethodDeclarationVisitor visitor = new MethodDeclarationVisitor();
     compilationUnit.accept(visitor);
@@ -51,6 +55,7 @@ public class JavaPatternFileParser {
 
     patternToRefactorTo = parsePatternToRefactorTo(visitor);
   }
+
 
   private MethodDeclaration parseMethodAnnotatedWithJavaPatternReplacement(MethodDeclarationVisitor visitor) {
     final List<MethodDeclaration> methodsWithJavaPatternReplacementAnnotation = visitor.getMethodDeclarations().stream()
