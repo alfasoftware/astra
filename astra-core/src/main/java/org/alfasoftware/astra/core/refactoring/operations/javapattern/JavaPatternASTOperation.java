@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
 import org.alfasoftware.astra.core.utils.ASTOperation;
+import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -172,9 +173,14 @@ public class JavaPatternASTOperation implements ASTOperation {
               final ClassVisitor methodVisitor = new ClassVisitor();
               methodInvocation.accept(methodVisitor);
               replaceCapturedSimpleNames(rewriter, ASTNodeMatchInformation, methodVisitor);
-              rewriter.set(methodInvocation, MethodInvocation.NAME_PROPERTY,
-                  ((MethodInvocation) ASTNodeMatchInformation.getSubstituteMethodToCapturedNode()
-                      .get(methodInvocation.getName().toString())).getName(), null);
+                final MethodInvocation capturedMethodInvocation = (MethodInvocation) ASTNodeMatchInformation.getSubstituteMethodToCapturedNode()
+                    .get(methodInvocation.getName().toString());
+                if(AstraUtils.isMethodInvocationStatic(capturedMethodInvocation)) {
+                  rewriter.set(methodInvocation, MethodInvocation.EXPRESSION_PROPERTY, capturedMethodInvocation.getExpression(), null);
+                }
+                rewriter.set(methodInvocation, MethodInvocation.NAME_PROPERTY,
+                    capturedMethodInvocation.getName(), null);
+
             }
         );
   }

@@ -7,7 +7,7 @@ import org.alfasoftware.astra.core.refactoring.operations.javapattern.Substitute
 import java.util.Map;
 
 
-public abstract class SubstituteMethodPattern<K,V> {
+public abstract class SubstituteMethodPattern {
 
   @Substitute
   abstract boolean someMethod(String string, Integer integer, Object[] objects);
