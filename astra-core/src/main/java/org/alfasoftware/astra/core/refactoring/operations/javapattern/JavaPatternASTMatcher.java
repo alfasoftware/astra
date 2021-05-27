@@ -190,12 +190,18 @@ class JavaPatternASTMatcher {
      */
     @Override
     public boolean match(MethodInvocation methodInvocationFromJavaPattern, Object matchCandidate) {
-      if(methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) { // TODO investigate whether this handling of methods is adequate, and whether we need similar matches for other methodinvocationlikes, such as InfixExpression
+      // TODO investigate whether this handling of methods is adequate, and whether we need similar matches for other methodinvocationlikes, such as InfixExpression
+      if(methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) {
         if (matchCandidate instanceof MethodInvocation &&
-            returnTypeMatches(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding()) &&
-            //TODO instead of just expecting safe arguments, store the arguments as well.
-            safeSubtreeListMatch(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())) {
-
+            returnTypeMatches(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding())
+          ) {
+          if(methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
+              != ((MethodInvocation) matchCandidate).resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
+            return false;
+          }
+          if(!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())){
+            return false;
+          }
           return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern,  (ASTNode) matchCandidate);
         }
         return false;
@@ -324,34 +330,23 @@ class JavaPatternASTMatcher {
     }
 
     boolean matchAndCaptureArgumentList(List argumentsFromPattern, List candidateArguments){
-      int size1 = argumentsFromPattern.size();
-      int size2 = candidateArguments.size();
-
-      if (size1 != size2
-          && !lastPatternArgumentIsVarargs(argumentsFromPattern)) {
-        return false;
-      }
       for (Iterator it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
         ASTNode n1 = (ASTNode) it1.next();
 
         if(n1 instanceof SimpleName) {
           final Optional<SingleVariableDeclaration> patternParameterFromSimpleName = findPatternParameterFromSimpleName((SimpleName) n1);
-          if(patternParameterFromSimpleName.isPresent() && patternParameterFromSimpleName.get().resolveBinding().getType().isArray()){
+          if (patternParameterFromSimpleName.isPresent() && patternParameterFromSimpleName.get().resolveBinding().getType().isArray()) {
             captureVarargs(it2, n1);
             return true;
-          } else {
-            ASTNode n2 = (ASTNode) it2.next();
-            if (!n1.subtreeMatch(this, n2)) {
-              return false;
-            }
-          }
-        } else {
-          // default behaviour
-          ASTNode n2 = (ASTNode) it2.next();
-          if (!n1.subtreeMatch(this, n2)) {
-            return false;
           }
         }
+
+        // default behaviour
+        ASTNode n2 = (ASTNode) it2.next();
+        if (!n1.subtreeMatch(this, n2)) {
+          return false;
+        }
+
       }
       return true;
     }
