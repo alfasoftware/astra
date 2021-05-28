@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.matchers;
 
 import static org.alfasoftware.astra.core.matchers.DescribedPredicate.describedPredicate;
+import static org.alfasoftware.astra.core.utils.AstraUtils.CLASSPATHS_MISSING_WARNING;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.apache.log4j.Logger;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -27,15 +29,15 @@ public class MethodMatcher {
 
   private static final Logger log = Logger.getLogger(MethodMatcher.class);
 
-  private final Optional<DescribedPredicate<String>> fullyQualifiedDeclaringTypePredicate;
-  private final Optional<String> fullyQualifiedDeclaringTypeExactName;
-  private final Optional<DescribedPredicate<String>> methodNamePredicate;
-  private final Optional<String> methodNameExactName;
-  private final Optional<List<String>> fullyQualifiedParameterNames;
-  private final Optional<Boolean> isVarargs;
-  private final Optional<MethodMatcher> parentContextMatcher;
-  private final Optional<DescribedPredicate<String>> returnTypePredicate;
-  private final Optional<DescribedPredicate<MethodInvocation>> customInvocationPredicate;
+  private Optional<DescribedPredicate<String>> fullyQualifiedDeclaringTypePredicate = Optional.empty();
+  private Optional<String> fullyQualifiedDeclaringTypeExactName = Optional.empty();
+  private Optional<DescribedPredicate<String>> methodNamePredicate = Optional.empty();
+  private Optional<String> methodNameExactName = Optional.empty();
+  private Optional<List<String>> fullyQualifiedParameterNames = Optional.empty();
+  private Optional<Boolean> isVarargs = Optional.empty();
+  private Optional<MethodMatcher> parentContextMatcher = Optional.empty();
+  private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
+  private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
 
 
   private MethodMatcher(Builder builder) {
@@ -47,7 +49,7 @@ public class MethodMatcher {
     this.isVarargs = builder.isVarargs;
     this.parentContextMatcher = builder.parentContext;
     this.returnTypePredicate = builder.returnTypePredicate; // only implemented for MethodDeclarations so far
-    this.customInvocationPredicate = builder.customInvocationPredicate; // only implemented for MethodInvocations so far
+    this.customPredicate = builder.customPredicate;
   }
 
   /**
@@ -70,7 +72,7 @@ public class MethodMatcher {
     private Optional<Boolean> isVarargs = Optional.empty();
     private Optional<MethodMatcher> parentContext = Optional.empty();
     private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
-    private Optional<DescribedPredicate<MethodInvocation>> customInvocationPredicate = Optional.empty();
+    private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
 
 
     /**
@@ -102,7 +104,7 @@ public class MethodMatcher {
     }
     public Builder withFullyQualifiedParameters(List<String> fullyQualifiedParameterNames) {
       this.fullyQualifiedParameterNames = Optional.of(fullyQualifiedParameterNames)
-          // Removing $ from inner class names as this won't match with resolved type binding names
+       // Removing $ from inner class names as this won't match with resolved type binding names
           .map(names -> names.stream().map(name -> name.replaceAll("\\$", ".")).collect(Collectors.toList()));
       return this;
     }
@@ -122,8 +124,8 @@ public class MethodMatcher {
       this.returnTypePredicate = Optional.of(describedPredicate("method return type is [" + fullyQualifiedReturnType + "]", Predicate.isEqual(fullyQualifiedReturnType)));
       return this;
     }
-    public Builder withCustomInvocationPredicate(DescribedPredicate<MethodInvocation> customInvocationPredicate) {
-      this.customInvocationPredicate = Optional.of(customInvocationPredicate);
+    public Builder withCustomPredicate(DescribedPredicate<? super ASTNode> customInvocationPredicate) {
+      this.customPredicate = Optional.of(customInvocationPredicate);
       return this;
     }
 
@@ -131,8 +133,8 @@ public class MethodMatcher {
       return new MethodMatcher(this);
     }
   }
-
-
+  
+  
   /**
    * For a method signature, returns a method matcher.
    * Example valid inputs:
@@ -141,32 +143,32 @@ public class MethodMatcher {
    *  <li>com.Foo.doFoo()<li>
    *  <li>com.Foo.doFoo(int,com.Bar)<li>
    *  <li>com.Foo.doFoo(int, com.Bar)<li>
-   * </ul> 
+   * </ul>
    */
   public static MethodMatcher buildMethodMatcherForFQSignature(String fqSignature) {
     final String trimmed = fqSignature.trim();
     final String[] split = trimmed.split("\\(");
-
+    
     List<String> typeSplits = new ArrayList<>(Arrays.asList(split[0].split("\\.")));
     String methodName = typeSplits.get(typeSplits.size() - 1);
     typeSplits.remove(typeSplits.size() - 1);
     String declaringType = String.join(".", typeSplits);
-
+    
     List<String> fullyQualifiedParametersList = new ArrayList<>();
     // If this is just ")", then no parameters
     if (split[1].length() != 1) {
-      for (String parameterSplit : split[1].substring(0, split[1].indexOf(")")).split(",")) {
+      for (String parameterSplit : split[1].substring(0, split[1].indexOf(')')).split(",")) {
         fullyQualifiedParametersList.add(parameterSplit.trim());
       }
     }
-
+    
     return MethodMatcher.builder()
-        .withFullyQualifiedDeclaringType(declaringType)
-        .withMethodName(methodName)
-        .withFullyQualifiedParameters(fullyQualifiedParametersList)
-        .build();
+            .withFullyQualifiedDeclaringType(declaringType)
+            .withMethodName(methodName)
+            .withFullyQualifiedParameters(fullyQualifiedParametersList)
+            .build();
   }
-
+  
 
   private boolean isMethodNameMatch(MethodInvocation mi) {
     return ! methodNamePredicate.isPresent() || methodNamePredicate.get().test(mi.getName().toString());
@@ -175,44 +177,40 @@ public class MethodMatcher {
 
   private boolean isFQInvocationTypeNameMatch(MethodInvocation mi, CompilationUnit cu) {
     return ! fullyQualifiedDeclaringTypePredicate.isPresent() ||
-        fullyQualifiedDeclaringTypePredicate.get().test(AstraUtils.getFullyQualifiedName(mi, cu)) ||
-        (mi.getExpression() != null &&  mi.getExpression().resolveTypeBinding() != null &&
-            (methodInvocationMatchesSuperType(mi.getExpression().resolveTypeBinding()) ||
-                methodInvocationMatchesInterface(mi.getExpression().resolveTypeBinding())));
+            fullyQualifiedDeclaringTypePredicate.get().test(AstraUtils.getFullyQualifiedName(mi, cu)) ||
+            (mi.getExpression() != null &&  mi.getExpression().resolveTypeBinding() != null &&
+              (methodInvocationMatchesSuperType(mi.getExpression().resolveTypeBinding()) ||
+               methodInvocationMatchesInterface(mi.getExpression().resolveTypeBinding())));
   }
 
   private boolean methodInvocationMatchesSuperType(ITypeBinding resolveTypeBinding) {
     final ITypeBinding superclass = resolveTypeBinding.getSuperclass();
     if (superclass != null) {
-      if (fullyQualifiedDeclaringTypePredicate.get().test(superclass.getBinaryName())) {
-        return true;
-      } else if (superclass.getSuperclass() != null) {
-        return methodInvocationMatchesSuperType(superclass);
-      }
+       if (fullyQualifiedDeclaringTypePredicate.get().test(superclass.getBinaryName())) {
+         return true;
+       } else if (superclass.getSuperclass() != null) {
+         return methodInvocationMatchesSuperType(superclass);
+       }
     }
     return false;
   }
-
-  private boolean methodInvocationMatchesInterface(ITypeBinding resolveTypeBinding) {
-    if (fullyQualifiedDeclaringTypePredicate.get().test(resolveTypeBinding.getBinaryName())) {
+  
+  private boolean methodInvocationMatchesInterface(ITypeBinding typeBinding) {
+    if (fullyQualifiedDeclaringTypePredicate.get().test(typeBinding.getBinaryName())) {
       return true;
     }
-
-    if (Arrays.stream(resolveTypeBinding.getInterfaces()).anyMatch(i -> methodInvocationMatchesInterface(i))) {
-      return true;
-    }
-
-    return false;
+    
+    return Arrays.stream(typeBinding.getInterfaces()).anyMatch(this::methodInvocationMatchesInterface);
   }
 
 
   private boolean isFQDeclaringTypeNameMatch(IMethodBinding mb) {
     return Optional.of(mb)
-        .map(IMethodBinding::getDeclaringClass)
-        .map(iTypeBinding -> iTypeBinding.isAnonymous() ? iTypeBinding.getSuperclass() : iTypeBinding)
-        .map(ITypeBinding::getQualifiedName)
-        .filter(n -> ! fullyQualifiedDeclaringTypePredicate.isPresent() || fullyQualifiedDeclaringTypePredicate.get().test(n))
-        .isPresent();
+      .map(IMethodBinding::getDeclaringClass)
+      .map(iTypeBinding -> iTypeBinding.isAnonymous() ? iTypeBinding.getSuperclass() : iTypeBinding)
+      .map(ITypeBinding::getQualifiedName)
+      .filter(n -> ! fullyQualifiedDeclaringTypePredicate.isPresent() || fullyQualifiedDeclaringTypePredicate.get().test(n))
+      .isPresent();
   }
 
 
@@ -227,32 +225,30 @@ public class MethodMatcher {
       return false;
     }
 
+    // Check the parameters are as expected, and in the correct order
     for (int i = 0; i < mb.getParameterTypes().length; i++) {
-
-      ITypeBinding iTypeBinding = mb.getParameterTypes()[i];
-      // If the actual method invocation's argument is a paramaterized type
-      // And we're not looking for a parameterized type,
-      // then we must be looking for a raw type
-      if (iTypeBinding.isParameterizedType() && ! fullyQualifiedParameterNames.get().get(i).contains("<")) {
-        // if any parameters, in order, don't match, return false
-        if (! iTypeBinding.getBinaryName().equals(fullyQualifiedParameterNames.get().get(i))) {
+      
+      /// If we have specified a parameterized type, or the type is a primitive or array, match on the qualified name
+      if (fullyQualifiedParameterNames.get().get(i).contains("<") || 
+          mb.getParameterTypes()[i].isPrimitive() || 
+          mb.getParameterTypes()[i].isArray()) {
+        if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
           return false;
         }
-
-        // if any parameters, in order, don't match, return false
-      } else if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
+      // Otherwise match on binary type name
+      } else if (! mb.getParameterTypes()[i].getBinaryName().equals(fullyQualifiedParameterNames.get().get(i))) {
         return false;
       }
     }
-    // otherwise the parameter types and order must match, so return true
+    // if we get here, all parameter types must match our expectations
     return true;
   }
 
 
   private boolean isMethodVarargs(IMethodBinding mb) {
     return Optional.of(mb)
-        .filter(IMethodBinding::isVarargs)
-        .isPresent();
+      .filter(IMethodBinding::isVarargs)
+      .isPresent();
   }
 
   private boolean isSimpleNameMatch(ClassInstanceCreation cic) {
@@ -267,24 +263,24 @@ public class MethodMatcher {
     final Optional<IMethodBinding> binding = Optional.of(iMethodBinding);
 
     return binding
-        .filter(this::isFQDeclaringTypeNameMatch)
-        .isPresent();
+      .filter(this::isFQDeclaringTypeNameMatch)
+      .isPresent();
   }
 
 
   private boolean isCICFQTypeNameMatch(ClassInstanceCreation cic) {
     final Optional<IMethodBinding> binding = Optional.of(cic)
-        .map(ClassInstanceCreation::resolveConstructorBinding);
+      .map(ClassInstanceCreation::resolveConstructorBinding);
 
     if (! binding.isPresent()) {
       log.debug("Binding not found for constructor of class instance creation. "
-          + "This may be a sign that classpaths for the operation need to be supplied. "
+          + CLASSPATHS_MISSING_WARNING
           + "Class instance creation: [" + cic + "]");
     }
 
     return binding
-        .filter(this::isFQDeclaringTypeNameMatch)
-        .isPresent();
+      .filter(this::isFQDeclaringTypeNameMatch)
+      .isPresent();
   }
 
 
@@ -303,17 +299,6 @@ public class MethodMatcher {
     }
     return false;
   }
-
-
-//  public boolean matches(ASTNode node, CompilationUnit compilationUnit) {
-//    if (node instanceof MethodInvocation) {
-//      matches((MethodInvocation) node, compilationUnit);
-//    } else if (node instanceof ClassInstanceCreation) {
-//      matches(node, compilationUnit);
-//    } else if (node instanceof MethodDeclaration) {
-//      matches(node, compilationUnit);
-//    }
-//  }
 
 
   public boolean matches(MethodInvocation methodInvocation, CompilationUnit compilationUnit) {
@@ -336,36 +321,36 @@ public class MethodMatcher {
 
       if (! binding.isPresent()) {
         log.debug("Binding not found for method invocation. "
-            + "This may be a sign that classpaths for the operation need to be supplied. "
+            + CLASSPATHS_MISSING_WARNING
             + "Method invocation: [" + methodInvocation + "]");
       }
-      return binding
+      if(! binding
           .filter(mb -> ! isVarargs.isPresent() || isMethodVarargs(mb))
           .filter(this::isMethodParameterListMatch)
-          .isPresent();
+          .isPresent()) {
+        return false;
+      }
     }
 
-    if (customInvocationPredicate.isPresent() && ! customInvocationPredicate.get().test(methodInvocation)) {
-      return false;
-    }
-
-    return true;
+    return ! customPredicate.isPresent() || customPredicate.get().test(methodInvocation);
   }
 
 
   public boolean matches(ClassInstanceCreation classInstanceCreation) {
 
     return Optional.of(classInstanceCreation)
-        // does the constructor name match?
+      // does the constructor name match?
         .filter(this::isSimpleNameMatch)
-        // is that constructor declared on the type we're looking for?
+      // is that constructor declared on the type we're looking for?
         .filter(this::isCICFQTypeNameMatch)
-        // do the parameters match?
+      // do the parameters match?
         .filter(cic -> isMethodParameterListMatch(cic.resolveConstructorBinding()))
-        // if we're checking whether it's varargs, does it match our expectation?
-        .filter(cic -> {
-          return ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding());
-        })
+      // if we're checking whether it's varargs, does it match our expectation?
+        .filter(cic -> 
+          ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding())
+        )
+      // does the classInstanceCreation match the custom predicate
+        .filter(cic -> !customPredicate.isPresent() || customPredicate.get().test(cic))
         .isPresent();
   }
 
@@ -380,7 +365,7 @@ public class MethodMatcher {
         .filter(this::isMethodParameterListMatch)
         // if we're checking whether it's varargs, does it match our expectation?
         .filter(imb ->
-            ! isVarargs.isPresent() || isMethodVarargs(imb)
+          ! isVarargs.isPresent() || isMethodVarargs(imb)
         )
         .isPresent();
   }
@@ -389,21 +374,25 @@ public class MethodMatcher {
 
   public boolean matches(MethodDeclaration methodDeclaration) {
     final Optional<MethodDeclaration> method = Optional.of(methodDeclaration)
-        // does the method name match?
-        .filter(m -> !methodNamePredicate.isPresent() || methodNamePredicate.get().test(m.getName().toString()))
-        // does the return type match?
-        .filter(m -> !returnTypePredicate.isPresent() || returnTypePredicate.get().test(AstraUtils.getFullyQualifiedName(m.getReturnType2())));
+      // does the method name match?
+      .filter(m -> !methodNamePredicate.isPresent() || methodNamePredicate.get().test(m.getName().toString()))
+      // does the return type match?
+      .filter(m -> !returnTypePredicate.isPresent() || returnTypePredicate.get().test(AstraUtils.getFullyQualifiedName(m.getReturnType2())));
 
     final Optional<IMethodBinding> binding = method
-        // Now on to the things that require a resolved binding
-        .map(MethodDeclaration::resolveBinding);
+      // Now on to the things that require a resolved binding
+      .map(MethodDeclaration::resolveBinding);
 
     if (method.isPresent() && ! binding.isPresent()) {
       log.debug("Binding not found for method declaration. "
-          + "This may be a sign that classpaths for the operation need to be supplied. "
+          + CLASSPATHS_MISSING_WARNING
           + "Method declaration: [" + methodDeclaration + "]");
     }
-
+    
+    if(customPredicate.isPresent() && !customPredicate.get().test(methodDeclaration)) {
+      return false;
+    }
+    
     return binding
         // is that method declared on the type we're looking for?
         .filter(this::isFQDeclaringTypeNameMatch)
@@ -457,11 +446,11 @@ public class MethodMatcher {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + (fullyQualifiedDeclaringTypePredicate == null ? 0 : fullyQualifiedDeclaringTypePredicate.hashCode());
-    result = prime * result + (fullyQualifiedParameterNames == null ? 0 : fullyQualifiedParameterNames.hashCode());
-    result = prime * result + (isVarargs == null ? 0 : isVarargs.hashCode());
-    result = prime * result + (methodNamePredicate == null ? 0 : methodNamePredicate.hashCode());
-    result = prime * result + (parentContextMatcher == null ? 0 : parentContextMatcher.hashCode());
+    result = prime * result + fullyQualifiedDeclaringTypePredicate.hashCode();
+    result = prime * result + fullyQualifiedParameterNames.hashCode();
+    result = prime * result + isVarargs.hashCode();
+    result = prime * result + methodNamePredicate.hashCode();
+    result = prime * result + parentContextMatcher.hashCode();
     return result;
   }
 
@@ -477,41 +466,18 @@ public class MethodMatcher {
       return false;
     }
     MethodMatcher other = (MethodMatcher) obj;
-    if (fullyQualifiedDeclaringTypePredicate == null) {
-      if (other.fullyQualifiedDeclaringTypePredicate != null) {
-        return false;
-      }
-    } else if (!fullyQualifiedDeclaringTypePredicate.get().equals(other.fullyQualifiedDeclaringTypePredicate.get())) {
+    if (!fullyQualifiedDeclaringTypePredicate.get().equals(other.fullyQualifiedDeclaringTypePredicate.get())) {
       return false;
     }
-    if (fullyQualifiedParameterNames == null) {
-      if (other.fullyQualifiedParameterNames != null) {
-        return false;
-      }
-    } else if (!fullyQualifiedParameterNames.equals(other.fullyQualifiedParameterNames)) {
+    if (!fullyQualifiedParameterNames.equals(other.fullyQualifiedParameterNames)) {
       return false;
     }
-    if (isVarargs == null) {
-      if (other.isVarargs != null) {
-        return false;
-      }
-    } else if (!isVarargs.equals(other.isVarargs)) {
+    if (!isVarargs.equals(other.isVarargs)) {
       return false;
     }
-    if (methodNamePredicate == null) {
-      if (other.methodNamePredicate != null) {
-        return false;
-      }
-    } else if (!methodNamePredicate.equals(other.methodNamePredicate)) {
+    if (!methodNamePredicate.equals(other.methodNamePredicate)) {
       return false;
     }
-    if (parentContextMatcher == null) {
-      if (other.parentContextMatcher != null) {
-        return false;
-      }
-    } else if (!parentContextMatcher.equals(other.parentContextMatcher)) {
-      return false;
-    }
-    return true;
+    return parentContextMatcher.equals(other.parentContextMatcher);
   }
 }

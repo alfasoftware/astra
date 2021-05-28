@@ -118,7 +118,7 @@ public class TypeMatcher implements Matcher {
     /**
      * Specifies the type must have the exact name provided
      *
-     * @param typeName the type name to match
+     * @param typeNamePredicate a predicate for matching on the type name
      * @return the builder
      */
     public TypeBuilder withNamePredicate(final Predicate<String> typeNamePredicate) {
@@ -246,56 +246,73 @@ public class TypeMatcher implements Matcher {
    */
   @Override
   public boolean matches(ASTNode node) {
-    TypeDeclaration typeDeclaration;
-    if (node instanceof TypeDeclaration) {
-      typeDeclaration = (TypeDeclaration) node;
-    } else {
+    
+    if (!(node instanceof TypeDeclaration)) {
       return false;
     }
+    TypeDeclaration typeDeclaration = (TypeDeclaration) node;
     
-    boolean matches = true;
-    
-    if (matches && typeBuilder.isInterface != null) {
-      matches = typeBuilder.isInterface == typeDeclaration.isInterface();
+    if (! checkIsInterface(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isClass != null) {
-      matches = typeBuilder.isClass == ! typeDeclaration.isInterface();
+    if (! checkIsClass(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.typeName != null) {
-      matches = checkTypeName(typeDeclaration);
+    if (! checkTypeName(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.typeNameRegex != null) {
-      matches = checkClassNameRegex(typeDeclaration);
+    if (! checkClassNameRegex(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.typeNamePredicate != null) {
-      matches = checkTypeNamePredicate(typeDeclaration);
+    if (! checkTypeNamePredicate(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.interfaces != null) {
-      matches = checkInterfaces(typeDeclaration);
+    if (! checkInterfaces(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.annotationBuilders != null) {
-      matches = checkAnnotations(typeDeclaration);
+    if (! checkAnnotations(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.visibility != null) {
-      matches = checkVisibility(typeDeclaration);
+    if (! checkVisibility(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isStatic != null) {
-      matches = checkIsStatic(typeDeclaration);
+    if (! checkIsStatic(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isAbstract != null) {
-      matches = checkIsAbstract(typeDeclaration);
+    if (! checkIsAbstract(typeDeclaration)) {
+      return false;
     }
-    if (matches && typeBuilder.isFinal != null) {
-      matches = checkIsFinal(typeDeclaration);
+    if (! checkIsFinal(typeDeclaration)) {
+      return false;
     }
-    if (matches) {
+    return checkSuperclass(typeDeclaration);
+  }
+
+  private boolean checkSuperclass(TypeDeclaration typeDeclaration) {
+    if (typeBuilder.superClass != null) {
       Type superclassType = typeDeclaration.getSuperclassType();
-      if (superclassType != null) {
-        matches = AstraUtils.getFullyQualifiedName(superclassType).equals(typeBuilder.superClass);
+      if (superclassType == null || superclassType.resolveBinding() == null) {
+        return false;
+      }
+      // If we have specified a parameterized supertype, match on the qualified name
+      if (typeBuilder.superClass.contains("<")) {
+        if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getQualifiedName())) {
+          return false;
+        }
+      // If we have not specified a parameterized supertype, then only match on binary type name
+      } else if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getBinaryName())) {
+        return false;
       }
     }
+    return true;
+  }
 
-    return matches;
+  private boolean checkIsClass(TypeDeclaration typeDeclaration) {
+    return typeBuilder.isClass == null || typeBuilder.isClass != typeDeclaration.isInterface();
+  }
+
+  private boolean checkIsInterface(TypeDeclaration typeDeclaration) {
+    return typeBuilder.isInterface == null || typeBuilder.isInterface == typeDeclaration.isInterface();
   }
 
   /**
@@ -305,7 +322,8 @@ public class TypeMatcher implements Matcher {
    * @return true if it matches, false otherwise
    */
   private boolean checkTypeName(final TypeDeclaration typeDeclaration) {
-    return typeBuilder.typeName.equals(AstraUtils.getFullyQualifiedName(typeDeclaration));
+    return typeBuilder.typeName == null ||
+        typeBuilder.typeName.equals(AstraUtils.getFullyQualifiedName(typeDeclaration));
   }
 
   /**
@@ -315,7 +333,8 @@ public class TypeMatcher implements Matcher {
    * @return true if it matches, false otherwise
    */
   private boolean checkClassNameRegex(final TypeDeclaration typeDeclaration) {
-    return AstraUtils.getFullyQualifiedName(typeDeclaration).matches(typeBuilder.typeNameRegex);
+    return typeBuilder.typeNameRegex == null || 
+        AstraUtils.getFullyQualifiedName(typeDeclaration).matches(typeBuilder.typeNameRegex);
   }
   
   /**
@@ -325,7 +344,8 @@ public class TypeMatcher implements Matcher {
    * @return true if it matches, false otherwise
    */
   private boolean checkTypeNamePredicate(final TypeDeclaration typeDeclaration) {
-    return typeBuilder.typeNamePredicate.test(AstraUtils.getFullyQualifiedName(typeDeclaration));
+    return typeBuilder.typeNamePredicate == null || 
+        typeBuilder.typeNamePredicate.test(AstraUtils.getFullyQualifiedName(typeDeclaration));
   }
 
   /**
@@ -335,6 +355,9 @@ public class TypeMatcher implements Matcher {
    * @return true if all interfaces expected are present, false otherwise
    */
   private boolean checkInterfaces(final TypeDeclaration typeDeclaration) {
+    if (typeBuilder.interfaces == null) {
+      return true;
+    }
     @SuppressWarnings("unchecked")
     List<Type> interfaces = typeDeclaration.superInterfaceTypes();
     Set<String> actualInterfaceNames = new HashSet<>();
@@ -352,6 +375,10 @@ public class TypeMatcher implements Matcher {
    * @return true if all annotations expected are present, false otherwise
    */
   private boolean checkAnnotations(final TypeDeclaration typeDeclaration) {
+    if (typeBuilder.annotationBuilders == null) {
+      return true;
+    }
+    
     for (Builder annotationBuilder : typeBuilder.annotationBuilders) {
       boolean found = false;
       for (Object modifier : typeDeclaration.modifiers()) {
@@ -377,6 +404,10 @@ public class TypeMatcher implements Matcher {
    * @return true if the visibilty is correct, false otherwise
    */
   private boolean checkVisibility(final TypeDeclaration typeDeclaration) {
+    if (typeBuilder.visibility == null) {
+      return true;
+    }
+    
     boolean isPublic = checkForModifier(typeDeclaration, Modifier::isPublic);
     boolean isPrivate = checkForModifier(typeDeclaration, Modifier::isPrivate);
     return isPublic && typeBuilder.visibility == Visibility.PUBLIC ||
@@ -391,7 +422,7 @@ public class TypeMatcher implements Matcher {
    * @return true if it is static, false otherwise
    */
   private boolean checkIsStatic(final TypeDeclaration typeDeclaration) {
-    return checkForModifier(typeDeclaration, Modifier::isStatic);
+    return typeBuilder.isStatic == null || checkForModifier(typeDeclaration, Modifier::isStatic);
   }
 
   /**
@@ -401,7 +432,7 @@ public class TypeMatcher implements Matcher {
    * @return true if it is abstract, false otherwise
    */
   private boolean checkIsAbstract(final TypeDeclaration typeDeclaration) {
-    return checkForModifier(typeDeclaration, Modifier::isAbstract);
+    return typeBuilder.isAbstract == null || checkForModifier(typeDeclaration, Modifier::isAbstract);
   }
 
   /**
@@ -411,7 +442,7 @@ public class TypeMatcher implements Matcher {
    * @return true if it is final, false otherwise
    */
   private boolean checkIsFinal(final TypeDeclaration typeDeclaration) {
-    return checkForModifier(typeDeclaration, Modifier::isFinal);
+    return typeBuilder.isFinal == null || checkForModifier(typeDeclaration, Modifier::isFinal);
   }
 
   /**

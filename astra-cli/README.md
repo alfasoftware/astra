@@ -23,6 +23,8 @@ There are now two ways to use Astra. You can:
 ## Sounds good, let's take it for a spin!
 We've initially added support for two common Astra refactors to this CLI. We think they're probably the most widely useful - the `MethodInvocationRefactor` and the `TypeReferenceRefactor`.
 
+| Refactor | Description |
+| -------- | ----------- |
 | Method invocation refactor | Find uses of method A, and instead, use method B |
 | Type reference refactor | Find uses of type A, and instead, use type B |
 
@@ -34,6 +36,6 @@ We've initially added support for two common Astra refactors to this CLI. We thi
 
 
 ## What are its limitations?
-The CLI currently only supports these two refactors, and even then are very simplified versions. The standard astra-core SPI offers far more options for these refactors, like changing the method parameters, offering predicate / pattern matching (like "does the method name start with *get"), and defining custom changes. 
+The CLI currently only supports these two refactors, and even then are very simplified versions. The standard astra-core SPI offers far more options for these refactors, like changing the method parameters, offering predicate and pattern matching (like "does the method name start with *get"), and defining custom changes. 
 
-We hope that this bare-bones MVP version of the CLI will help us gauge interest, collect early feedback, and make sure we focus our efforts on the things that provide the most value.
+We hope that this bare-bones version of the CLI will help us gauge interest, collect early feedback, and make sure we focus our efforts on things that provide the most value.

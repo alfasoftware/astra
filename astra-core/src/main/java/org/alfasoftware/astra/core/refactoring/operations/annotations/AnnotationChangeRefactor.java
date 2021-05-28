@@ -19,7 +19,9 @@ import org.eclipse.text.edits.MalformedTreeException;
 
 /**
  * Simple swap of an annotation, eg,
- * com.google.inject.Inject -> javax.inject.Inject.
+ * <pre>
+ * com.google.inject.Inject -&gt; javax.inject.Inject.
+ * <pre>
  */
 public class AnnotationChangeRefactor implements ASTOperation {
 

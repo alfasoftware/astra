@@ -551,10 +551,81 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
+  
+  
+  @Test
+  public void testParameterizedTypeWithoutTypeParameterSpecified() {
+    // Given
+    String extendsMatcher = "package x;\r\n" +
+        "import java.util.List;\r\n" +
+        "public class Y extends List<Integer>{}";
+    
+    String extendsMatcherNoTypeParameter = "package x;\r\n" +
+        "import java.util.List;\r\n" +
+        "public class Y extends List{}";
+    
+    Matcher parameterizedTypeMatcher = TypeMatcher.builder()
+        .extending("java.util.List")
+        .build();
+    
+    // When
+    ClassVisitor visitor = parse(extendsMatcher);
+    ClassVisitor visitorNoTypeParameter = parse(extendsMatcherNoTypeParameter);
+    
+    // Then
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
+    typeDeclarations = visitorNoTypeParameter.getTypeDeclarations();
+    assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
+  }
+  
+  
+  @Test
+  public void testParameterizedTypeWithTypeParameterSpecified() {
+    // Given
+    String extendsMatcher = "package x;\r\n" +
+        "import java.util.List;\r\n" +
+        "public class Y extends List<Integer>{}";
+    
+    Matcher parameterizedTypeMatcher = TypeMatcher.builder()
+        .extending("java.util.List<java.lang.Integer>")
+        .build();
+    
+    Matcher incorrectParameterizedTypeMatcher = TypeMatcher.builder()
+        .extending("java.util.List<java.lang.Long>")
+        .build();
+    
+    // When
+    ClassVisitor visitor = parse(extendsMatcher);
+    
+    // Then
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
+    assertFalse(incorrectParameterizedTypeMatcher.matches(typeDeclarations.get(0)));
+  }
+  
+  
+  @Test
+  public void testTypeMatcherExtendingWhereNoSupertypePresent() {
+    // Given
+    String extendsMatcher = "package x;\r\n" +
+        "public class Y{}";
+    
+    Matcher parameterizedTypeMatcher = TypeMatcher.builder()
+        .extending("java.util.List")
+        .build();
+    
+    // When
+    ClassVisitor visitor = parse(extendsMatcher);
+    
+    // Then
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertFalse(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
+  }
 
 
   private ClassVisitor parse(String source) {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, new String[] {TEST_SOURCE}, UseCase.defaultClasspathEntries.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, new String[] {TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
     ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
     return visitor;

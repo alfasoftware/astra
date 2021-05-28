@@ -30,9 +30,9 @@ public class RemovePublicModifierFromInterfaces implements ASTOperation {
     getMethodDeclarations(node)
       .stream()
       // find any public modifiers
-      .map(n -> n.modifiers())
+      .map(MethodDeclaration::modifiers)
       .flatMap(List<Modifier>::stream)
-      .filter(m -> m.isPublic())
+      .filter(Modifier::isPublic)
       // remove them
       .forEach(m -> rewriter.remove(m, null));
   }

@@ -36,27 +36,25 @@ public class FindMethodDeclarationsAnalysis implements AnalysisOperation<MethodA
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) throws IOException, MalformedTreeException, BadLocationException {
     if (node instanceof MethodDeclaration) {
       matchers.stream()
-        .filter(m -> {
-          return m.matches((MethodDeclaration) node);
-        })
+        .filter(m -> m.matches((MethodDeclaration) node))
         .findAny()
-        .ifPresent(method -> {
+        .ifPresent(method -> 
           matchedNodes.computeIfAbsent(method, m -> new ArrayList<>()).add(
             new MatchedMethodResult(node, AstraUtils.getNameForCompilationUnit(compilationUnit),
               compilationUnit.getLineNumber(compilationUnit.getExtendedStartPosition(node)))
-          );
-        });
+          )
+        );
     }
   }
 
 
   public Collection<String> getPrintableResults() {
     List<String> results = new LinkedList<>();
-    for (MethodMatcher method : matchedNodes.keySet()) {
+    for (Map.Entry<MethodMatcher, List<MatchedMethodResult>> methodEntry : matchedNodes.entrySet()) {
       StringBuilder sb = new StringBuilder();
       sb.append("\r\n");
-      sb.append(method);
-      for (MatchedMethodResult result : matchedNodes.get(method)) {
+      sb.append(methodEntry.getKey());
+      for (MatchedMethodResult result : methodEntry.getValue()) {
         sb.append("\r\n");
         sb.append(result.toString());
       }

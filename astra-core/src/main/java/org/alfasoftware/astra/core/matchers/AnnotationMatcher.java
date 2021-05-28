@@ -133,11 +133,7 @@ public class AnnotationMatcher implements Matcher {
     }
 
     // Check annotation predicate
-    if (annotationBuilder.annotationPredicate.isPresent() && ! annotationBuilder.annotationPredicate.get().test((Annotation) node)) {
-      return false;
-    }
-
-    return true;
+    return ! annotationBuilder.annotationPredicate.isPresent() || annotationBuilder.annotationPredicate.get().test((Annotation) node);
   }
 
 

@@ -76,11 +76,14 @@ public class AstraCore {
     AtomicLong currentPercentage = new AtomicLong();
     log.info("Counting files (this may take a few seconds)");
     Instant startTime = Instant.now();
-    List<Path> javaFilesInDirectory = Files.walk(Paths.get(directoryPath))
-        .filter(Files::isRegularFile)
-        .filter(f -> f.getFileName().toString().endsWith("java"))
-        .collect(Collectors.toList());
-
+    
+    List<Path> javaFilesInDirectory;
+    try (Stream<Path> walk = Files.walk(Paths.get(directoryPath))) {
+      javaFilesInDirectory = walk
+          .filter(f -> f.toFile().isFile())
+          .filter(f -> f.getFileName().toString().endsWith("java"))
+          .collect(Collectors.toList());
+    }
     log.info(javaFilesInDirectory.size() + " .java files in directory to review");
 
     log.info("Applying prefilters to files in directory");
@@ -199,7 +202,7 @@ public class AstraCore {
    * @param fileContentBefore Source file content before any operations are applied
    * @param operations Operations to apply
    */
-  public String applyOperationsToFile(String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws IOException, BadLocationException {
+  public String applyOperationsToFile(String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws BadLocationException {
 
     String fileContentAfter = applyOperationsToSource(operations, sources, classpath, fileContentBefore);
 
@@ -217,11 +220,10 @@ public class AstraCore {
    * Runs operations over the source file, and returns the result of running those operations
    */
   protected String applyOperationsToSource(Set<? extends ASTOperation> operations, String[] sources, String[] classpath, String source)
-      throws IOException, BadLocationException {
+      throws BadLocationException {
     CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, sources, classpath);
     ASTRewrite rewriter = runOperations(operations, compilationUnit);
-    String fileContentAfterOperations = makeChangesFromAST(source, rewriter);
-    return fileContentAfterOperations;
+    return makeChangesFromAST(source, rewriter);
   }
 
   
@@ -233,8 +235,7 @@ public class AstraCore {
    * @param compilationUnit The compilation unit - expected to be a whole Java source file
    * @return ASTRewrite, a collection of changes to make to the source file
    */
-  private static ASTRewrite runOperations(Set<? extends ASTOperation> operations, final CompilationUnit compilationUnit)
-      throws IOException, BadLocationException {
+  private static ASTRewrite runOperations(Set<? extends ASTOperation> operations, final CompilationUnit compilationUnit) {
 
     // Create the re-writer for modifying the code
     final ASTRewrite rewriter = ASTRewrite.create(compilationUnit.getAST());

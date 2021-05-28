@@ -1,5 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.operations.methods;
 
+import static org.alfasoftware.astra.core.utils.AstraUtils.getFullyQualifiedName;
+import static org.alfasoftware.astra.core.utils.AstraUtils.getNameForCompilationUnit;
 import static org.alfasoftware.astra.core.utils.AstraUtils.getSimpleName;
 
 import java.io.IOException;
@@ -15,7 +17,6 @@ import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -76,33 +77,36 @@ public class MethodDeclaringTypeRefactor implements ASTOperation {
   @Override
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
       throws IOException, MalformedTreeException, BadLocationException {
-    if (node instanceof TypeDeclaration) {
-      ClassVisitor visitor = new ClassVisitor();
-      node.accept(visitor);
-      for (MethodInvocation method : visitor.getMethodInvocations()) {
-        if (methodMatcher.matches(method, compilationUnit)) {
-
-          // Then we have a match
-          // This is a pretty blunt tool. It's saying "look for all the times we used the old type name, and change them to the new"
-          for (SimpleType simpleType : visitor.getSimpleTypes()) {
-            if (Optional.of(simpleType)
-              .map(SimpleType::resolveBinding)
-              .map(ITypeBinding::getBinaryName)
-              .filter(n -> ! methodMatcher.getFullyQualifiedDeclaringType().isPresent() || methodMatcher.getFullyQualifiedDeclaringType().get().test(n))
-              .isPresent()) {
-
-              log.info("Refactoring method declaration type of "
-                  + "method [" + method.getName().toString() + "] "
-                  + "from [" + getSimpleName(AstraUtils.getFullyQualifiedName(method, compilationUnit)) + "] "
-                  + "to [" + getSimpleName(toType) + "] "
-                  + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
-              rewriter.set(simpleType, SimpleType.NAME_PROPERTY, node.getAST().newSimpleName(getSimpleName(toType)), null);
-
-              AstraUtils.addImport(compilationUnit, toType, rewriter);
-            }
-          }
-        }
-      }
+    if (!(node instanceof TypeDeclaration)) {
+      return;
     }
+    
+    ClassVisitor visitor = new ClassVisitor();
+    node.accept(visitor);
+    
+    visitor.getMethodInvocations().stream()
+      .filter(m -> methodMatcher.matches(m, compilationUnit))
+      .forEach(method -> 
+
+        // Then we have a match
+        // This is a pretty blunt tool. It's saying "look for all the times we used the old type name, and change them to the new"
+        visitor.getSimpleTypes().stream()
+          .filter(st -> 
+            Optional.ofNullable(st)
+            .map(SimpleType::resolveBinding)
+            .map(ITypeBinding::getBinaryName)
+            .filter(n -> ! methodMatcher.getFullyQualifiedDeclaringType().isPresent() || methodMatcher.getFullyQualifiedDeclaringType().get().test(n))
+            .isPresent())
+          .forEach(simpleType -> {
+            log.info("Refactoring method declaration type of "
+                + "method [" + method.getName().toString() + "] "
+                + "from [" + getSimpleName(getFullyQualifiedName(method, compilationUnit)) + "] "
+                + "to [" + getSimpleName(toType) + "] "
+                + "in [" + getNameForCompilationUnit(compilationUnit) + "]");
+            
+            rewriter.set(simpleType, SimpleType.NAME_PROPERTY, node.getAST().newSimpleName(getSimpleName(toType)), null);
+            AstraUtils.addImport(compilationUnit, toType, rewriter);
+          })
+      );
   }
 }

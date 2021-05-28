@@ -26,9 +26,9 @@ import org.eclipse.text.edits.MalformedTreeException;
  * Finds a method invocation, and applies some kind of transform.
  * Transforms may include:
  * <ul>
- *  <li>changing the name of the invoked method<ul>a.<b>foo</b>() -> a.<b>bar</b>()</ul></li>
- *  <li>changing the type on which the method is invoked<ul><b>a</b>.foo() -> <b>b</b>.foo()</ul></li>
- *  <li>changing the parameters with which the method is invoked<ul>a.foo(<b>x</b>) -> a.foo(<b>x, y</b>)</ul></li>
+ *  <li>changing the name of the invoked method<ul>a.<b>foo</b>() -&gt; a.<b>bar</b>()</ul></li>
+ *  <li>changing the type on which the method is invoked<ul><b>a</b>.foo() -&gt; <b>b</b>.foo()</ul></li>
+ *  <li>changing the parameters with which the method is invoked<ul>a.foo(<b>x</b>) -&gt; a.foo(<b>x, y</b>)</ul></li>
  * </ul>
  * Where a type is changed, imports will be handled. For static method invocations,
  * the original invocation type will be preserved.
@@ -92,9 +92,9 @@ public class MethodInvocationRefactor implements ASTOperation {
       return this;
     }
 
-    public Changes withNewParameter(Object parameter, Position position) {
+    public Changes withNewParameter(Object parameterLiteral, Position position) {
       Parameter value = new Parameter();
-      value.parameter = parameter;
+      value.parameterLiteral = parameterLiteral;
       value.position = position;
       this.parameter = Optional.of(value);
       return this;
@@ -117,7 +117,7 @@ public class MethodInvocationRefactor implements ASTOperation {
   }
 
   static class Parameter {
-    Object parameter;
+    Object parameterLiteral;
     Position position;
     int supplied;
   }
@@ -204,13 +204,13 @@ public class MethodInvocationRefactor implements ASTOperation {
       ListRewrite methodArguments = rewriter.getListRewrite(methodInvocation, MethodInvocation.ARGUMENTS_PROPERTY);
 
       ASTNode newArgument = null;
-      if (parameter.get().parameter instanceof String) {
+      if (parameter.get().parameterLiteral instanceof String) {
         newArgument = methodInvocation.getAST().newStringLiteral();
-        rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, parameter.get().parameter, null);
+        rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, parameter.get().parameterLiteral, null);
       } else {
         // Unfortunately have to handle each argument type individually.
         // Hopefully once primitives and general object types are covered, this will be less of a pain.
-        throw new IllegalArgumentException("Unhandled argument type: " + parameter.get().parameter.getClass());
+        throw new IllegalArgumentException("Unhandled argument type: " + parameter.get().parameterLiteral.getClass());
       }
 
       switch (parameter.get().position) {
@@ -222,6 +222,7 @@ public class MethodInvocationRefactor implements ASTOperation {
           break;
         case SUPPLIED:
           methodArguments.insertAt(newArgument, parameter.get().supplied, null);
+          break;
         default:
           break;
       }

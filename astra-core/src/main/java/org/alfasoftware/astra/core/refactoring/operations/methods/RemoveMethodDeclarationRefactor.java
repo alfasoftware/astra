@@ -67,7 +67,7 @@ public class RemoveMethodDeclarationRefactor implements ASTOperation {
         
         log.info("Removing method declaration [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + 
           "#" + methodDeclaration.getName() + 
-          "(" + methodDeclaration.parameters().stream().map(p -> p.toString()).collect(Collectors.joining(", ")) + ")]");
+          "(" + methodDeclaration.parameters().stream().map(Object::toString).collect(Collectors.joining(", ")) + ")]");
         
         rewriter.remove(methodDeclaration, null);
       }

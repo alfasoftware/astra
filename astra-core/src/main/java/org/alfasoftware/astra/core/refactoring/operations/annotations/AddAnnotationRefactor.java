@@ -114,9 +114,9 @@ public class AddAnnotationRefactor implements ASTOperation {
         }
         AstraUtils.addAnnotationToNode(node, annotation, rewriter, modifiersProperty);
         
-        additionalImports.ifPresent(imports -> Arrays.asList(imports).forEach(i -> {
-          AstraUtils.addImport(compilationUnit, i, rewriter);
-        }));
+        additionalImports.ifPresent(imports -> Arrays.asList(imports).forEach(i -> 
+          AstraUtils.addImport(compilationUnit, i, rewriter)
+        ));
       }
   }
 }

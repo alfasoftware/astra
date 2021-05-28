@@ -3,10 +3,13 @@ package org.alfasoftware.astra.core.analysis.operations.methods;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,32 +41,38 @@ public class FindMethodInvocationsAnalysis implements AnalysisOperation<MethodAn
       throws IOException, MalformedTreeException, BadLocationException {
     if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation) {
       matchers.stream()
-        .filter(m -> {
-          return node instanceof MethodInvocation && m.matches((MethodInvocation) node, compilationUnit)
-              || node instanceof ClassInstanceCreation && m.matches((ClassInstanceCreation) node);
-        })
+        .filter(m -> 
+             node instanceof MethodInvocation && m.matches((MethodInvocation) node, compilationUnit)
+          || node instanceof ClassInstanceCreation && m.matches((ClassInstanceCreation) node)
+        )
         .findAny()
-        .ifPresent(method -> {
+        .ifPresent(method -> 
           matchedNodes.computeIfAbsent(method, m -> new ArrayList<>()).add(
             new MatchedMethodResult(node, AstraUtils.getNameForCompilationUnit(compilationUnit),
               compilationUnit.getLineNumber(compilationUnit.getExtendedStartPosition(node)))
-          );
-        });
+          )
+        );
     }
   }
 
   public Collection<String> getPrintableResults() {
     List<String> results = new LinkedList<>();
-    for (MethodMatcher method : matchedNodes.keySet()) {
+    for (Entry<MethodMatcher, List<MatchedMethodResult>> method : matchedNodes.entrySet()) {
       StringBuilder sb = new StringBuilder();
       sb.append("\r\n");
-      sb.append(method);
-      for (MatchedMethodResult result : matchedNodes.get(method)) {
+      sb.append(method.getKey());
+      for (MatchedMethodResult result : method.getValue()) {
         sb.append("\r\n");
         sb.append(result.toString());
       }
       results.add(sb.toString());
     }
+    
+    results.add("\r\n ============ SUMMARY =========== ");
+    matchedNodes.entrySet().stream()
+        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue(Comparator.comparingInt(List::size))))
+        .forEach(e -> results.add("\r\n Usages: [" + e.getValue().size() + "], Method: [" + e.getKey() + "]"));
+    
     return results;
   }
 

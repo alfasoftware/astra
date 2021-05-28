@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.alfasoftware</groupId>
     <artifactId>astra</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.2.3-SNAPSHOT</version>
   </parent>
   
   <artifactId>astra-core</artifactId>
@@ -26,6 +26,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.0</version>
         <executions>
           <execution>
             <goals>

@@ -14,7 +14,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class AbstractRefactorTest {
+public abstract class AbstractRefactorTest {
 
   protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
   protected static final String TEST_EXAMPLES = "./src/test/java";
@@ -30,7 +30,7 @@ public class AbstractRefactorTest {
    */
   protected void assertRefactor(Class<?> beforeClass, Set<? extends ASTOperation> refactors) {
     // This just gets the java path.
-    assertRefactorWithClassPath(beforeClass, refactors, UseCase.defaultClasspathEntries.toArray(new String[0]));
+    assertRefactorWithClassPath(beforeClass, refactors, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
   }
 
   protected void assertRefactorWithClassPath(Class<?> beforeClass, Set<? extends ASTOperation> refactors, String[] classPath) {
@@ -43,6 +43,9 @@ public class AbstractRefactorTest {
 
     File before = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
     File after = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.java");
+    if (! after.exists()) {
+      after = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.txt");
+    }
 
     try {
       String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
