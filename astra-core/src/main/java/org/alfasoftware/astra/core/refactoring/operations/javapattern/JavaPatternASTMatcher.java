@@ -223,7 +223,7 @@ class JavaPatternASTMatcher {
 
         // check whether the number of parameters for the method matches the number of parameters in the method declaration
         // for the method we are comparing to, to be able to compare varargs parameters.
-        if(methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
+        if(o.resolveMethodBinding() == null || methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
             != o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
           return false;
         }
