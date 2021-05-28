@@ -57,6 +57,7 @@ class JavaPatternASTMatcher {
     return foundMatches;
   }
 
+
   /**
    * This ASTMatcher sub-type has support for matching a Pattern against a single ASTNode
    * For matches found it collects the match information expressed by the @JavaPattern's method parameters and the @Substitute methods.
@@ -72,6 +73,7 @@ class JavaPatternASTMatcher {
     public JavaPatternMatcher(JavaPatternFileParser.SingleASTNodePatternMatcher patternToMatch) {
       this.patternToMatch = patternToMatch;
     }
+
 
     /**
      * Overridden matcher for simpleName.
@@ -129,12 +131,23 @@ class JavaPatternASTMatcher {
     }
 
 
+    /**
+     * Checks whether a simpleName from the JavaPattern is one that is a Parameter and should therefore capture match information
+     */
     private Optional<SingleVariableDeclaration> findPatternParameterFromSimpleName(SimpleName simpleNameFromPatternMatcher) {
       return patternToMatch.getSingleVariableDeclarations().stream()
           .filter(singleVariableDeclaration -> singleVariableDeclaration.getName().toString().equals(simpleNameFromPatternMatcher.toString()))
           .findAny();
     }
 
+
+    /**
+     * Checks whether we have found an existing value for a simpleName, which isn't the same as the ASTNode we are now matching against.
+     * For example, if we have already resolved the simpleName "string" to "foo.toString()", then trying to set "string" to be "bar.stringValue()"
+     * means we don't have a match.
+     *
+     * If we don't already have an ASTNode captured for the simpleName, store it.
+     */
     private boolean putSimpleNameAndCapturedNode(SimpleName simpleNameFromPatternMatcher, ASTNode matchCandidate) {
       if(simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()) != null &&
       !simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)){
@@ -145,11 +158,21 @@ class JavaPatternASTMatcher {
       }
     }
 
+
+    /**
+     * Checks whether we have found an existing value for a TypeArgument, which isn't the same as the Type we are now matching against.
+     * For example, if we have already resolved the Type of K from the JavaPattern to be String, then trying to set K to be Integer means
+     * we don't have a match.
+     */
     private boolean weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(ITypeBinding matchCandidateTypeParameter, ITypeBinding simpleTypesToMatch) {
       return simpleTypeToCapturedType.get(simpleTypesToMatch.getName()) != null
           && !simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).isEqualTo(matchCandidateTypeParameter);
     }
 
+
+    /**
+     * Checks whether the type of the matchCandidate is the same as the type of the simpleName from the JavaPattern.
+     */
     private boolean typeOfSimpleNameIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
       if(matchCandidate.resolveTypeBinding() == null) {
         return false;
@@ -158,13 +181,19 @@ class JavaPatternASTMatcher {
           .isEqualTo(matchCandidate.resolveTypeBinding().getTypeDeclaration());
     }
 
+
+    /**
+     * Checks whether the type of the matchCandidate can be assigned to the type of the simpleName from the JavaPattern.
+     * For example, if the simpleName from the Pattern has type Foo, then any matchCandidate type which is a subtype of Foo should
+     * be matched.
+     */
     private boolean isAssignmentCompatible(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
       if(matchCandidate.resolveTypeBinding() == null) {
-        // log warning that we were unable to resolve a type binding here.
         return false;
       }
       return matchCandidate.resolveTypeBinding().isAssignmentCompatible(simpleNameFromPatternMatcher.resolveTypeBinding());
     }
+
 
     /**
      * Checks whether the TypeDeclaration for the resolved type binding for the simpleName and the matchCandidate are sub-type compatible.
@@ -179,62 +208,56 @@ class JavaPatternASTMatcher {
       return matchCandidate.resolveTypeBinding().getTypeDeclaration().isSubTypeCompatible(simpleNameFromPatternMatcher.resolveTypeBinding().getTypeDeclaration());
     }
 
+
     /**
      * Overridden matcher for MethodInvocation.
-     * Tests whether a MethodInvocation in the {@link JavaPattern} matches a given ASTNode.
      * If the MethodInvocation from the {@link JavaPattern} is an invocation of a {@link Substitute} annotated method,
      * verify that the matchCandidate is appropriate for the substitute and capture it.
-     * If the MethodInvocation is not from a {@link Substitute} annotated method, delegate to the default matching.
      *
-     * Additionally has handling for varargs parameters in the JavaPattern
+     * If the MethodInvocation is not from a {@link Substitute} annotated method, use the full super types matching.
+     *
+     * Additionally has handling for varargs parameters in the JavaPattern for non {@link Substitute} annotated methods
      */
     @Override
     public boolean match(MethodInvocation methodInvocationFromJavaPattern, Object matchCandidate) {
-      // TODO investigate whether this handling of methods is adequate, and whether we need similar matches for other methodinvocationlikes, such as InfixExpression
-      if(methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) {
-        if (matchCandidate instanceof MethodInvocation &&
-            returnTypeMatches(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding())
-          ) {
-          if(methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
-              != ((MethodInvocation) matchCandidate).resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
-            return false;
-          }
-          if(!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), ((MethodInvocation) matchCandidate).arguments())){
-            return false;
-          }
-          return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern,  (ASTNode) matchCandidate);
-        }
+      if (!(matchCandidate instanceof MethodInvocation)) {
         return false;
-      } else {
-        if (!(matchCandidate instanceof MethodInvocation)) {
-          return false;
-        }
-        MethodInvocation o = (MethodInvocation) matchCandidate;
-
-        if (!safeSubtreeListMatch(methodInvocationFromJavaPattern.typeArguments(), o.typeArguments())) {
-          return false;
-        }
-
-        if(!(
-            safeSubtreeMatch(methodInvocationFromJavaPattern.getExpression(), o.getExpression())
-                && safeSubtreeMatch(methodInvocationFromJavaPattern.getName(), o.getName()))){
-          return false;
-        }
-
-        // check whether the number of parameters for the method matches the number of parameters in the method declaration
-        // for the method we are comparing to, to be able to compare varargs parameters.
-        if(o.resolveMethodBinding() == null || methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
-            != o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
-          return false;
-        }
-        if(!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())){
-          return false;
-        }
-
-        return true;
       }
+      MethodInvocation o = (MethodInvocation) matchCandidate;
+
+      if (!safeSubtreeListMatch(methodInvocationFromJavaPattern.typeArguments(), o.typeArguments())) {
+        return false;
+      }
+
+      // check whether the number of parameters for the method matches the number of parameters in the method declaration
+      // for the method we are comparing to, to be able to compare varargs parameters.
+      if (o.resolveMethodBinding() == null || methodInvocationFromJavaPattern.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length
+          != o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
+        return false;
+      }
+      if (!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())) {
+        return false;
+      }
+
+      // If the method invocation is a substitute annotated method, we want the return type to match as well.
+      if (methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) {
+        if (returnTypeMatches(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding())) {
+          return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern, (ASTNode) matchCandidate);
+        } else {
+          return false;
+        }
+      }
+
+      return safeSubtreeMatch(methodInvocationFromJavaPattern.getExpression(), o.getExpression())
+          && safeSubtreeMatch(methodInvocationFromJavaPattern.getName(), o.getName());
     }
 
+
+    /**
+     * Checks whether the return type of an {@link Substitute} annotated method can be assigned from the matchCandidate.
+     * If the return type is a TypeVariable V, then if we have already resolved a type for V, check that the return type
+     * of the matchCandidate is assignable to the type of V.
+     */
     private boolean returnTypeMatches(MethodInvocation methodInvocationFromJavaPattern, ITypeBinding matchCandidate) {
       final ITypeBinding returnType = methodInvocationFromJavaPattern.resolveMethodBinding().getReturnType();
       if(returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) != null) {
@@ -247,6 +270,14 @@ class JavaPatternASTMatcher {
       }
     }
 
+
+    /**
+     * Checks whether we have found an existing value for a {@link Substitute} method, which isn't the same as the ASTNode we are now matching against.
+     * For example, if we have already resolved the substitute method "aMethod" to "foo.toString()", then trying to set "aMethod" to be "bar.stringValue()"
+     * means we don't have a match.
+     *
+     * If we don't already have an ASTNode captured for the substitute method, store the matchCandidate.
+     */
     private boolean putSubstituteNameAndCapturedNode(MethodInvocation methodInvocationFromJavaPattern, ASTNode matchCandidate) {
       if(substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()) != null &&
           !substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)){
@@ -256,6 +287,7 @@ class JavaPatternASTMatcher {
         return true;
       }
     }
+
 
     /**
      * Overridden match to be more relaxed about static arguments.
@@ -276,6 +308,13 @@ class JavaPatternASTMatcher {
           && safeSubtreeMatch(node.getName(), o.getName());
     }
 
+
+    /**
+     * If the simpleType from the pattern is a TypeVariable
+     * then make sure that either we haven't already resolved a different type for it.
+     * If we haven't resolved a type yet, then capture the type found and consider it a match.
+     *
+     */
     @Override
     public boolean match(SimpleType node, Object other) {
       if (!(other instanceof SimpleType)) {
@@ -293,8 +332,6 @@ class JavaPatternASTMatcher {
         return super.match(node, other);
       }
     }
-
-
 
 
     /**
@@ -329,6 +366,19 @@ class JavaPatternASTMatcher {
               o.getAnonymousClassDeclaration());
     }
 
+
+    /**
+     * Similar to safeSubTreeListMatch, but has handling for when the left hand side is an array/varargs.
+     * In that case, it will capture the remaining arguments from the list on the right hand side.
+     *
+     * The method assumes that checks on the number of arguments on the left hand side has already been compared to the
+     * method declaration of the method being invoked on the right hand side.
+     *
+     * @param argumentsFromPattern the list of arguments from the JavaPattern invocation
+     * @param candidateArguments the list of arguments in the ASTNode we are testing for a match
+     *
+     * @return true if the arguments are a match
+     */
     boolean matchAndCaptureArgumentList(List argumentsFromPattern, List candidateArguments){
       for (Iterator it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
         ASTNode n1 = (ASTNode) it1.next();
@@ -336,7 +386,7 @@ class JavaPatternASTMatcher {
         if(n1 instanceof SimpleName) {
           final Optional<SingleVariableDeclaration> patternParameterFromSimpleName = findPatternParameterFromSimpleName((SimpleName) n1);
           if (patternParameterFromSimpleName.isPresent() && patternParameterFromSimpleName.get().resolveBinding().getType().isArray()) {
-            captureVarargs(it2, n1);
+            captureVarargs(n1, it2);
             return true;
           }
         }
@@ -351,7 +401,14 @@ class JavaPatternASTMatcher {
       return true;
     }
 
-    private void captureVarargs(Iterator it2, ASTNode n1) {
+
+    /**
+     * Captures the remaining items from the passed in iterator against the node passed in from the JavaPattern.
+     *
+     * @param n1 the node in the pattern
+     * @param it2 the iterator previously iterated to be at the same point in the argument list as n1.
+     */
+    private void captureVarargs(ASTNode n1, Iterator it2) {
       List<ASTNode> capturedArguments = new ArrayList<>();
       while(it2.hasNext()) {
         capturedArguments.add((ASTNode) it2.next());
@@ -359,19 +416,10 @@ class JavaPatternASTMatcher {
       varArgsToCapturedNodes.put(n1.toString(), capturedArguments);
     }
 
-    private boolean lastPatternArgumentIsVarargs(List argumentsFromPattern) {
-      if (argumentsFromPattern.size() ==0) {
-        return false;
-      }
-      Object lastPatternArgument = argumentsFromPattern.get(argumentsFromPattern.size()-1);
-      return lastPatternArgument instanceof SimpleName &&
-          findPatternParameterFromSimpleName((SimpleName) lastPatternArgument).isPresent()
-          && findPatternParameterFromSimpleName((SimpleName) lastPatternArgument).get().resolveBinding().getType().isArray();
-    }
 
     /**
      *
-     * @param o the methodinvocation to test
+     * @param o the MethodInvocation to test
      * @return true, if the method invocation matches the declaration of an @Substitute annotated method
      */
     private boolean methodInvocationMatchesSubstituteMethod(MethodInvocation o) {
@@ -388,6 +436,11 @@ class JavaPatternASTMatcher {
       return javaPattern.subtreeMatch(this, matchCandidate);
     }
 
+
+    /**
+     *
+     * @return an ASTNodeMatchInformation containing the node that was matched and all of the captured information.
+     */
     ASTNodeMatchInformation getNodeMatch(){
       return new ASTNodeMatchInformation(astNodeToMatchAgainst, substituteMethodToCapturedNode, simpleNameToCapturedNode, simpleTypeToCapturedType, varArgsToCapturedNodes);
     }
