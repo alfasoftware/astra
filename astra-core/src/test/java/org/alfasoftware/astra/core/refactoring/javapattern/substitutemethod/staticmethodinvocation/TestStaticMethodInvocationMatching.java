@@ -15,7 +15,7 @@ public class TestStaticMethodInvocationMatching extends AbstractRefactorTest {
    * qualified similarly after replacement.
    *
    * E.g. when changing the parameter to Collections.singletonList()
-   * ensure that the result is also Collections.singletoneList()
+   * ensure that the result is also Collections.singletonList()
    * and not just singletonList()
    *
    * @throws IOException
