@@ -22,7 +22,12 @@ import java.util.Map;
 import java.util.Optional;
 
 
-
+/**
+ * Tries to match some number of JavaPatterns with a candidate ASTNode.
+ *
+ * Results are returned by calling getFoundMatches() which returns {@link ASTNodeMatchInformation} for
+ * each JavaPattern that matched the candidate ASTNode.
+ */
 class JavaPatternASTMatcher {
 
   private final Collection<MethodDeclaration> substituteMethods;
