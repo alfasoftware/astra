@@ -8,9 +8,11 @@ import java.util.Map;
 
 /**
  * Contains information about a matched ASTNode and the pattern captures such as
- * - The ASTNodes that have been captured to replace simpleName parameters
- * - The ASTNodes captured to replace @Substitute methods
- * - The resolved TypeParameters for parameterized types that have been captured
+ * <ul>
+ *   <li>The ASTNodes that have been captured to replace simpleName parameters</li>
+ *   <li>The ASTNodes captured to replace @Substitute methods</li>
+ *   <li>The resolved TypeParameters for parameterized types that have been captured</li>
+ * </ul>
  *
  * This information is used by the {@link JavaPatternASTOperation} when rewriting a compilation unit
  */

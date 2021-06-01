@@ -42,11 +42,11 @@ class JavaPatternASTMatcher {
   boolean matchAndCapture(ASTNode matchCandidate){
     for (JavaPatternFileParser.SingleASTNodePatternMatcher javaPatternToMatch: javaPatternsToMatch) {
       final JavaPatternMatcher javaPatternMatcher = new JavaPatternMatcher(javaPatternToMatch);
-      if(javaPatternMatcher.match(javaPatternToMatch.getJavaPatternToMatch(), matchCandidate)) {
+      if (javaPatternMatcher.match(javaPatternToMatch.getJavaPatternToMatch(), matchCandidate)) {
         foundMatches.add(javaPatternMatcher.getNodeMatch());
       }
     }
-    return !foundMatches.isEmpty();
+    return ! foundMatches.isEmpty();
   }
 
   /**
@@ -99,20 +99,20 @@ class JavaPatternASTMatcher {
     public boolean match(SimpleName simpleNameFromPatternMatcher, Object matchCandidate) {
       final Optional<SingleVariableDeclaration> patternParameter = findPatternParameterFromSimpleName(simpleNameFromPatternMatcher);
 
-      if(patternParameter.isPresent() &&
+      if (patternParameter.isPresent() &&
           (isAssignmentCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
               isSubTypeCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
               typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
               simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable())) {
         // we may need to resolve Type variables defined in the JavaPattern
-        if(simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
+        if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
           final ITypeBinding[] matchCandidateTypeParameters = ((Expression) matchCandidate).resolveTypeBinding().getTypeArguments();
           final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
-          if(matchCandidateTypeParameters.length != simpleTypesToMatch.length){
+          if (matchCandidateTypeParameters.length != simpleTypesToMatch.length) {
             return false;
           }
           for (int i = 0; i < simpleTypesToMatch.length; i++) {
-            if(weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])){
+            if (weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])) {
               return false;
             }
             simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i]);
@@ -149,8 +149,8 @@ class JavaPatternASTMatcher {
      * If we don't already have an ASTNode captured for the simpleName, store it.
      */
     private boolean putSimpleNameAndCapturedNode(SimpleName simpleNameFromPatternMatcher, ASTNode matchCandidate) {
-      if(simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()) != null &&
-      !simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)){
+      if (simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()) != null && 
+          ! simpleNameToCapturedNode.get(simpleNameFromPatternMatcher.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)) {
         return false;
       } else {
         simpleNameToCapturedNode.put(simpleNameFromPatternMatcher.toString(), matchCandidate);
@@ -165,8 +165,8 @@ class JavaPatternASTMatcher {
      * we don't have a match.
      */
     private boolean weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(ITypeBinding matchCandidateTypeParameter, ITypeBinding simpleTypesToMatch) {
-      return simpleTypeToCapturedType.get(simpleTypesToMatch.getName()) != null
-          && !simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).isEqualTo(matchCandidateTypeParameter);
+      return simpleTypeToCapturedType.get(simpleTypesToMatch.getName()) != null && 
+        ! simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).isEqualTo(matchCandidateTypeParameter);
     }
 
 
@@ -174,7 +174,7 @@ class JavaPatternASTMatcher {
      * Checks whether the type of the matchCandidate is the same as the type of the simpleName from the JavaPattern.
      */
     private boolean typeOfSimpleNameIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
-      if(matchCandidate.resolveTypeBinding() == null) {
+      if (matchCandidate.resolveTypeBinding() == null) {
         return false;
       }
       return simpleNameFromPatternMatcher.resolveTypeBinding().getTypeDeclaration()
@@ -188,7 +188,7 @@ class JavaPatternASTMatcher {
      * be matched.
      */
     private boolean isAssignmentCompatible(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
-      if(matchCandidate.resolveTypeBinding() == null) {
+      if (matchCandidate.resolveTypeBinding() == null) {
         return false;
       }
       return matchCandidate.resolveTypeBinding().isAssignmentCompatible(simpleNameFromPatternMatcher.resolveTypeBinding());
@@ -202,7 +202,7 @@ class JavaPatternASTMatcher {
      * a generic Map.
      */
     private boolean isSubTypeCompatible(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
-      if(matchCandidate.resolveTypeBinding() == null) {
+      if (matchCandidate.resolveTypeBinding() == null) {
         return false;
       }
       return matchCandidate.resolveTypeBinding().getTypeDeclaration().isSubTypeCompatible(simpleNameFromPatternMatcher.resolveTypeBinding().getTypeDeclaration());
@@ -220,12 +220,12 @@ class JavaPatternASTMatcher {
      */
     @Override
     public boolean match(MethodInvocation methodInvocationFromJavaPattern, Object matchCandidate) {
-      if (!(matchCandidate instanceof MethodInvocation)) {
+      if (! (matchCandidate instanceof MethodInvocation)) {
         return false;
       }
       MethodInvocation o = (MethodInvocation) matchCandidate;
 
-      if (!safeSubtreeListMatch(methodInvocationFromJavaPattern.typeArguments(), o.typeArguments())) {
+      if (! safeSubtreeListMatch(methodInvocationFromJavaPattern.typeArguments(), o.typeArguments())) {
         return false;
       }
 
@@ -235,7 +235,7 @@ class JavaPatternASTMatcher {
           != o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
         return false;
       }
-      if (!matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())) {
+      if (! matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())) {
         return false;
       }
 
@@ -260,9 +260,9 @@ class JavaPatternASTMatcher {
      */
     private boolean returnTypeMatches(MethodInvocation methodInvocationFromJavaPattern, ITypeBinding matchCandidate) {
       final ITypeBinding returnType = methodInvocationFromJavaPattern.resolveMethodBinding().getReturnType();
-      if(returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) != null) {
+      if (returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) != null) {
         return matchCandidate.isAssignmentCompatible(simpleTypeToCapturedType.get(returnType.getName()));
-      } else if (returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) == null){
+      } else if (returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) == null) {
         simpleTypeToCapturedType.put(returnType.getName(), matchCandidate);
         return true;
       } else {
@@ -279,8 +279,8 @@ class JavaPatternASTMatcher {
      * If we don't already have an ASTNode captured for the substitute method, store the matchCandidate.
      */
     private boolean putSubstituteNameAndCapturedNode(MethodInvocation methodInvocationFromJavaPattern, ASTNode matchCandidate) {
-      if(substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()) != null &&
-          !substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)){
+      if (substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()) != null && 
+          ! substituteMethodToCapturedNode.get(methodInvocationFromJavaPattern.toString()).subtreeMatch(new ASTMatcher(), matchCandidate)) {
         return false;
       } else {
         substituteMethodToCapturedNode.put(methodInvocationFromJavaPattern.getName().toString(),  matchCandidate);
@@ -294,13 +294,13 @@ class JavaPatternASTMatcher {
      */
     @Override
     public boolean match(QualifiedName node, Object other) {
-      if(other instanceof SimpleName) {
+      if (other instanceof SimpleName) {
         final IBinding iBinding = ((SimpleName) other).resolveBinding();
-        if(iBinding.isEqualTo(node.resolveBinding())){
+        if (iBinding.isEqualTo(node.resolveBinding())) {
           return true;
         }
       }
-      if (!(other instanceof QualifiedName)) {
+      if (! (other instanceof QualifiedName)) {
         return false;
       }
       QualifiedName o = (QualifiedName) other;
@@ -317,12 +317,12 @@ class JavaPatternASTMatcher {
      */
     @Override
     public boolean match(SimpleType node, Object other) {
-      if (!(other instanceof SimpleType)) {
+      if (! (other instanceof SimpleType)) {
         return false;
       }
       SimpleType o = (SimpleType) other;
 
-      if(node.resolveBinding().isTypeVariable() &&
+      if (node.resolveBinding().isTypeVariable() &&
           weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(o.resolveBinding(), node.resolveBinding())) {
         return false;
       } else if (node.resolveBinding().isTypeVariable()) {
@@ -339,25 +339,25 @@ class JavaPatternASTMatcher {
      *
      */
     public boolean match(ClassInstanceCreation node, Object other) {
-      if (!(other instanceof ClassInstanceCreation)) {
+      if (! (other instanceof ClassInstanceCreation)) {
         return false;
       }
       ClassInstanceCreation o = (ClassInstanceCreation) other;
-      if (!safeSubtreeListMatch(node.typeArguments(), o.typeArguments())) {
+      if (! safeSubtreeListMatch(node.typeArguments(), o.typeArguments())) {
         return false;
       }
-      if (!safeSubtreeMatch(node.getType(), o.getType())) {
+      if (! safeSubtreeMatch(node.getType(), o.getType())) {
         return false;
       }
 
-      if(node.arguments().size()
+      if (node.arguments().size()
           != o.resolveConstructorBinding().getParameterTypes().length) {
         return false;
       }
 
-      if(!matchAndCaptureArgumentList(node.arguments(), o.arguments())){
+      if (! matchAndCaptureArgumentList(node.arguments(), o.arguments())) {
         return false;
-      };
+      }
 
       return
           safeSubtreeMatch(node.getExpression(), o.getExpression())
@@ -379,11 +379,11 @@ class JavaPatternASTMatcher {
      *
      * @return true if the arguments are a match
      */
-    boolean matchAndCaptureArgumentList(List argumentsFromPattern, List candidateArguments){
+    boolean matchAndCaptureArgumentList(List argumentsFromPattern, List candidateArguments) {
       for (Iterator it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
         ASTNode n1 = (ASTNode) it1.next();
 
-        if(n1 instanceof SimpleName) {
+        if (n1 instanceof SimpleName) {
           final Optional<SingleVariableDeclaration> patternParameterFromSimpleName = findPatternParameterFromSimpleName((SimpleName) n1);
           if (patternParameterFromSimpleName.isPresent() && patternParameterFromSimpleName.get().resolveBinding().getType().isArray()) {
             captureVarargs(n1, it2);
@@ -393,7 +393,7 @@ class JavaPatternASTMatcher {
 
         // default behaviour
         ASTNode n2 = (ASTNode) it2.next();
-        if (!n1.subtreeMatch(this, n2)) {
+        if (! n1.subtreeMatch(this, n2)) {
           return false;
         }
 
@@ -410,7 +410,7 @@ class JavaPatternASTMatcher {
      */
     private void captureVarargs(ASTNode n1, Iterator it2) {
       List<ASTNode> capturedArguments = new ArrayList<>();
-      while(it2.hasNext()) {
+      while (it2.hasNext()) {
         capturedArguments.add((ASTNode) it2.next());
       }
       varArgsToCapturedNodes.put(n1.toString(), capturedArguments);
