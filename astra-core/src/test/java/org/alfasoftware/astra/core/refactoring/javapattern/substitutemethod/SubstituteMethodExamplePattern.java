@@ -3,6 +3,7 @@ package org.alfasoftware.astra.core.refactoring.javapattern.substitutemethod;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPattern;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.Substitute;
+import org.alfasoftware.astra.exampleTypes.ExampleWithFluentBuilder;
 
 
 public abstract class SubstituteMethodExamplePattern {
@@ -17,8 +18,8 @@ public abstract class SubstituteMethodExamplePattern {
 
   @JavaPatternReplacement
   void patternReplacement(String string, Integer integer, Object[] objects){
-    BuilderExample
-        .otherMethod(integer, string) // swap order
+    ExampleWithFluentBuilder
+        .withAandB(integer, string)// swap order
         .withArguments(objects); // capture varargs
   }
 }

@@ -8,7 +8,9 @@ public class ExampleWithFluentBuilder {
   public static Builder withCode(String c) {
     return new Builder(c);
   }
-
+  public static Builder withAandB(Integer a, String b) {
+    return new Builder("");
+  }
 
   public static class Builder {
 
@@ -32,6 +34,8 @@ public class ExampleWithFluentBuilder {
     public Builder withC() {
       return this;
     }
+
+    public Builder withArguments(Object... objects) {return this;}
 
     public ExampleWithFluentBuilder build() {
       return new ExampleWithFluentBuilder();

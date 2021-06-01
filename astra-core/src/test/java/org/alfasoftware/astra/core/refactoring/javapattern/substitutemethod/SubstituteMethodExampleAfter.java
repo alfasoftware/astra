@@ -1,5 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.substitutemethod;
 
+import org.alfasoftware.astra.exampleTypes.ExampleWithFluentBuilder;
+
 class SubstituteMethodExampleAfter {
 
   void someMethodWithCodeToMatch(){
@@ -8,8 +10,8 @@ class SubstituteMethodExampleAfter {
     String arg1 = "arg1";
     String arg2 = "arg2";
 
-    BuilderExample.otherMethod(anInteger, someText).withArguments(arg1, arg2);
-    BuilderExample.otherMethod(anInteger, someText).withArguments(arg1);
+    ExampleWithFluentBuilder.withAandB(anInteger, someText).withArguments(arg1, arg2);
+    ExampleWithFluentBuilder.withAandB(anInteger, someText).withArguments(arg1);
     aVoidMethod(someText, anInteger, arg1, arg2);
   }
 
