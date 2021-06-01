@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 
-public abstract class StaticMethodInvocationSubstitutePattern {
+abstract class StaticMethodInvocationSubstitutePattern {
 
+  /**
+   * Capture some method taking a String and returning a List<String>
+   */
   @Substitute
   abstract List<String> someMethod(String string);
 

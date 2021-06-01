@@ -1,6 +1,6 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.substitutemethod;
 
-public class SubstituteMethod {
+class SubstituteMethodExample {
 
   void someMethodWithCodeToMatch(){
     String someText = "someText";

@@ -2,7 +2,7 @@ package org.alfasoftware.astra.core.refactoring.javapattern.parametermatching;
 
 import java.util.HashMap;
 
-public class ParameterMatching {
+class ParameterMatching {
 
   void someMethodWithCodeToMatch(){
     HashMap<Integer, Object> map = new HashMap<>();

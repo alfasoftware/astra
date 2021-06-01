@@ -8,15 +8,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-public class TestSubstituteMethodMatching extends AbstractRefactorTest {
+public class TestSubstituteMethodExampleMatching extends AbstractRefactorTest {
 
   @Test
   public void test() throws IOException {
     assertRefactor(
-        SubstituteMethod.class,
+        SubstituteMethodExample.class,
         Collections.singleton(
             new JavaPatternASTOperation(
-                new File(TEST_EXAMPLES + "/" + SubstituteMethodPattern.class.getName().replaceAll("\\.", "/") + ".java")
+                new File(TEST_EXAMPLES + "/" + SubstituteMethodExamplePattern.class.getName().replaceAll("\\.", "/") + ".java")
             )
         )
     );

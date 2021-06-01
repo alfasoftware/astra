@@ -4,7 +4,7 @@ import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatter
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 
 
-public class InvocationChangeInheritedFromSuperclassMatcher {
+class InvocationChangeInheritedFromSuperclassMatcher {
 
   @JavaPattern
   void matcher(Object a){

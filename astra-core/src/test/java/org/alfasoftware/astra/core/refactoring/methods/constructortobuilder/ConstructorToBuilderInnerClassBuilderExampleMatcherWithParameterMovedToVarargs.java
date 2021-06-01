@@ -4,16 +4,16 @@ import org.alfasoftware.astra.core.refactoring.methods.constructortobuilder.buil
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPattern;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 
-public class ConstructorToBuilderInnerClassBuilderExampleMatcher2 {
+class ConstructorToBuilderInnerClassBuilderExampleMatcherWithParameterMovedToVarargs {
 
   @JavaPattern
-  void pattern(String parameter1, Object[] parameterArray){
-    new BuiltType(parameter1, parameterArray);
+  void pattern(String parameter1, String parameter2, Object[] parameterArray){
+    new BuiltType(parameter1, parameter2, parameterArray);
   }
 
   @JavaPatternReplacement
-  void patternReplacement(String parameter1, Object[] parameterArray){
-    BuiltType.builderForKey(parameter1).withValues(parameterArray).build();
+  void patternReplacement(String parameter1, String parameter2, Object[] parameterArray){
+    BuiltType.builderForKey(parameter1).withValues(parameter2, parameterArray).build();
   }
 
 }

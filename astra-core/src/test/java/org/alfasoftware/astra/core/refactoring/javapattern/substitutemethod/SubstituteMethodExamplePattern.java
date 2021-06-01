@@ -4,10 +4,8 @@ import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatter
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.Substitute;
 
-import java.util.Map;
 
-
-public abstract class SubstituteMethodPattern {
+public abstract class SubstituteMethodExamplePattern {
 
   @Substitute
   abstract boolean someMethod(String string, Integer integer, Object[] objects);
@@ -19,7 +17,7 @@ public abstract class SubstituteMethodPattern {
 
   @JavaPatternReplacement
   void patternReplacement(String string, Integer integer, Object[] objects){
-    MethodBuilder
+    BuilderExample
         .otherMethod(integer, string) // swap order
         .withArguments(objects); // capture varargs
   }

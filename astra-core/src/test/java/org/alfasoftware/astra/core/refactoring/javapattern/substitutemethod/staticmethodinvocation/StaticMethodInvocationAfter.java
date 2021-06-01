@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class StaticMethodInvocationAfter {
+class StaticMethodInvocationAfter {
 
   void someMethodWithCodeToMatch(){
     String key = "key";

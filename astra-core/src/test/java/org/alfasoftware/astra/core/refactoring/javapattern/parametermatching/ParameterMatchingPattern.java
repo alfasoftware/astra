@@ -6,7 +6,7 @@ import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatter
 import java.util.Map;
 
 
-public class ParameterMatchingPattern<K,V> {
+class ParameterMatchingPattern<K,V> {
 
   @JavaPattern
   void patternWithParameters(String string, Map<K,V> map, K key){

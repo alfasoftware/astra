@@ -1,6 +1,6 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.substitutemethod;
 
-public class MethodBuilder {
+class BuilderExample {
 
   static RequiresArguments otherMethod(Integer integer, String string){
     return new RequiresArguments(integer, string);

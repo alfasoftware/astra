@@ -8,7 +8,6 @@ import java.util.HashSet;
 
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
-import org.alfasoftware.astra.core.refactoring.methods.constructortobuilder.ConstructorToBuilderInnerClassBuilderExampleMatcher1;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal.sub.ExampleRule;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal.sub.ExampleTestingModule;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal.sub.ReplacementRule;

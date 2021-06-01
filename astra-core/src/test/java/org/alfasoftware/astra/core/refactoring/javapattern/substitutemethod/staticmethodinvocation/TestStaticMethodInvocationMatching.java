@@ -10,6 +10,16 @@ import java.util.Collections;
 
 public class TestStaticMethodInvocationMatching extends AbstractRefactorTest {
 
+  /**
+   * Tests that captured static method invocations are
+   * qualified similarly after replacement.
+   *
+   * E.g. when changing the parameter to Collections.singletonList()
+   * ensure that the result is also Collections.singletoneList()
+   * and not just singletonList()
+   *
+   * @throws IOException
+   */
   @Test
   public void test() throws IOException {
     assertRefactor(

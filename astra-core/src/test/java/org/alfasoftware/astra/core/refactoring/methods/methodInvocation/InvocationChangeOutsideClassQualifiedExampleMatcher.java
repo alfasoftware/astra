@@ -5,7 +5,7 @@ import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatter
 import org.alfasoftware.astra.exampleTypes.A;
 
 
-public class InvocationChangeOutsideClassQualifiedExampleMatcher {
+class InvocationChangeOutsideClassQualifiedExampleMatcher {
 
   @JavaPattern
   void matcher(A a){
