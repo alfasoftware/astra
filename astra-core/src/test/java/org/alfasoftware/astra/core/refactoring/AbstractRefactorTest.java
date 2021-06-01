@@ -1,5 +1,8 @@
 package org.alfasoftware.astra.core.refactoring;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
 import org.eclipse.jface.text.BadLocationException;
@@ -10,9 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.function.Function;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public abstract class AbstractRefactorTest {
 
