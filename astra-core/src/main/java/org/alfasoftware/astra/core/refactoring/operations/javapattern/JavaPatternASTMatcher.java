@@ -105,7 +105,7 @@ class JavaPatternASTMatcher {
       final Optional<SingleVariableDeclaration> patternParameter = findPatternParameterFromSimpleName(simpleNameFromPatternMatcher);
 
       if (patternParameter.isPresent() &&
-          typeOfSimpleNameIsCompatibleWithMatchCandidate(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
+          isTypeOfSimpleNameCompatibleWithMatchCandidate(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
         // we may need to resolve Type variables defined in the JavaPattern
         if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
           if (!resolveSimpleTypes(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
@@ -139,7 +139,7 @@ class JavaPatternASTMatcher {
       return true;
     }
 
-    private boolean typeOfSimpleNameIsCompatibleWithMatchCandidate(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+    private boolean isTypeOfSimpleNameCompatibleWithMatchCandidate(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
       return isAssignmentCompatible(simpleNameFromPatternMatcher, matchCandidate) ||
           isSubTypeCompatible(simpleNameFromPatternMatcher, matchCandidate) ||
           typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, matchCandidate) ||
