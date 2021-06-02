@@ -108,7 +108,7 @@ class JavaPatternASTMatcher {
           isTypeOfSimpleNameCompatibleWithMatchCandidate(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
         // we may need to resolve Type variables defined in the JavaPattern
         if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
-          if (!isResolveAndCaptureSimpleTypeAMatch(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
+          if (!matchAndCaptureSimpleTypesForParameterizedType(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
             return false;
           }
         }
@@ -117,10 +117,10 @@ class JavaPatternASTMatcher {
         return false;
       } else if (simpleNameFromPatternMatcher.getParent() instanceof SingleVariableDeclaration
       || simpleNameFromPatternMatcher.getLocationInParent().getId().equals("expression")) {
-        // don't care about it if it's the name of a variable only
+        // don't care about it if it's just the name of a variable
         return true;
       } else {
-        return super.match(simpleNameFromPatternMatcher, matchCandidate); // the names given to variables in the pattern don't matter.
+        return super.match(simpleNameFromPatternMatcher, matchCandidate);
       }
     }
 
@@ -137,7 +137,7 @@ class JavaPatternASTMatcher {
      * @param matchCandidate the candidate to match against
      * @return false if the simpleName doesn't match the matchCandidate
      */
-    private boolean isResolveAndCaptureSimpleTypeAMatch(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+    private boolean matchAndCaptureSimpleTypesForParameterizedType(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
       final ITypeBinding[] matchCandidateTypeParameters = matchCandidate.resolveTypeBinding().getTypeArguments();
       final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
       if (matchCandidateTypeParameters.length != simpleTypesToMatch.length) {
