@@ -8,12 +8,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-public class TestParameterMatching extends AbstractRefactorTest {
+public class TestParameterMatchingExample extends AbstractRefactorTest {
 
+  /**
+   * Tests that the parameters in a JavaPattern are captured
+   * and replaced correctly.
+   *
+   * See {@link ParameterMatchingPattern} for details.
+   *
+   */
   @Test
   public void test() throws IOException {
     assertRefactor(
-        ParameterMatching.class,
+        ParameterMatchingExample.class,
         Collections.singleton(
             new JavaPatternASTOperation(
                 new File(TEST_EXAMPLES + "/" + ParameterMatchingPattern.class.getName().replaceAll("\\.", "/") + ".java")

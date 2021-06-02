@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * - @JavaPatternReplacement the expression to replace matches with, specifying how the parameters and @Substitute methods should be used
  *
  */
-public class JavaPatternFileParser {
+class JavaPatternFileParser {
 
   private final Collection<SingleASTNodePatternMatcher> patternsToMatch = new ArrayList<>();
   private final Collection<MethodDeclaration> substituteMethods = new ArrayList<>();

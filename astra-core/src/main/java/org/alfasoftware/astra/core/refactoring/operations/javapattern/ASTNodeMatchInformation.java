@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * This information is used by the {@link JavaPatternASTOperation} when rewriting a compilation unit
  */
-public class ASTNodeMatchInformation {
+class ASTNodeMatchInformation {
   private final ASTNode nodeThatWasMatched;
   private final Map<String, ASTNode> substituteMethodToCapturedNode;
   private final Map<String, ASTNode> simpleNameToCapturedNode;
