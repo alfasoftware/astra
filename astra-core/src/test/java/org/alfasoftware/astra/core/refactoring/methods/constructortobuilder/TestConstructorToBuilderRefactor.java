@@ -78,6 +78,7 @@ public class TestConstructorToBuilderRefactor extends AbstractRefactorTest {
   }
 
   /**
+   * Tests refactoring using the JavaPattern operation.
    * This variant ensures that where the builder used is not an inner class of the existing type,
    * an import can be added for the new one.
    */

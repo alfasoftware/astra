@@ -50,13 +50,18 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
 		            .toNewMethodName("getClass")))));
   }
 
+
+  /**
+   * Uses the JavaPattern framework to change an invocation of a method from a specific class,
+   * with a specific name, to another method on the same class.
+   */
   @Test
   public void testInvocationChangeOutsideClassFullyQualifiedUsingMatcher() throws IOException {
     assertRefactor(InvocationChangeOutsideClassQualifiedExample.class,
         new HashSet<>(
             Arrays.asList(
               new JavaPatternASTOperation(
-                  new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodInvocation/InvocationChangeOutsideClassQualifiedExampleMatcher.java"),
+		  new File(TEST_EXAMPLES + "/" + InvocationChangeOutsideClassQualifiedExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
                   new String[]{TEST_SOURCE}
               )
             )
@@ -83,12 +88,16 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
                 .toNewMethodName("getClass")))));
   }
 
+  /*
+   * Uses the JavaPattern framework to change an invocation of a method inherited from a class with a specific name, to another method.
+   */
   @Test
   public void testInvocationChangeInheritedFromSuperclassMatcher() throws IOException {
     assertRefactor(InvocationChangeInheritedFromSuperclassExample.class,
         new HashSet<>(
             Collections.singletonList(
-                new JavaPatternASTOperation(new File("src/test/java/org/alfasoftware/astra/core/refactoring/methods/methodInvocation/InvocationChangeInheritedFromSuperclassMatcher.java"))
+                new JavaPatternASTOperation(
+		  new File(TEST_EXAMPLES + "/" + InvocationChangeInheritedFromSuperclassMatcher.class.getName().replaceAll("\\.", "/") + ".java"))
             )
         )
     );
