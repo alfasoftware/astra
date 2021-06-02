@@ -1,6 +1,9 @@
 package org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
@@ -8,6 +11,7 @@ import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal.sub.ExampleRule;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal.sub.ExampleTestingModule;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal.sub.ReplacementRule;
+import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.refactoring.operations.methods.ChainedMethodInvocationRemovalRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.methods.UnwrapAndRemoveMethodInvocationRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.methods.UnwrapAndRemoveMethodInvocationRefactor.Changes;
@@ -32,6 +36,23 @@ public class TestInvocationRemovalRefactor extends AbstractRefactorTest {
             .withFullyQualifiedDeclaringType(ExampleWithFluentBuilder.Builder.class.getName())
             .build())
       ))
+    );
+  }
+
+  /**
+   * Verifies that a JavaPattern can be used to remove calls to withB() and withBs()
+   * that are part of a builder chain.
+   */
+  @Test
+  public void testInvocationChainedRemovalMatcher() throws IOException {
+    assertRefactor(
+        RemoveChainedInvocationExample.class,
+        Collections.singleton(
+            new JavaPatternASTOperation(
+                new File(TEST_EXAMPLES + "/" + RemoveChainedInvocationExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
+                new String[]{TEST_SOURCE}
+            )
+        )
     );
   }
 

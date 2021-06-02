@@ -1,5 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.methods.constructortobuilder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -7,6 +9,7 @@ import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
 import org.alfasoftware.astra.core.refactoring.methods.constructortobuilder.builder.BuiltType;
 import org.alfasoftware.astra.core.refactoring.methods.constructortobuilder.constructor.ConstructorType;
+import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.refactoring.operations.methods.ConstructorToBuilderRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.methods.ConstructorToBuilderRefactor.BuilderSection;
 import org.junit.Test;
@@ -72,6 +75,31 @@ public class TestConstructorToBuilderRefactor extends AbstractRefactorTest {
                 )
               )
           )));
+  }
+
+  /**
+   * Tests refactoring using the JavaPattern operation.
+   * This variant ensures that where the builder used is not an inner class of the existing type,
+   * an import can be added for the new one.
+   */
+  @Test
+  public void testConstructorToInnerClassBuilderMatcher() throws IOException {
+    assertRefactor(
+        ConstructorToBuilderInnerClassBuilderExample.class,
+        new HashSet<>(
+            Arrays.asList(
+            new JavaPatternASTOperation(
+                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithThreeParameters.class.getName().replaceAll("\\.", "/") + ".java")
+            ),
+            new JavaPatternASTOperation(
+                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithVarargs.class.getName().replaceAll("\\.", "/") + ".java")
+            ),
+            new JavaPatternASTOperation(
+                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithParameterMovedToVarargs.class.getName().replaceAll("\\.", "/") + ".java")
+            )
+          )
+        )
+    );
   }
 
 
