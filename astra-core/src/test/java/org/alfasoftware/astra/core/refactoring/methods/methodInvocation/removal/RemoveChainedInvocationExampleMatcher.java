@@ -4,7 +4,7 @@ import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatter
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 import org.alfasoftware.astra.exampleTypes.ExampleWithFluentBuilder;
 
-public class RemoveChainedInvocationExampleMatcher {
+class RemoveChainedInvocationExampleMatcher {
 
   @JavaPattern
   void pattern(ExampleWithFluentBuilder.Builder builder){

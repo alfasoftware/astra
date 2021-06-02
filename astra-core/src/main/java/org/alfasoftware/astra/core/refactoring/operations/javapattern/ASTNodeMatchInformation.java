@@ -43,7 +43,7 @@ class ASTNodeMatchInformation {
     return simpleNameToCapturedNode;
   }
 
-  public final Map<String, ITypeBinding> getSimpleTypeToCapturedType() {
+  public Map<String, ITypeBinding> getSimpleTypeToCapturedType() {
     return simpleTypeToCapturedType;
   }
 

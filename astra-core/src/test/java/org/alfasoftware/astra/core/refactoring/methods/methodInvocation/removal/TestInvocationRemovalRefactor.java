@@ -39,6 +39,10 @@ public class TestInvocationRemovalRefactor extends AbstractRefactorTest {
     );
   }
 
+  /**
+   * Verifies that a JavaPattern can be used to remove calls to withB() and withBs()
+   * that are part of a builder chain.
+   */
   @Test
   public void testInvocationChainedRemovalMatcher() throws IOException {
     assertRefactor(
