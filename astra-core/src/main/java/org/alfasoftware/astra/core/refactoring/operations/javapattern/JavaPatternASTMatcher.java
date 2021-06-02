@@ -105,22 +105,11 @@ class JavaPatternASTMatcher {
       final Optional<SingleVariableDeclaration> patternParameter = findPatternParameterFromSimpleName(simpleNameFromPatternMatcher);
 
       if (patternParameter.isPresent() &&
-          (isAssignmentCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              isSubTypeCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable())) {
+          isTypeOfSimpleNameCompatibleWithMatchCandidate(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
         // we may need to resolve Type variables defined in the JavaPattern
         if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
-          final ITypeBinding[] matchCandidateTypeParameters = ((Expression) matchCandidate).resolveTypeBinding().getTypeArguments();
-          final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
-          if (matchCandidateTypeParameters.length != simpleTypesToMatch.length) {
+          if (!matchAndCaptureSimpleTypesForParameterizedType(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
             return false;
-          }
-          for (int i = 0; i < simpleTypesToMatch.length; i++) {
-            if (weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])) {
-              return false;
-            }
-            simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i]);
           }
         }
         return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
@@ -128,11 +117,46 @@ class JavaPatternASTMatcher {
         return false;
       } else if (simpleNameFromPatternMatcher.getParent() instanceof SingleVariableDeclaration
       || simpleNameFromPatternMatcher.getLocationInParent().getId().equals("expression")) {
-        // don't care about it if it's the name of a variable only
+        // don't care about it if it's just the name of a variable
         return true;
       } else {
-        return super.match(simpleNameFromPatternMatcher, matchCandidate); // the names given to variables in the pattern don't matter.
+        return super.match(simpleNameFromPatternMatcher, matchCandidate);
       }
+    }
+
+
+    /**
+     * For a parameterized type, verifies that the matchCandidate
+     * has the same number of type arguments as the simpleName's type.
+     *
+     * Captures the SimpleTypes if they have not already been captured.
+     * If an existing capture of a simpleType doesn't match the corresponding type argument in the matchCandidate
+     * then return false, as we don't have a match between the simpleName and the matchCandidate.
+     *
+     * @param simpleNameFromPatternMatcher the simpleName we are matching
+     * @param matchCandidate the candidate to match against
+     * @return false if the simpleName doesn't match the matchCandidate
+     */
+    private boolean matchAndCaptureSimpleTypesForParameterizedType(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      final ITypeBinding[] matchCandidateTypeParameters = matchCandidate.resolveTypeBinding().getTypeArguments();
+      final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
+      if (matchCandidateTypeParameters.length != simpleTypesToMatch.length) {
+        return false;
+      }
+      for (int i = 0; i < simpleTypesToMatch.length; i++) {
+        if (isSimpleTypeAlreadyCapturedWithTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])) {
+          return false;
+        }
+        simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i]);
+      }
+      return true;
+    }
+
+    private boolean isTypeOfSimpleNameCompatibleWithMatchCandidate(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      return isAssignmentCompatible(simpleNameFromPatternMatcher, matchCandidate) ||
+          isSubTypeCompatible(simpleNameFromPatternMatcher, matchCandidate) ||
+          isTypeOfSimpleNameEqualToTypeOfMatchCandidate(simpleNameFromPatternMatcher, matchCandidate) ||
+          simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable();
     }
 
 
@@ -169,7 +193,7 @@ class JavaPatternASTMatcher {
      * For example, if we have already resolved the Type of K from the JavaPattern to be String, then trying to set K to be Integer means
      * we don't have a match.
      */
-    private boolean weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(ITypeBinding matchCandidateTypeParameter, ITypeBinding simpleTypesToMatch) {
+    private boolean isSimpleTypeAlreadyCapturedWithTypeWhichIsDifferent(ITypeBinding matchCandidateTypeParameter, ITypeBinding simpleTypesToMatch) {
       return simpleTypeToCapturedType.get(simpleTypesToMatch.getName()) != null && 
         ! simpleTypeToCapturedType.get(simpleTypesToMatch.getName()).isEqualTo(matchCandidateTypeParameter);
     }
@@ -178,7 +202,7 @@ class JavaPatternASTMatcher {
     /**
      * Checks whether the type of the matchCandidate is the same as the type of the simpleName from the JavaPattern.
      */
-    private boolean typeOfSimpleNameIsEqual(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+    private boolean isTypeOfSimpleNameEqualToTypeOfMatchCandidate(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
       if (matchCandidate.resolveTypeBinding() == null) {
         return false;
       }
@@ -246,7 +270,7 @@ class JavaPatternASTMatcher {
 
       // If the method invocation is a substitute annotated method, we want the return type to match as well.
       if (methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern)) {
-        if (returnTypeMatches(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding())) {
+        if (isReturnTypeMatch(methodInvocationFromJavaPattern, ((MethodInvocation) matchCandidate).resolveTypeBinding())) {
           return putSubstituteNameAndCapturedNode(methodInvocationFromJavaPattern, (ASTNode) matchCandidate);
         } else {
           return false;
@@ -263,7 +287,7 @@ class JavaPatternASTMatcher {
      * If the return type is a TypeVariable V, then if we have already resolved a type for V, check that the return type
      * of the matchCandidate is assignable to the type of V.
      */
-    private boolean returnTypeMatches(MethodInvocation methodInvocationFromJavaPattern, ITypeBinding matchCandidate) {
+    private boolean isReturnTypeMatch(MethodInvocation methodInvocationFromJavaPattern, ITypeBinding matchCandidate) {
       final ITypeBinding returnType = methodInvocationFromJavaPattern.resolveMethodBinding().getReturnType();
       if (returnType.isTypeVariable() && simpleTypeToCapturedType.get(returnType.getName()) != null) {
         return matchCandidate.isAssignmentCompatible(simpleTypeToCapturedType.get(returnType.getName()));
@@ -328,7 +352,7 @@ class JavaPatternASTMatcher {
       SimpleType o = (SimpleType) other;
 
       if (node.resolveBinding().isTypeVariable() &&
-          weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(o.resolveBinding(), node.resolveBinding())) {
+          isSimpleTypeAlreadyCapturedWithTypeWhichIsDifferent(o.resolveBinding(), node.resolveBinding())) {
         return false;
       } else if (node.resolveBinding().isTypeVariable()) {
         simpleTypeToCapturedType.put(node.resolveBinding().getName(), o.resolveBinding());
@@ -343,6 +367,7 @@ class JavaPatternASTMatcher {
      * Overridden matcher for ClassInstanceCreation to handle varargs specified in the JavaPattern.
      *
      */
+    @Override
     public boolean match(ClassInstanceCreation node, Object other) {
       if (! (other instanceof ClassInstanceCreation)) {
         return false;
