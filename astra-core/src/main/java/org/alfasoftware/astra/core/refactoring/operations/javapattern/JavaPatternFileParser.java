@@ -88,7 +88,6 @@ class JavaPatternFileParser {
     final Collection<MethodDeclaration> methodsWithJavaCodeToMatch = parseMethodsDefiningExpressionsToRefactorFrom(visitor);
     List<SingleASTNodePatternMatcher> nodesToMatch = new ArrayList<>();
     methodsWithJavaCodeToMatch.forEach(methodDeclaration ->
-    {
       methodDeclaration.getBody()
           .statements().forEach(statement -> {
             ASTNode expressionToMatch;
@@ -105,23 +104,23 @@ class JavaPatternFileParser {
 
             nodesToMatch.add(new SingleASTNodePatternMatcher(expressionToMatch, singleVariableDeclarations));
           }
-      );
-    });
+      )
+    );
     return nodesToMatch;
   }
 
   private ASTNode parsePatternToRefactorTo(MethodDeclarationVisitor visitor) {
     final MethodDeclaration methodToRefactorTo = parseMethodAnnotatedWithJavaPatternReplacement(visitor);
     final Statement statement = (Statement) methodToRefactorTo.getBody().statements().get(0);
-    ASTNode patternToRefactorTo;
+    ASTNode parsedPatternToRefactorTo;
     if (statement instanceof ReturnStatement) {
-      patternToRefactorTo = ((ReturnStatement) statement).getExpression();
+      parsedPatternToRefactorTo = ((ReturnStatement) statement).getExpression();
     } else if (statement instanceof ExpressionStatement){
-      patternToRefactorTo = ((ExpressionStatement) statement).getExpression();
+      parsedPatternToRefactorTo = ((ExpressionStatement) statement).getExpression();
     } else {
-      patternToRefactorTo = statement;
+      parsedPatternToRefactorTo = statement;
     }
-    return patternToRefactorTo;
+    return parsedPatternToRefactorTo;
   }
 
 

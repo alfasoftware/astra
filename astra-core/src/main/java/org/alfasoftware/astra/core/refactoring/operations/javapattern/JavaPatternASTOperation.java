@@ -165,15 +165,15 @@ public class JavaPatternASTOperation implements ASTOperation {
   /**
    * Replaces the references to @Substitute methods in the patternToRefactorTo with the ASTNodes captured during matching.
    */
-  private static void replaceCapturedSubstituteMethods(ASTRewrite rewriter, ASTNodeMatchInformation ASTNodeMatchInformation, ClassVisitor visitor) {
+  private static void replaceCapturedSubstituteMethods(ASTRewrite rewriter, ASTNodeMatchInformation astNodeMatchInformation, ClassVisitor visitor) {
     visitor.getMethodInvocations().stream().
-        filter(methodInvocation -> ASTNodeMatchInformation.getSubstituteMethodToCapturedNode().get(methodInvocation.getName().toString()) != null)
+        filter(methodInvocation -> astNodeMatchInformation.getSubstituteMethodToCapturedNode().get(methodInvocation.getName().toString()) != null)
         .forEach(
             methodInvocation -> {
               final ClassVisitor methodVisitor = new ClassVisitor();
               methodInvocation.accept(methodVisitor);
-              replaceCapturedSimpleNames(rewriter, ASTNodeMatchInformation, methodVisitor);
-                final MethodInvocation capturedMethodInvocation = (MethodInvocation) ASTNodeMatchInformation.getSubstituteMethodToCapturedNode()
+              replaceCapturedSimpleNames(rewriter, astNodeMatchInformation, methodVisitor);
+                final MethodInvocation capturedMethodInvocation = (MethodInvocation) astNodeMatchInformation.getSubstituteMethodToCapturedNode()
                     .get(methodInvocation.getName().toString());
                 if(AstraUtils.isMethodInvocationStatic(capturedMethodInvocation)) {
                   rewriter.set(methodInvocation, MethodInvocation.EXPRESSION_PROPERTY, capturedMethodInvocation.getExpression(), null);
@@ -189,12 +189,12 @@ public class JavaPatternASTOperation implements ASTOperation {
    * Replaces references to TypeParameters with the Types captured during matching.
    *
    */
-  private static void replaceCapturedSimpleTypes(ASTRewrite rewriter, ASTNodeMatchInformation ASTNodeMatchInformation, ClassVisitor visitor) {
+  private static void replaceCapturedSimpleTypes(ASTRewrite rewriter, ASTNodeMatchInformation astNodeMatchInformation, ClassVisitor visitor) {
     visitor.getSimpleTypes()
-        .stream().filter(simpleType -> ASTNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()) != null)
+        .stream().filter(simpleType -> astNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()) != null)
         .forEach(simpleType ->
             rewriter.replace(simpleType, rewriter.getAST().newSimpleType(
-                rewriter.getAST().newSimpleName(ASTNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()).getName())
+                rewriter.getAST().newSimpleName(astNodeMatchInformation.getSimpleTypeToCapturedType().get(simpleType.getName().toString()).getName())
             ), null)
         );
   }

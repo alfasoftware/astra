@@ -105,22 +105,11 @@ class JavaPatternASTMatcher {
       final Optional<SingleVariableDeclaration> patternParameter = findPatternParameterFromSimpleName(simpleNameFromPatternMatcher);
 
       if (patternParameter.isPresent() &&
-          (isAssignmentCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              isSubTypeCompatible(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, (Expression) matchCandidate) ||
-              simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable())) {
+          typeOfSimpleNameIsCompatibleWithMatchCandidate(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
         // we may need to resolve Type variables defined in the JavaPattern
         if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
-          final ITypeBinding[] matchCandidateTypeParameters = ((Expression) matchCandidate).resolveTypeBinding().getTypeArguments();
-          final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
-          if (matchCandidateTypeParameters.length != simpleTypesToMatch.length) {
+          if (!resolveSimpleTypes(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
             return false;
-          }
-          for (int i = 0; i < simpleTypesToMatch.length; i++) {
-            if (weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])) {
-              return false;
-            }
-            simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i]);
           }
         }
         return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
@@ -133,6 +122,28 @@ class JavaPatternASTMatcher {
       } else {
         return super.match(simpleNameFromPatternMatcher, matchCandidate); // the names given to variables in the pattern don't matter.
       }
+    }
+
+    private boolean resolveSimpleTypes(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      final ITypeBinding[] matchCandidateTypeParameters = matchCandidate.resolveTypeBinding().getTypeArguments();
+      final ITypeBinding[] simpleTypesToMatch = simpleNameFromPatternMatcher.resolveTypeBinding().getTypeArguments();
+      if (matchCandidateTypeParameters.length != simpleTypesToMatch.length) {
+        return false;
+      }
+      for (int i = 0; i < simpleTypesToMatch.length; i++) {
+        if (weAlreadyHaveACapturedTypeForThisSimpleTypeWhichIsDifferent(matchCandidateTypeParameters[i], simpleTypesToMatch[i])) {
+          return false;
+        }
+        simpleTypeToCapturedType.put(simpleTypesToMatch[i].getName(), matchCandidateTypeParameters[i]);
+      }
+      return true;
+    }
+
+    private boolean typeOfSimpleNameIsCompatibleWithMatchCandidate(SimpleName simpleNameFromPatternMatcher, Expression matchCandidate) {
+      return isAssignmentCompatible(simpleNameFromPatternMatcher, matchCandidate) ||
+          isSubTypeCompatible(simpleNameFromPatternMatcher, matchCandidate) ||
+          typeOfSimpleNameIsEqual(simpleNameFromPatternMatcher, matchCandidate) ||
+          simpleNameFromPatternMatcher.resolveTypeBinding().isTypeVariable();
     }
 
 
@@ -343,6 +354,7 @@ class JavaPatternASTMatcher {
      * Overridden matcher for ClassInstanceCreation to handle varargs specified in the JavaPattern.
      *
      */
+    @Override
     public boolean match(ClassInstanceCreation node, Object other) {
       if (! (other instanceof ClassInstanceCreation)) {
         return false;
