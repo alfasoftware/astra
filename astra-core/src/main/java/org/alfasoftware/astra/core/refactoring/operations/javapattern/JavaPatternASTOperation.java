@@ -1,19 +1,21 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
-
-import java.io.File;
-import java.io.IOException;
 
 
 /**
@@ -100,7 +102,9 @@ public class JavaPatternASTOperation implements ASTOperation {
 
           CompilationUnit compilationUnit = getCompilationUnit(patternToRefactorTo);
           final ListRewrite listRewrite = rewriter.getListRewrite(targetCompilationUnit, CompilationUnit.IMPORTS_PROPERTY);
-          compilationUnit.imports().stream().forEach(
+          @SuppressWarnings("unchecked")
+          List<ImportDeclaration> imports = compilationUnit.imports();
+          imports.stream().forEach(
               importFromPattern -> listRewrite.insertLast((ASTNode) importFromPattern, null)
           );
 

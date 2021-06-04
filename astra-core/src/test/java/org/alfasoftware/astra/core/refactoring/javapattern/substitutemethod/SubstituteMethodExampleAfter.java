@@ -2,6 +2,7 @@ package org.alfasoftware.astra.core.refactoring.javapattern.substitutemethod;
 
 import org.alfasoftware.astra.exampleTypes.ExampleWithFluentBuilder;
 
+@SuppressWarnings("unused")
 class SubstituteMethodExampleAfter {
 
   void someMethodWithCodeToMatch(){

@@ -1,5 +1,6 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.substitutemethod;
 
+@SuppressWarnings("unused")
 class SubstituteMethodExample {
 
   void someMethodWithCodeToMatch(){

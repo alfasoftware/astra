@@ -33,7 +33,7 @@ class ExampleUsedClass {
     return null;
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({ "unused", "rawtypes" })
   static Collection methodWithCollectionClassArg(java.lang.Class<? extends Collection> clazz) {
     return null;
   }
