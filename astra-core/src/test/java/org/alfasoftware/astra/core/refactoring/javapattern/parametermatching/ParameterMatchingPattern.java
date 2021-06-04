@@ -1,11 +1,11 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.parametermatching;
 
+import java.util.Map;
+
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPattern;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 
-import java.util.Map;
-
-
+@SuppressWarnings("unchecked")
 class ParameterMatchingPattern<K,V> {
 
   @JavaPattern

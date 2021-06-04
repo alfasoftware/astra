@@ -11,9 +11,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.alfasoftware.astra.core.matchers.predicates.ExamplePredicateMatches;
-import org.alfasoftware.astra.core.matchers.predicates.ExamplePredicateMethodNameMismatch;
-import org.alfasoftware.astra.core.matchers.predicates.ExamplePredicateReturnTypeMismatch;
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;

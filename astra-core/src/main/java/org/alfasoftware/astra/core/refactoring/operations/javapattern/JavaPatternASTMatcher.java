@@ -1,5 +1,13 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.eclipse.jdt.core.dom.ASTMatcher;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -12,14 +20,6 @@ import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 
 /**
@@ -264,7 +264,11 @@ class JavaPatternASTMatcher {
           != o.resolveMethodBinding().getMethodDeclaration().getParameterTypes().length) {
         return false;
       }
-      if (! matchAndCaptureArgumentList(methodInvocationFromJavaPattern.arguments(), o.arguments())) {
+      @SuppressWarnings("unchecked")
+      List<Expression> arguments = methodInvocationFromJavaPattern.arguments();
+      @SuppressWarnings("unchecked")
+      List<Expression> otherArguments = o.arguments();
+      if (! matchAndCaptureArgumentList(arguments, otherArguments)) {
         return false;
       }
 
@@ -380,12 +384,15 @@ class JavaPatternASTMatcher {
         return false;
       }
 
-      if (node.arguments().size()
-          != o.resolveConstructorBinding().getParameterTypes().length) {
+      @SuppressWarnings("unchecked")
+      List<Expression> arguments = node.arguments();
+      @SuppressWarnings("unchecked")
+      List<Expression> otherArguments = o.arguments();
+      if (arguments.size() != o.resolveConstructorBinding().getParameterTypes().length) {
         return false;
       }
 
-      if (! matchAndCaptureArgumentList(node.arguments(), o.arguments())) {
+      if (! matchAndCaptureArgumentList(arguments, otherArguments)) {
         return false;
       }
 
@@ -409,8 +416,8 @@ class JavaPatternASTMatcher {
      *
      * @return true if the arguments are a match
      */
-    boolean matchAndCaptureArgumentList(List argumentsFromPattern, List candidateArguments) {
-      for (Iterator it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
+    boolean matchAndCaptureArgumentList(List<Expression> argumentsFromPattern, List<Expression> candidateArguments) {
+      for (Iterator<Expression> it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
         ASTNode n1 = (ASTNode) it1.next();
 
         if (n1 instanceof SimpleName) {
@@ -438,7 +445,7 @@ class JavaPatternASTMatcher {
      * @param n1 the node in the pattern
      * @param it2 the iterator previously iterated to be at the same point in the argument list as n1.
      */
-    private void captureVarargs(ASTNode n1, Iterator it2) {
+    private void captureVarargs(ASTNode n1, Iterator<Expression> it2) {
       List<ASTNode> capturedArguments = new ArrayList<>();
       while (it2.hasNext()) {
         capturedArguments.add((ASTNode) it2.next());
