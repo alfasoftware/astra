@@ -388,10 +388,10 @@ public class AstraUtils {
 
     // Don't add an import if it would clash with an existing type -
     // instead, update that import
-    Optional<ImportDeclaration> existingImportWithSameName = currentList.stream().filter(i -> getSimpleName(importPath).equals(
-      getSimpleName(i.getName().getFullyQualifiedName())))
+    Optional<ImportDeclaration> existingImportWithSameName = currentList.stream()
+        .filter(i -> getSimpleName(importPath).equals(getSimpleName(i.getName().getFullyQualifiedName())))
         .findFirst();
-    if (existingImportWithSameName.isPresent()) {
+    if (existingImportWithSameName.isPresent() && ! existingImportWithSameName.get().isStatic()) {
       updateImport(compilationUnit, existingImportWithSameName.get().getName().getFullyQualifiedName(), importPath, rewriter);
       return;
     }
