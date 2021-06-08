@@ -20,6 +20,15 @@ public class A implements Fooable {
 	public static void staticTwo() {
 
 	}
+	
+	public static void staticThree() {
+
+	}
+	
+	 
+  public static void staticFour(String arg) {
+
+  }
 
 	public B first() {
 	  return new B();

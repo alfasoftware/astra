@@ -13,11 +13,15 @@ public class B {
 	public static void staticOne() {
 
 	}
-
+	
 	public static void staticTwo() {
 
 	}
 
+	public static void staticThree(@SuppressWarnings("unused") String arg) {
+	  
+	}
+	
   public C second() {
     return new C();
   }
