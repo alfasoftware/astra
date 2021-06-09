@@ -157,24 +157,20 @@ public class UnusedImportRefactor implements ASTOperation {
 
   private boolean isImportFromSamePackageAndNotStatic(CompilationUnit compilationUnit, ImportDeclaration importDeclaration) {
 
-    // This method checks the package as it assumes that's the only thing that can precede a type,
-    // however this is not the case when importing a static method. If all other conditions are met, we also need to
-    // assert that the method import is not static to avoid incorrect removal.
-    boolean isImportStaticMethod = Optional.ofNullable(importDeclaration.resolveBinding())
+    // Imports from the same package will still be valid if they are imports of static methods
+    boolean isImportStaticMethod = Optional.ofNullable(importDeclaration)
+        .filter(ImportDeclaration::isStatic)
+        .map(ImportDeclaration::resolveBinding)
         .map(IMethodBinding.class::isInstance)
-        .isPresent()
-        && importDeclaration.isStatic();
+        .isPresent();
 
     return compilationUnit.getPackage().getName().toString().equals(
         AstraUtils.getPackageName(importDeclaration.getName().toString()))
-        && !AstraUtils.isImportOfInnerType(importDeclaration)
-        && !isImportStaticMethod;
+        && ! AstraUtils.isImportOfInnerType(importDeclaration)
+        && ! isImportStaticMethod;
   }
 
-  /* 
-   * TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
-   * (can be multiple methods with same name)
-   */ 
+
   private boolean isImportUnused(ReferenceTrackingVisitor visitor, ImportDeclaration importDeclaration) {
     return ! visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString()));
   }
