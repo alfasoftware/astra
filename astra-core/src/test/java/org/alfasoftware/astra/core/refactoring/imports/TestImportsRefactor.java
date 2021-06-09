@@ -62,4 +62,26 @@ public class TestImportsRefactor extends AbstractRefactorTest {
         }
       })));
   }
+
+  /**
+   * Tests that the following static imports are not removed:
+   * <ul>
+   *   <li>A static method import from another type in the same package</li>
+   *   <li>A static method import from an inner class of that type</li>
+   * </ul>
+   */
+  @Test
+  public void testStaticImportsFromSamePackageAreNotRemoved() {
+    assertRefactor(StaticImportSamePackageExample.class,
+        new HashSet<>(Arrays.asList(new UnusedImportRefactor())));
+  }
+
+  /**
+   * Tests that static imports from an inner class of a top level type are not incorrectly removed
+   */
+  @Test
+  public void testStaticImportsFromInnerClassOfRefactoredClassAreNotRemoved() {
+    assertRefactor(StaticImportSameTypeInnerClassExample.class,
+        new HashSet<>(Arrays.asList(new UnusedImportRefactor())));
+  }
 }
