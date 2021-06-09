@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2021-06-09
+### Added
+
+### Changed
+
+### Fixed
+* Fixed case where adding a static import would remove an existing static import of the same name, even if this was valid.
+
+
 ## [1.3.1] - 2021-06-04
 ### Added
 
