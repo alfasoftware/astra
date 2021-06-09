@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -14,6 +15,7 @@ import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodRef;
@@ -135,7 +137,7 @@ public class UnusedImportRefactor implements ASTOperation {
           if (! isImportOnDemand(importDeclaration) && 
               (isImportDuplicate(remainingImports, importDeclaration) ||
                isImportUnused(visitor, importDeclaration) ||
-               isImportFromSamePackage(compilationUnit, importDeclaration) ||
+               isImportFromSamePackageAndNotStatic(compilationUnit, importDeclaration) ||
                isImportJavaLangAndNotStatic(importDeclaration))) {
             AstraUtils.removeImport(importDeclaration, rewriter);
           }
@@ -153,16 +155,22 @@ public class UnusedImportRefactor implements ASTOperation {
   }
 
 
-  private boolean isImportFromSamePackage(CompilationUnit compilationUnit, ImportDeclaration importDeclaration) {
+  private boolean isImportFromSamePackageAndNotStatic(CompilationUnit compilationUnit, ImportDeclaration importDeclaration) {
+
+    // Imports from the same package will still be valid if they are imports of static methods
+    boolean isImportStaticMethod = Optional.ofNullable(importDeclaration)
+        .filter(ImportDeclaration::isStatic)
+        .map(ImportDeclaration::resolveBinding)
+        .map(IMethodBinding.class::isInstance)
+        .isPresent();
+
     return compilationUnit.getPackage().getName().toString().equals(
-      AstraUtils.getPackageName(importDeclaration.getName().toString()))
-      && !AstraUtils.isImportOfInnerType(importDeclaration);
+        AstraUtils.getPackageName(importDeclaration.getName().toString()))
+        && ! AstraUtils.isImportOfInnerType(importDeclaration)
+        && ! isImportStaticMethod;
   }
 
-  /* 
-   * TODO this doesn't properly handle static imports yet - they are quite problematic as you can't accurately resolve the method signature
-   * (can be multiple methods with same name)
-   */ 
+
   private boolean isImportUnused(ReferenceTrackingVisitor visitor, ImportDeclaration importDeclaration) {
     return ! visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString()));
   }
