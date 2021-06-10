@@ -92,7 +92,7 @@ public class MethodInvocationRefactor implements ASTOperation {
       return this;
     }
 
-    public Changes withNewParameter(Object parameterLiteral, Position position) {
+    public Changes withNewParameter(String parameterLiteral, Position position) {
       Parameter value = new Parameter();
       value.parameterLiteral = parameterLiteral;
       value.position = position;
@@ -117,7 +117,7 @@ public class MethodInvocationRefactor implements ASTOperation {
   }
 
   static class Parameter {
-    Object parameterLiteral;
+    String parameterLiteral;
     Position position;
     int supplied;
   }
@@ -203,15 +203,8 @@ public class MethodInvocationRefactor implements ASTOperation {
     if (parameter.isPresent()) {
       ListRewrite methodArguments = rewriter.getListRewrite(methodInvocation, MethodInvocation.ARGUMENTS_PROPERTY);
 
-      ASTNode newArgument = null;
-      if (parameter.get().parameterLiteral instanceof String) {
-        newArgument = methodInvocation.getAST().newStringLiteral();
-        rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, parameter.get().parameterLiteral, null);
-      } else {
-        // Unfortunately have to handle each argument type individually.
-        // Hopefully once primitives and general object types are covered, this will be less of a pain.
-        throw new IllegalArgumentException("Unhandled argument type: " + parameter.get().parameterLiteral.getClass());
-      }
+      ASTNode newArgument = methodInvocation.getAST().newStringLiteral();
+      rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, parameter.get().parameterLiteral, null);
 
       switch (parameter.get().position) {
         case FIRST:
