@@ -207,6 +207,9 @@ public class MethodInvocationRefactor implements ASTOperation {
       if (parameter.get().parameterLiteral instanceof String) {
         newArgument = methodInvocation.getAST().newStringLiteral();
         rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, parameter.get().parameterLiteral, null);
+      } else if(parameter.get().parameterLiteral instanceof Class) {
+        newArgument = methodInvocation.getAST().newStringLiteral();
+        rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, ((Class<?>) parameter.get().parameterLiteral).getSimpleName()+".class", null);
       } else {
         // Unfortunately have to handle each argument type individually.
         // Hopefully once primitives and general object types are covered, this will be less of a pain.
