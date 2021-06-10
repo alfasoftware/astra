@@ -418,7 +418,7 @@ class JavaPatternASTMatcher {
      */
     boolean matchAndCaptureArgumentList(List<Expression> argumentsFromPattern, List<Expression> candidateArguments) {
       for (Iterator<Expression> it1 = argumentsFromPattern.iterator(), it2 = candidateArguments.iterator(); it1.hasNext();) {
-        ASTNode n1 = (ASTNode) it1.next();
+        ASTNode n1 = it1.next();
 
         if (n1 instanceof SimpleName) {
           final Optional<SingleVariableDeclaration> patternParameterFromSimpleName = findPatternParameterFromSimpleName((SimpleName) n1);
@@ -429,7 +429,7 @@ class JavaPatternASTMatcher {
         }
 
         // default behaviour
-        ASTNode n2 = (ASTNode) it2.next();
+        ASTNode n2 = it2.next();
         if (! n1.subtreeMatch(this, n2)) {
           return false;
         }
@@ -448,7 +448,7 @@ class JavaPatternASTMatcher {
     private void captureVarargs(ASTNode n1, Iterator<Expression> it2) {
       List<ASTNode> capturedArguments = new ArrayList<>();
       while (it2.hasNext()) {
-        capturedArguments.add((ASTNode) it2.next());
+        capturedArguments.add(it2.next());
       }
       varArgsToCapturedNodes.put(n1.toString(), capturedArguments);
     }
