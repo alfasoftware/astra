@@ -105,7 +105,7 @@ public class JavaPatternASTOperation implements ASTOperation {
           @SuppressWarnings("unchecked")
           List<ImportDeclaration> imports = compilationUnit.imports();
           imports.stream().forEach(
-              importFromPattern -> listRewrite.insertLast((ASTNode) importFromPattern, null)
+              importFromPattern -> listRewrite.insertLast(importFromPattern, null)
           );
 
           rewriter.replace(astNodeMatchInformation.getNodeThatWasMatched(), astNode, null);
