@@ -97,7 +97,7 @@ class JavaPatternFileParser {
         } else if(statement instanceof ExpressionStatement){
           expressionToMatch = ((ExpressionStatement) statement).getExpression();
         } else {
-          expressionToMatch = (ASTNode) statement;
+          expressionToMatch = statement;
         }
 
         List<SingleVariableDeclaration> singleVariableDeclarations = methodDeclaration.parameters();
