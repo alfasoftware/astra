@@ -169,6 +169,29 @@ public class MethodMatcher {
             .build();
   }
   
+  
+  public static MethodMatcher buildMethodMatcherForMethodBinding(IMethodBinding methodBinding) {
+    return MethodMatcher.builder()
+      .withMethodName(methodBinding.getName())
+      .withFullyQualifiedDeclaringType(AstraUtils.getFullyQualifiedName(methodBinding))
+      .withFullyQualifiedParameters(
+        Arrays.asList(methodBinding.getParameterTypes())
+          .stream()
+          .map(p -> {
+            if (p.isArray() && p.getElementType().isTypeVariable()) {
+              return p.getErasure().getQualifiedName();
+            } else if (p.isTypeVariable()) {
+              return p.getErasure().getBinaryName();
+            } else if (p.isPrimitive() || p.isArray()) {
+              return p.getQualifiedName();
+            } else {
+              return p.getBinaryName();
+            }
+          })
+        .collect(Collectors.toList()))
+      .build();
+  }
+  
 
   private boolean isMethodNameMatch(MethodInvocation mi) {
     return ! methodNamePredicate.isPresent() || methodNamePredicate.get().test(mi.getName().toString());
@@ -179,28 +202,40 @@ public class MethodMatcher {
     return ! fullyQualifiedDeclaringTypePredicate.isPresent() ||
             fullyQualifiedDeclaringTypePredicate.get().test(AstraUtils.getFullyQualifiedName(mi, cu)) ||
             (mi.getExpression() != null &&  mi.getExpression().resolveTypeBinding() != null &&
-              (methodInvocationMatchesSuperType(mi.getExpression().resolveTypeBinding()) ||
-               methodInvocationMatchesInterface(mi.getExpression().resolveTypeBinding())));
+              isSuperTypeOrInterfaceMatch(mi.getExpression().resolveTypeBinding(), fullyQualifiedDeclaringTypePredicate.get()));
   }
 
-  private boolean methodInvocationMatchesSuperType(ITypeBinding resolveTypeBinding) {
+  
+  private boolean isSuperTypeOrInterfaceMatch(ITypeBinding typeBinding, Predicate<String> test) {
+    return isSuperTypeMatch(typeBinding, test) ||
+        isInterfaceMatch(typeBinding, test);
+  }
+  
+  
+  private boolean isSuperTypeMatch(ITypeBinding resolveTypeBinding, Predicate<String> test) {
+    
+    // If testing for Object, then any class will match 
+    if (test.test(Object.class.getName())) {
+      return true;
+    }
+    
     final ITypeBinding superclass = resolveTypeBinding.getSuperclass();
     if (superclass != null) {
-       if (fullyQualifiedDeclaringTypePredicate.get().test(superclass.getBinaryName())) {
+       if (test.test(superclass.getBinaryName())) {
          return true;
        } else if (superclass.getSuperclass() != null) {
-         return methodInvocationMatchesSuperType(superclass);
+         return isSuperTypeMatch(superclass, test);
        }
     }
     return false;
   }
   
-  private boolean methodInvocationMatchesInterface(ITypeBinding typeBinding) {
-    if (fullyQualifiedDeclaringTypePredicate.get().test(typeBinding.getBinaryName())) {
+  
+  private boolean isInterfaceMatch(ITypeBinding typeBinding, Predicate<String> test) {
+    if (test.test(typeBinding.getBinaryName())) {
       return true;
     }
-    
-    return Arrays.stream(typeBinding.getInterfaces()).anyMatch(this::methodInvocationMatchesInterface);
+    return Arrays.stream(typeBinding.getInterfaces()).anyMatch(i -> isInterfaceMatch(i, test));
   }
 
 
@@ -228,15 +263,7 @@ public class MethodMatcher {
     // Check the parameters are as expected, and in the correct order
     for (int i = 0; i < mb.getParameterTypes().length; i++) {
       
-      /// If we have specified a parameterized type, or the type is a primitive or array, match on the qualified name
-      if (fullyQualifiedParameterNames.get().get(i).contains("<") || 
-          mb.getParameterTypes()[i].isPrimitive() || 
-          mb.getParameterTypes()[i].isArray()) {
-        if (! mb.getParameterTypes()[i].getQualifiedName().equals(fullyQualifiedParameterNames.get().get(i))) {
-          return false;
-        }
-      // Otherwise match on binary type name
-      } else if (! mb.getParameterTypes()[i].getBinaryName().equals(fullyQualifiedParameterNames.get().get(i))) {
+      if (! isTypeBindingMatch(mb.getParameterTypes()[i], fullyQualifiedParameterNames.get().get(i))) {
         return false;
       }
     }
@@ -245,20 +272,36 @@ public class MethodMatcher {
   }
 
 
+  private boolean isTypeBindingMatch(ITypeBinding resolveTypeBinding, String test) {
+    if (resolveTypeBinding.getQualifiedName().equals(test) ||
+        resolveTypeBinding.getBinaryName().equals(test)) {
+      return true;
+    } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, s -> s.equals(test))) {
+      return true;
+    } else if (resolveTypeBinding.isArray() && test.endsWith("[]")) {
+      return isSuperTypeOrInterfaceMatch(resolveTypeBinding.getComponentType(), s -> s.equals(test.substring(0, test.indexOf("["))));
+    }
+    return false;
+  }
+  
+
   private boolean isMethodVarargs(IMethodBinding mb) {
     return Optional.of(mb)
       .filter(IMethodBinding::isVarargs)
       .isPresent();
   }
 
+  
   private boolean isSimpleNameMatch(ClassInstanceCreation cic) {
     return ! methodNamePredicate.isPresent() || methodNamePredicate.get().test(AstraUtils.getSimpleName(cic.getType().toString()));
   }
 
+  
   private boolean isSimpleNameMatch(IMethodBinding iMethodBinding) {
     return ! methodNamePredicate.isPresent() || methodNamePredicate.get().test(AstraUtils.getSimpleName(iMethodBinding.getName()));
   }
 
+  
   private boolean isCICFQTypeNameMatch(IMethodBinding iMethodBinding) {
     final Optional<IMethodBinding> binding = Optional.of(iMethodBinding);
 
@@ -371,7 +414,6 @@ public class MethodMatcher {
   }
 
 
-
   public boolean matches(MethodDeclaration methodDeclaration) {
     final Optional<MethodDeclaration> method = Optional.of(methodDeclaration)
       // does the method name match?
@@ -389,7 +431,7 @@ public class MethodMatcher {
           + "Method declaration: [" + methodDeclaration + "]");
     }
     
-    if(customPredicate.isPresent() && !customPredicate.get().test(methodDeclaration)) {
+    if (customPredicate.isPresent() && ! customPredicate.get().test(methodDeclaration)) {
       return false;
     }
     
@@ -402,6 +444,7 @@ public class MethodMatcher {
         .isPresent();
   }
 
+  
   public Optional<DescribedPredicate<String>> getFullyQualifiedDeclaringType() {
     return fullyQualifiedDeclaringTypePredicate;
   }
@@ -440,7 +483,6 @@ public class MethodMatcher {
         ", parentContext=" + parentContextMatcher +
         "]";
   }
-
 
   @Override
   public int hashCode() {

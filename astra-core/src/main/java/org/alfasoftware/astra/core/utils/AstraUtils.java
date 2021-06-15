@@ -111,7 +111,7 @@ public class AstraUtils {
     rewriter.rewriteAST(document, formattingOptions).apply(document);
     return document.get();
   }
-
+  
 
   /**
    * Build the fully qualified name for a type.
@@ -178,6 +178,14 @@ public class AstraUtils {
     }
 
     return "";
+  }
+  
+  
+  public static String getFullyQualifiedName(IMethodBinding methodBinding) {
+    return Optional.of(methodBinding)
+        .map(IMethodBinding::getDeclaringClass)
+        .map(ITypeBinding::getQualifiedName)
+        .orElse("");
   }
 
 
@@ -528,14 +536,14 @@ public class AstraUtils {
     if (isStaticallyImportedMethod(methodInvocation, compilationUnit, fullyQualifiedDeclaringType, methodName)) {
       return MethodInvocationType.STATIC_METHOD_METHOD_NAME_ONLY;
     }
-    throw new IllegalStateException("Unknown scenario for method invocation :" + methodInvocation.toString());
+    throw new IllegalStateException("Unknown scenario for method invocation: " + methodInvocation.toString());
   }
 
 
   public static boolean isStaticallyImportedMethod(MethodInvocation methodInvocation, CompilationUnit compilationUnit,
       String fullyQualifiedDeclaringType, String methodName) {
 
-    if (!methodInvocation.getName().toString().equals(methodName)) {
+    if (! methodInvocation.getName().toString().equals(methodName)) {
       return false;
     }
 
@@ -562,6 +570,10 @@ public class AstraUtils {
       for (Object item : compilationUnit.imports()) {
         if (item instanceof ImportDeclaration) {
           ImportDeclaration importDeclaration = (ImportDeclaration) item;
+          if (importDeclaration.isOnDemand() &&
+              importDeclaration.getName().toString().equals(fullyQualifiedDeclaringType)) {
+            return true;
+          }
           if (importDeclaration.getName().toString().equals(nameForImport)) {
             return true;
           }

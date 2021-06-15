@@ -1,7 +1,9 @@
 package org.alfasoftware.astra.core.refactoring.operations.methods;
 
 import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
-import static org.alfasoftware.astra.core.utils.AstraUtils.updateImport;
+import static org.alfasoftware.astra.core.utils.AstraUtils.addStaticImport;
+import static org.alfasoftware.astra.core.utils.AstraUtils.getFullyQualifiedName;
+import static org.alfasoftware.astra.core.utils.AstraUtils.removeImport;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -167,9 +169,9 @@ public class MethodInvocationRefactor implements ASTOperation {
             rewriter.set(methodInvocation, MethodInvocation.EXPRESSION_PROPERTY, newName, null);
             rewriter.set(methodInvocation.getName(), SimpleName.IDENTIFIER_PROPERTY, methodName, null);
           } else {
-            updateImport(compilationUnit,
-              AstraUtils.getFullyQualifiedName(methodInvocation, compilationUnit) + "." + methodInvocation.getName().toString(),
-              afterTypeFQ + "." + methodName, rewriter);
+            removeImport(compilationUnit, 
+              getFullyQualifiedName(methodInvocation, compilationUnit) + "." + methodInvocation.getName().toString(), rewriter);
+            addStaticImport(compilationUnit, afterTypeFQ + "." + methodName, rewriter);
             rewriter.set(methodInvocation.getName(), SimpleName.IDENTIFIER_PROPERTY, methodName, null);
           }
           break;

@@ -189,7 +189,7 @@ public class AstraCore {
       log.error("ioE: " + e);
     } catch (BadLocationException e) {
       log.error("blE: " + e);
-    } catch (IllegalArgumentException e){
+    } catch (IllegalArgumentException e) {
       log.error("IAE: " + e);
     }
   }

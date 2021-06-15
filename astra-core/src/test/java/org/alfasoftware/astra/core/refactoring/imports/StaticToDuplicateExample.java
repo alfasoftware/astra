@@ -1,12 +1,13 @@
 package org.alfasoftware.astra.core.refactoring.imports;
 
-import static org.alfasoftware.astra.exampleTypes.A.staticFour;
 import static org.alfasoftware.astra.exampleTypes.A.staticThree;
+import static org.alfasoftware.astra.exampleTypes.B.staticThree;
 
-class DuplicateStaticImportExample {
+class StaticToDuplicateExample {
 
   void foo() {
     staticThree();
-    staticFour("");
+    staticThree("");
   }
 }
+
