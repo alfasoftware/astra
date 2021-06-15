@@ -2,6 +2,7 @@ package org.alfasoftware.astra.core.refactoring.operations.imports;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -10,14 +11,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Javadoc;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.MethodRefParameter;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -121,8 +126,8 @@ public class UnusedImportRefactor implements ASTOperation {
   private void removeUnnecessaryImports(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) {
     if (node instanceof TypeDeclaration) {
       // Only remove imports for top-level types
-      TypeDeclaration typeDeclaration = (TypeDeclaration) node;
-      if (! typeDeclaration.resolveBinding().isNested()) {
+      if (((TypeDeclaration) node).isPackageMemberTypeDeclaration()) {
+        
         ReferenceTrackingVisitor visitor = new ReferenceTrackingVisitor();
         compilationUnit.accept(visitor);
         @SuppressWarnings("unchecked")
@@ -136,7 +141,7 @@ public class UnusedImportRefactor implements ASTOperation {
           // Can't easily tell if on-demand imports are actually needed so best to leave them in place.
           if (! isImportOnDemand(importDeclaration) && 
               (isImportDuplicate(remainingImports, importDeclaration) ||
-               isImportUnused(visitor, importDeclaration) ||
+               ! isImportUsed(visitor, importDeclaration, compilationUnit) ||
                isImportFromSamePackageAndNotStatic(compilationUnit, importDeclaration) ||
                isImportJavaLangAndNotStatic(importDeclaration))) {
             AstraUtils.removeImport(importDeclaration, rewriter);
@@ -151,7 +156,7 @@ public class UnusedImportRefactor implements ASTOperation {
 
   private boolean isImportJavaLangAndNotStatic(ImportDeclaration importDeclaration) {
     return ! importDeclaration.isStatic() && importDeclaration.getName().toString().split("java\\.lang\\.[A-Z]").length > 1
-        && !AstraUtils.isImportOfInnerType(importDeclaration);
+        && ! AstraUtils.isImportOfInnerType(importDeclaration);
   }
 
 
@@ -171,8 +176,31 @@ public class UnusedImportRefactor implements ASTOperation {
   }
 
 
-  private boolean isImportUnused(ReferenceTrackingVisitor visitor, ImportDeclaration importDeclaration) {
-    return ! visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString()));
+  private boolean isImportUsed(ReferenceTrackingVisitor visitor, ImportDeclaration importDeclaration, CompilationUnit compilationUnit) {
+    return visitor.types.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString())) ||
+        visitor.variables.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString())) ||
+        visitor.unresolvableReferences.contains(AstraUtils.getSimpleName(importDeclaration.getName().toString())) ||
+        isImportForStaticMethodAndUsed(visitor, importDeclaration, compilationUnit);
+  }
+
+
+  private boolean isImportForStaticMethodAndUsed(ReferenceTrackingVisitor visitor, 
+      ImportDeclaration importDeclaration, CompilationUnit compilationUnit) {
+    Optional<ITypeBinding> type = Optional.ofNullable(importDeclaration)
+          .filter(ImportDeclaration::isStatic)
+          .map(ImportDeclaration::resolveBinding)
+          .filter(IMethodBinding.class::isInstance)
+          .map(IMethodBinding.class::cast)
+          .map(IMethodBinding::getDeclaringClass);
+    
+    if (! type.isPresent()) {
+      return false;
+    }
+    
+    return Arrays.stream(type.get().getDeclaredMethods())
+      .filter(mb -> mb.getName().equals(AstraUtils.getSimpleName(importDeclaration.getName().toString())))
+      .map(MethodMatcher::buildMethodMatcherForMethodBinding)
+      .anyMatch(mm -> visitor.methods.stream().anyMatch(mi -> mm.matches(mi, compilationUnit)));
   }
 
 
@@ -188,12 +216,41 @@ public class UnusedImportRefactor implements ASTOperation {
 
   private class ReferenceTrackingVisitor extends ASTVisitor {
     private final Set<String> types = new HashSet<>();
+    private final Set<String> variables = new HashSet<>();
+    private final Set<MethodInvocation> methods = new HashSet<>();
+    
+    // If we lack the classpath to resolve a type, we should be conservative about removing imports that match them.
+    private final Set<String> unresolvableReferences = new HashSet<>();
 
     @Override
     public boolean visit(SimpleName node) {
-      if (! isInImport(node)) {
-        types.add(AstraUtils.getSimpleName(node.toString()));
+      // If it's a type name
+      if (Optional.of(node)
+          .filter(n -> ! isInImport(n))
+          .map(SimpleName::resolveBinding)
+          .filter(ITypeBinding.class::isInstance)
+          .isPresent()) {
+        types.add(AstraUtils.getSimpleName(node.toString()));        
       }
+      
+      // If it's a variable name
+      if (Optional.of(node)
+          .filter(n -> ! isInImport(n))
+          .map(SimpleName::resolveBinding)
+          .filter(IVariableBinding.class::isInstance)
+          .isPresent()) {
+        variables.add(AstraUtils.getSimpleName(node.toString()));        
+      }
+      if (node.resolveBinding() == null) {
+        unresolvableReferences.add(AstraUtils.getSimpleName(node.toString()));
+      }
+      
+      return super.visit(node);
+    }
+    
+    @Override
+    public boolean visit(MethodInvocation node) {
+      methods.add(node);
       return super.visit(node);
     }
 
