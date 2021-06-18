@@ -47,6 +47,7 @@
         astra-example/**,
         astra-testing/**
     </sonar.coverage.exclusions>
+    <aggregate.report.dir>astra-core/target/site/jacoco-aggregate/jacoco.xml</aggregate.report.dir>
   </properties>
   
   <dependencyManagement>
@@ -181,6 +182,11 @@
             </configuration>            
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>3.7.0.1746</version>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
