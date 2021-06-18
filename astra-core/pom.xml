@@ -13,6 +13,10 @@
   <name>astra-core</name>
   <description>Astra is a Java tool for analysing and refactoring Java source code.</description>
  
+  <properties>
+    <sonar.coverage.jacoco.xmlReportPaths>${basedir}/../${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
+  </properties>
+ 
   <dependencies>
     <dependency>
       <groupId>org.eclipse.jdt</groupId>

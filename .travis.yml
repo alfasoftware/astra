@@ -5,7 +5,7 @@ jobs:
      name: "Test"
      script:
         - git fetch --quiet
-        - mvn clean verify
+        - mvn clean verify sonar:sonar -Pcoverage -B -U
    - if: repo = alfasoftware/astra AND (branch = main OR tag IS present) AND NOT type = pull_request
      name: "Deploy"
      script:
