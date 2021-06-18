@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.6] - 2021-06-16
+### Added
+
+### Changed
+
+### Fixed
+* Fixes for static imports, particularly better detection of when imports are really unused.
+* MethodMatcher now works better when matching parameters that are arrays and type variables.
+
+
 ## [1.3.3] - 2021-06-09
 ### Added
 
