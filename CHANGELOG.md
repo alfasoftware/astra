@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.7] - 2021-06-23
+### Added
+
+### Changed
+
+* Tweak to static method type resolution attempting to find single applicable type name from imports, if possible, before falling back to resolving
+
+### Fixed
+
 ## [1.3.6] - 2021-06-16
 ### Added
 
