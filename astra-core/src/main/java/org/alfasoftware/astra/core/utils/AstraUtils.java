@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.JavaCore;
@@ -153,6 +154,21 @@ public class AstraUtils {
     if (qualifiedNameNonStatic.isPresent()) {
       return qualifiedNameNonStatic.get();
     }
+
+    if (isMethodInvocationStatic(mi)) {     
+      @SuppressWarnings("unchecked")
+      List<ImportDeclaration> imports = compilationUnit.imports();
+      Set<String> matches = imports.stream()
+        .filter(ImportDeclaration::isStatic)
+        .map(ImportDeclaration::getName)
+        .map(Object::toString)
+        .filter(importName -> importName.substring(importName.lastIndexOf('.') + 1).equals(mi.getName().toString()))
+        .map(importName -> importName.substring(0, importName.lastIndexOf('.')))
+        .collect(Collectors.toSet());
+      if (matches.size() == 1) {
+        return matches.iterator().next();
+      }
+    }
     
     Optional<String> resolvedMethodBindingName = Optional.of(mi)
       .map(MethodInvocation::resolveMethodBinding)
@@ -160,21 +176,6 @@ public class AstraUtils {
       .map(ITypeBinding::getQualifiedName);
     if (resolvedMethodBindingName.isPresent()) {
       return resolvedMethodBindingName.get();
-    }
-
-    if (isMethodInvocationStatic(mi)) {     
-      @SuppressWarnings("unchecked")
-      List<ImportDeclaration> imports = compilationUnit.imports();
-      Optional<String> firstMatch = imports.stream()
-        .filter(ImportDeclaration::isStatic)
-        .map(ImportDeclaration::getName)
-        .map(Object::toString)
-        .filter(importName -> importName.substring(importName.lastIndexOf('.') + 1).equals(mi.getName().toString()))
-        .map(importName -> importName.substring(0, importName.lastIndexOf('.')))
-        .findFirst();
-      if (firstMatch.isPresent()) {
-        return firstMatch.get();
-      }
     }
 
     return "";
