@@ -9,6 +9,7 @@ Here are some important resources:
 Please raise a [GitHub Pull Request](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) with a clear description of your changes:
 * If applicable, please include the relevant issue number.
 * If updating a refactor, please use Astra's [test framework](https://github.com/alfasoftware/astra/wiki/Start-with-tests!) to add test coverage.
+There's no need to make any versioning changes in contributions - we work in snapshot, and releases are handled at appropriate milestones by the project maintainers.
 
 # How to contribute issues
 Please raise the issue as a [GitHub issue](https://guides.github.com/features/issues/) (if one hasn't already been raised!) explaining the problem and providing details to help with reproduction:
