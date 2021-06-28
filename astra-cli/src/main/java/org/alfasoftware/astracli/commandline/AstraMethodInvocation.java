@@ -81,7 +81,8 @@ class AstraMethodInvocation implements Runnable {
     @CommandLine.Option(
       names = "--cp",
       required = true,
-      description = "Set the path to the additional jar files. At least the jar containing the 'before' type should be specified.")
+      description = "Set the path to the additional jar files. At least the jar containing the 'before' type should be specified.",
+      split = "[,;]")
     File[] classpath;
 
 
