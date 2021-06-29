@@ -170,6 +170,7 @@ public class AstraUtils {
       if (matches.size() == 1) {
         return matches.iterator().next();
       }
+      
       Set<String> onDemandMatches = new HashSet<>();
       for (ImportDeclaration importCandidate : imports) {
         if (importCandidate.isStatic() &&
@@ -192,18 +193,6 @@ public class AstraUtils {
           }
         }
       }
-      
-//      Set<String> onDemandMatches = imports.stream()
-//          .filter(ImportDeclaration::isStatic)
-//          .filter(ImportDeclaration::isOnDemand)
-//          .map(ImportDeclaration::resolveBinding)
-//          .filter(ITypeBinding.class::isInstance)
-//          .map(ITypeBinding.class::cast)
-//          .map(ITypeBinding::getDeclaredMethods)
-//          .flatMap(Stream::of)
-//          .filter(n -> n.getName().equals(mi.getName().toString()))
-//          .map(n -> getFullyQualifiedName(n))
-//          .collect(Collectors.toSet());
       if (onDemandMatches.size() == 1) {
         return onDemandMatches.iterator().next();
       }
