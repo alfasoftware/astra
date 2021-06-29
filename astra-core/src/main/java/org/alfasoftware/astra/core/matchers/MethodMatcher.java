@@ -276,7 +276,7 @@ public class MethodMatcher {
     if (resolveTypeBinding.getQualifiedName().equals(test) ||
         Optional.ofNullable(resolveTypeBinding.getBinaryName()).filter(n -> n.equals(test)).isPresent()) {
       return true;
-    } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, s -> test.equals(s))) {
+    } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, test::equals)) {
       return true;
     } else if (resolveTypeBinding.isArray() && test.endsWith("[]")) {
       return isSuperTypeOrInterfaceMatch(resolveTypeBinding.getComponentType(), s -> test.substring(0, test.indexOf("[")).equals(s));
