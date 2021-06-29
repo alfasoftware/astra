@@ -37,7 +37,7 @@ public class AstraCli implements Runnable {
     @Override
     public void run() {
         // if the command was invoked without subcommand, show the usage help
-        spec.commandLine().usage(System.err);
+        spec.commandLine().usage(System.err); //NOSONAR
     }
 
     public static void main(String[] args) {

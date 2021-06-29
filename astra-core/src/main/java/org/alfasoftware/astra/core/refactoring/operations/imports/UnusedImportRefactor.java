@@ -124,31 +124,30 @@ public class UnusedImportRefactor implements ASTOperation {
 
 
   private void removeUnnecessaryImports(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) {
-    if (node instanceof TypeDeclaration) {
-      // Only remove imports for top-level types
-      if (((TypeDeclaration) node).isPackageMemberTypeDeclaration()) {
+    // Only remove imports for top-level types
+    if (node instanceof TypeDeclaration &&
+      ((TypeDeclaration) node).isPackageMemberTypeDeclaration()) {
         
-        ReferenceTrackingVisitor visitor = new ReferenceTrackingVisitor();
-        compilationUnit.accept(visitor);
-        @SuppressWarnings("unchecked")
-        List<ImportDeclaration> imports = compilationUnit.imports();
-        
-        Set<String> remainingImports = new HashSet<>();
+      ReferenceTrackingVisitor visitor = new ReferenceTrackingVisitor();
+      compilationUnit.accept(visitor);
+      @SuppressWarnings("unchecked")
+      List<ImportDeclaration> imports = compilationUnit.imports();
+      
+      Set<String> remainingImports = new HashSet<>();
 
-        for (ImportDeclaration importDeclaration : imports) {
-          
-          // Remove unnecessary imports
-          // Can't easily tell if on-demand imports are actually needed so best to leave them in place.
-          if (! isImportOnDemand(importDeclaration) && 
-              (isImportDuplicate(remainingImports, importDeclaration) ||
-               ! isImportUsed(visitor, importDeclaration, compilationUnit) ||
-               isImportFromSamePackageAndNotStatic(compilationUnit, importDeclaration) ||
-               isImportJavaLangAndNotStatic(importDeclaration))) {
-            AstraUtils.removeImport(importDeclaration, rewriter);
-          }
-          
-          remainingImports.add(importDeclaration.getName().toString());
+      for (ImportDeclaration importDeclaration : imports) {
+        
+        // Remove unnecessary imports
+        // Can't easily tell if on-demand imports are actually needed so best to leave them in place.
+        if (! isImportOnDemand(importDeclaration) && 
+            (isImportDuplicate(remainingImports, importDeclaration) ||
+             ! isImportUsed(visitor, importDeclaration, compilationUnit) ||
+             isImportFromSamePackageAndNotStatic(compilationUnit, importDeclaration) ||
+             isImportJavaLangAndNotStatic(importDeclaration))) {
+          AstraUtils.removeImport(importDeclaration, rewriter);
         }
+        
+        remainingImports.add(importDeclaration.getName().toString());
       }
     }
   }

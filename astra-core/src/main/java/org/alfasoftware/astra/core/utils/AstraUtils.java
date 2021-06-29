@@ -107,6 +107,7 @@ public class AstraUtils {
     formattingOptions.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_TYPE, JavaCore.INSERT);
     formattingOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
     formattingOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "2");
+    formattingOptions.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_NOT_OPERATOR, JavaCore.INSERT);
     JavaCore.setComplianceOptions(JAVA_VERSION, formattingOptions);
     org.eclipse.jface.text.Document document = new org.eclipse.jface.text.Document(source);
     rewriter.rewriteAST(document, formattingOptions).apply(document);
@@ -158,6 +159,7 @@ public class AstraUtils {
     if (isMethodInvocationStatic(mi)) {     
       @SuppressWarnings("unchecked")
       List<ImportDeclaration> imports = compilationUnit.imports();
+      
       Set<String> matches = imports.stream()
         .filter(ImportDeclaration::isStatic)
         .map(ImportDeclaration::getName)
@@ -167,6 +169,43 @@ public class AstraUtils {
         .collect(Collectors.toSet());
       if (matches.size() == 1) {
         return matches.iterator().next();
+      }
+      Set<String> onDemandMatches = new HashSet<>();
+      for (ImportDeclaration importCandidate : imports) {
+        if (importCandidate.isStatic() &&
+            importCandidate.isOnDemand()) {
+          IBinding binding = importCandidate.resolveBinding();
+          if (binding != null && binding instanceof ITypeBinding) {
+            ITypeBinding iTypeBinding = (ITypeBinding) binding;
+            for (IMethodBinding methodBinding : iTypeBinding.getDeclaredMethods()) {
+              if (methodBinding.getName().equals(mi.getName().toString())) {
+                onDemandMatches.add(importCandidate.getName().toString());
+              }
+            }
+            if (iTypeBinding.getSuperclass() != null) {
+              for (IMethodBinding methodBinding : iTypeBinding.getSuperclass().getDeclaredMethods()) {
+                if (methodBinding.getName().equals(mi.getName().toString())) {
+                  onDemandMatches.add(importCandidate.getName().toString());
+                }
+              }
+            }
+          }
+        }
+      }
+      
+//      Set<String> onDemandMatches = imports.stream()
+//          .filter(ImportDeclaration::isStatic)
+//          .filter(ImportDeclaration::isOnDemand)
+//          .map(ImportDeclaration::resolveBinding)
+//          .filter(ITypeBinding.class::isInstance)
+//          .map(ITypeBinding.class::cast)
+//          .map(ITypeBinding::getDeclaredMethods)
+//          .flatMap(Stream::of)
+//          .filter(n -> n.getName().equals(mi.getName().toString()))
+//          .map(n -> getFullyQualifiedName(n))
+//          .collect(Collectors.toSet());
+      if (onDemandMatches.size() == 1) {
+        return onDemandMatches.iterator().next();
       }
     }
     
@@ -494,29 +533,37 @@ public class AstraUtils {
   public enum MethodInvocationType {
     /*
      * The method is statically imported, so the name alone is used e.g.
-     * import static com.package.DeclaringType.methodName;
-     * methodName(); <<<<
+     * <pre>
+     *   import static com.package.DeclaringType.methodName;
+     *   methodName(); <<<<
+     * </pre>
      */
     STATIC_METHOD_METHOD_NAME_ONLY,
 
     /*
      * The simple class is used inline e.g.
-     * import com.package.DeclaringType;
-     * DeclaringType.methodName(); <<<<
+     * <pre>
+     *   import com.package.DeclaringType;
+     *   DeclaringType.methodName(); <<<<
+     * </pre>
      */
     STATIC_METHOD_SIMPLE_NAME,
 
     /*
      * The fully qualified name is used inline e.g.
-     * com.package.DeclaringType.methodName(); <<<<
+     * <pre>
+     *   com.package.DeclaringType.methodName(); <<<<
+     * </pre>
      */
     STATIC_METHOD_FULLY_QUALIFIED_NAME,
 
     /*
      * The method is invoked on a variable of the given type e.g.
-     * import com.package.DeclaringType;
-     * DeclaringType a = new DeclaringType();
-     * a.methodName(); <<<<
+     * <pre>
+     *   import com.package.DeclaringType;
+     *   DeclaringType a = new DeclaringType();
+     *   a.methodName(); <<<<
+     * </pre>
      */
     ON_CLASS_INSTANCE,
   }
@@ -537,7 +584,8 @@ public class AstraUtils {
     if (isStaticallyImportedMethod(methodInvocation, compilationUnit, fullyQualifiedDeclaringType, methodName)) {
       return MethodInvocationType.STATIC_METHOD_METHOD_NAME_ONLY;
     }
-    throw new IllegalStateException("Unknown scenario for method invocation: " + methodInvocation.toString());
+    throw new IllegalStateException("Unknown scenario for method invocation [" + methodInvocation.toString() + 
+      "] in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
   }
 
 
@@ -576,6 +624,11 @@ public class AstraUtils {
             return true;
           }
           if (importDeclaration.getName().toString().equals(nameForImport)) {
+            return true;
+          }
+          if (importDeclaration.isOnDemand() &&
+              importDeclaration.getName().toString()
+              .equals(nameForImport.substring(0, nameForImport.lastIndexOf(".")))) {
             return true;
           }
         }

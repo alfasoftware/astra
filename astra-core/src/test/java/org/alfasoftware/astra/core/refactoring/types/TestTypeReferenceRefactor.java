@@ -90,7 +90,7 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
    * Changing from one type to another, renaming variables of that type.
    */
   @Test
-  @Ignore // Typed variable rename currently works for direct type references, but not when used as a parameterized type.
+  @Ignore("Typed variable rename currently works for direct type references, but not when used as a parameterized type.")
   public void testChangeWrappedTypeWithRename() {
     assertRefactor(ChangeTypeWithRenameWrappedExample.class,
         new HashSet<>(Arrays.asList(
