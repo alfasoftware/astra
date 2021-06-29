@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.8] - 2021-06-29
+### Added
+
+### Changed
+
+* #51 Extra null safety when checking method names, and static on-demand imports are checked when finding declaring methods
+
+### Fixed
+
+* #49 Allow multiple files in --cp
+
 ## [1.3.7] - 2021-06-23
 ### Added
 
