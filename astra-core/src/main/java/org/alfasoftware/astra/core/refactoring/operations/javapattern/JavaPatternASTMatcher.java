@@ -107,10 +107,9 @@ class JavaPatternASTMatcher {
       if (patternParameter.isPresent() &&
           isTypeOfSimpleNameCompatibleWithMatchCandidate(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
         // we may need to resolve Type variables defined in the JavaPattern
-        if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType()) {
-          if (!matchAndCaptureSimpleTypesForParameterizedType(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
-            return false;
-          }
+        if (simpleNameFromPatternMatcher.resolveTypeBinding().isParameterizedType() && 
+            ! matchAndCaptureSimpleTypesForParameterizedType(simpleNameFromPatternMatcher, (Expression) matchCandidate)) {
+          return false;
         }
         return putSimpleNameAndCapturedNode(simpleNameFromPatternMatcher, (ASTNode) matchCandidate);
       } else if (patternParameter.isPresent()) {

@@ -9,11 +9,11 @@ import java.util.Objects;
 
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
-import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.edge.UnknownTypeInLambdaExample;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.InvocationTransformExample;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.InvocationTransformExampleMatcher;
 import org.alfasoftware.astra.core.refactoring.methods.methodInvocation.transform.ReturnsObject;
+import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.refactoring.operations.methods.ChainedMethodInvocationRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.methods.MethodInvocationRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.methods.MethodInvocationRefactor.Changes;
@@ -271,7 +271,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
   }
 
   @Test
-  @Ignore // Type rename currently works for direct type references, not as a parameterized type.
+  @Ignore("Type rename currently works for direct type references, not as a parameterized type.")
   public void testInvocationChainedWrapped() {
     assertRefactor(InvocationChainedWrappedExample.class,
       new HashSet<>(Arrays.asList(
@@ -337,29 +337,21 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
   }
 
 
-  /**
-   * In this case, we find that we can't resolve bindings inside a lambda, where the lambda has any prior unknown types.
-   * Here, that means that even though we have the class files for a method invocation, because we're missing the class
-   * files for a type referenced in the lambda, we cannot resolve the method invocation.
-   *
-   * We need this information for type inference - https://docs.oracle.com/javase/specs/jls/se8/html/jls-18.html
-   * Because we don't have that type information, we don't know the return type, which means we are also missing
-   * the type which could be used as a type parameter, or an argument to a later function - so we can't determine which
-   * of a number of overloaded methods are being called, or if we have met the specific type criteria for a method.
-   * The best we could do is match a method which uses "Object". In a later release, it's possible that Eclipse JDT Core
-   * may attempt a "best guess" - but this sounds like it's not planned, and is considered a difficult problem to solve.
-   *
-   * In this test, the unknown type is "ASTNode". If we provided the classpath for org.eclipse.jdt.core, the ASTNode type
-   * would be resolved, the rest of the lambda would be evaluated, the method identified and refactored, and the test would pass.
-   *
-   * The "proper" solution for this tool is to run with all the class files provided to the AST - but this makes the tool
-   * take significantly longer to run, due to the extra time taken to generate each file's AST - a full run that had
-   * taken approximately 20 minutes can jump to around 5 hours. In most cases, it's probably more efficient to
-   * just address 99% of cases with the fast run, accept that some will be missed and fix them by hand - but if 100% accuracy
-   * is required, provide all the class files and accept the slow run.
-   */
-  @Ignore // WIP TODO
   @Test
+  @Ignore("In this case, we find that we can't resolve bindings inside a lambda, where the lambda has any prior unknown types." + 
+    " Here, that means that even though we have the class files for a method invocation, because we're missing the class" + 
+    " files for a type referenced in the lambda, we cannot resolve the method invocation." + 
+    " We need this information for type inference - https://docs.oracle.com/javase/specs/jls/se8/html/jls-18.html" + 
+    " Because we don't have that type information, we don't know the return type, which means we are also missing" + 
+    " the type which could be used as a type parameter, or an argument to a later function - so we can't determine which" + 
+    " of a number of overloaded methods are being called, or if we have met the specific type criteria for a method." + 
+    " The best we could do is match a method which uses 'Object'. In a later release, it's possible that Eclipse JDT Core" + 
+    " may attempt a 'best guess' - but this sounds like it's not planned, and is considered a difficult problem to solve." + 
+    " In this test, the unknown type is 'ASTNode'. If we provided the classpath for org.eclipse.jdt.core, the ASTNode type" + 
+    " would be resolved, the rest of the lambda would be evaluated, the method identified and refactored, and the test would pass." + 
+    " The 'proper' solution for this tool is to run with all the class files provided to the AST - but this makes the tool" + 
+    " take significantly longer to run, due to the extra time taken to generate each file's AST." + 
+    " If 100% accuracy is required, provide all the class files and accept the slow run.")
   public void testInvocationInLambdaWithUnknownType() {
     assertRefactor(
       UnknownTypeInLambdaExample.class,

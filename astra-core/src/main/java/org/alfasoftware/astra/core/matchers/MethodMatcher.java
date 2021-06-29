@@ -274,12 +274,12 @@ public class MethodMatcher {
 
   private boolean isTypeBindingMatch(ITypeBinding resolveTypeBinding, String test) {
     if (resolveTypeBinding.getQualifiedName().equals(test) ||
-        resolveTypeBinding.getBinaryName().equals(test)) {
+        Optional.ofNullable(resolveTypeBinding.getBinaryName()).filter(n -> n.equals(test)).isPresent()) {
       return true;
-    } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, s -> s.equals(test))) {
+    } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, s -> test.equals(s))) {
       return true;
     } else if (resolveTypeBinding.isArray() && test.endsWith("[]")) {
-      return isSuperTypeOrInterfaceMatch(resolveTypeBinding.getComponentType(), s -> s.equals(test.substring(0, test.indexOf("["))));
+      return isSuperTypeOrInterfaceMatch(resolveTypeBinding.getComponentType(), s -> test.substring(0, test.indexOf("[")).equals(s));
     }
     return false;
   }
