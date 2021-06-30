@@ -1,6 +1,25 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2021-06-30
+### Added
+
+### Changed
+* #54 Cached sources and classpath so that they are only retrieved once, and shared between validation and use
+
+### Fixed
+
+* #54 Method parameter type name standardisation
+
+## [1.3.9] - 2021-06-30
+### Added
+
+### Changed
+
+* #53 Standardising name of parameter types for methods, between when a MethodMatcher is constructed and evaluated
+
+### Fixed
+
 ## [1.3.8] - 2021-06-29
 ### Added
 
