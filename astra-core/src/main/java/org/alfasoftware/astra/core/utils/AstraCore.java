@@ -51,17 +51,19 @@ public class AstraCore {
    * @param useCase The {@link UseCase} describing the Astra refactor to perform
    */
   public static void run(String targetDirectoryPath, UseCase useCase) {
-    validateSourceAndClasspath(useCase.getSources(), useCase.getClassPath());
+    String[] sources = useCase.getSources();
+    String[] classPath = useCase.getClassPath();
+    validateSourceAndClasspath(sources, classPath);
     try {
       AstraCore main = new AstraCore();
-      main.runOperations(targetDirectoryPath, useCase);
+      main.runOperations(targetDirectoryPath, useCase, sources, classPath);
     } catch (IOException e) {
       log.error("ioE: " + e);
     }
   }
 
 
-  protected void runOperations(String directoryPath, UseCase useCase) throws IOException {
+  protected void runOperations(String directoryPath, UseCase useCase, String[] sources, String[] classPath) throws IOException {
     log.info(System.lineSeparator() +
       "================================================" + System.lineSeparator() +
       "     ____     ____________________     ____" + System.lineSeparator() +
@@ -93,9 +95,7 @@ public class AstraCore {
         .collect(Collectors.toList());
     log.info(filteredJavaFiles.size() + " files remain after prefiltering");
 
-    final Set<? extends ASTOperation> operations = useCase.getOperations();
-    final String[] sources = useCase.getSources();
-    final String[] classPath = useCase.getClassPath();
+    Set<? extends ASTOperation> operations = useCase.getOperations();
 
     for (Path f : filteredJavaFiles) {
       // TODO AstUtils.getClassFilesForSource(f.toString()); - attempt to get only relevant classpaths for a given source file?

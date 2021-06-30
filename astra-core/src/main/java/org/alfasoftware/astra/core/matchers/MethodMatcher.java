@@ -264,7 +264,9 @@ public class MethodMatcher {
 
 
   private boolean isTypeBindingMatch(ITypeBinding resolveTypeBinding, String test) {
-    if (getName(resolveTypeBinding).equals(test)) {
+    if (getName(resolveTypeBinding) != null &&
+        (getName(resolveTypeBinding).equals(test) ||
+         getName(resolveTypeBinding).replaceAll("\\$", ".").equals(test))) {
       return true; 
     } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, test::equals)) {
       return true;
