@@ -2,6 +2,7 @@ package org.alfasoftware.astra.core.matchers;
 
 import static org.alfasoftware.astra.core.matchers.DescribedPredicate.describedPredicate;
 import static org.alfasoftware.astra.core.utils.AstraUtils.CLASSPATHS_MISSING_WARNING;
+import static org.alfasoftware.astra.core.utils.AstraUtils.getName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,17 +178,7 @@ public class MethodMatcher {
       .withFullyQualifiedParameters(
         Arrays.asList(methodBinding.getParameterTypes())
           .stream()
-          .map(p -> {
-            if (p.isArray() && p.getElementType().isTypeVariable()) {
-              return p.getErasure().getQualifiedName();
-            } else if (p.isTypeVariable()) {
-              return p.getErasure().getBinaryName();
-            } else if (p.isPrimitive() || p.isArray()) {
-              return p.getQualifiedName();
-            } else {
-              return p.getBinaryName();
-            }
-          })
+          .map(AstraUtils::getName)
         .collect(Collectors.toList()))
       .build();
   }
@@ -221,7 +212,7 @@ public class MethodMatcher {
     
     final ITypeBinding superclass = resolveTypeBinding.getSuperclass();
     if (superclass != null) {
-       if (test.test(superclass.getBinaryName())) {
+       if (test.test(getName(superclass))) {
          return true;
        } else if (superclass.getSuperclass() != null) {
          return isSuperTypeMatch(superclass, test);
@@ -232,7 +223,7 @@ public class MethodMatcher {
   
   
   private boolean isInterfaceMatch(ITypeBinding typeBinding, Predicate<String> test) {
-    if (test.test(typeBinding.getBinaryName())) {
+    if (test.test(getName(typeBinding))) {
       return true;
     }
     return Arrays.stream(typeBinding.getInterfaces()).anyMatch(i -> isInterfaceMatch(i, test));
@@ -273,9 +264,8 @@ public class MethodMatcher {
 
 
   private boolean isTypeBindingMatch(ITypeBinding resolveTypeBinding, String test) {
-    if (resolveTypeBinding.getQualifiedName().equals(test) ||
-        Optional.ofNullable(resolveTypeBinding.getBinaryName()).filter(n -> n.equals(test)).isPresent()) {
-      return true;
+    if (getName(resolveTypeBinding).equals(test)) {
+      return true; 
     } else if (isSuperTypeOrInterfaceMatch(resolveTypeBinding, test::equals)) {
       return true;
     } else if (resolveTypeBinding.isArray() && test.endsWith("[]")) {
@@ -367,7 +357,7 @@ public class MethodMatcher {
             + CLASSPATHS_MISSING_WARNING
             + "Method invocation: [" + methodInvocation + "]");
       }
-      if(! binding
+      if (! binding
           .filter(mb -> ! isVarargs.isPresent() || isMethodVarargs(mb))
           .filter(this::isMethodParameterListMatch)
           .isPresent()) {

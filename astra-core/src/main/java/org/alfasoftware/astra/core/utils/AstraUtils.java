@@ -234,6 +234,19 @@ public class AstraUtils {
           .orElse("");
     }
   }
+  
+  
+  public static String getName(ITypeBinding typeBinding) {
+    if (typeBinding.isArray() && (typeBinding.getElementType().isTypeVariable() || typeBinding.getElementType().isParameterizedType())) {
+      return typeBinding.getErasure().getQualifiedName();
+    } else if (typeBinding.isTypeVariable()) {
+      return typeBinding.getErasure().getBinaryName();
+    } else if (typeBinding.isPrimitive() || typeBinding.isArray()) {
+      return typeBinding.getQualifiedName();
+    } else {
+      return typeBinding.getBinaryName();
+    }
+  }
 
 
   public static String getFullyQualifiedName(ClassInstanceCreation cic) {
