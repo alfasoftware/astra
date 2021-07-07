@@ -169,8 +169,6 @@ public class MethodInvocationRefactor implements ASTOperation {
             rewriter.set(methodInvocation, MethodInvocation.EXPRESSION_PROPERTY, newName, null);
             rewriter.set(methodInvocation.getName(), SimpleName.IDENTIFIER_PROPERTY, methodName, null);
           } else {
-            removeImport(compilationUnit, 
-              getFullyQualifiedName(methodInvocation, compilationUnit) + "." + methodInvocation.getName().toString(), rewriter);
             addStaticImport(compilationUnit, afterTypeFQ + "." + methodName, rewriter);
             rewriter.set(methodInvocation.getName(), SimpleName.IDENTIFIER_PROPERTY, methodName, null);
           }
