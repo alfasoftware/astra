@@ -6,6 +6,7 @@ import org.alfasoftware.astra.exampleTypes.B;
 
 /**
  * {@link B}
+ * {@link org.alfasoftware.astra.exampleTypes.B}
  */
 public class TypeReferenceExampleAfter extends B {
   B field = new B();
