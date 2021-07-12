@@ -5,7 +5,7 @@
   <parent>
     <artifactId>astra</artifactId>
     <groupId>org.alfasoftware</groupId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>2.0.0</version>
   </parent>
 
   <artifactId>astra-cli</artifactId>
