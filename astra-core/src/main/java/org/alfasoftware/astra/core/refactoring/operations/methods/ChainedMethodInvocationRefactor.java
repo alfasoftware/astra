@@ -17,14 +17,22 @@ import org.eclipse.text.edits.MalformedTreeException;
  * Similar to a method invocation refactor, this swaps two chained method invocations to a different method.
  *
  * For example,
- * <pre>getCurrentFoo().doFooThing()</pre>
+ * <pre>
+ * # getCurrentFoo().doFooThing()
+ * </pre>
  * can be swapped to
- * <pre>doBarThing()</pre>
+ * <pre>
+ * # doBarThing()
+ * </pre>
  *
  * In that case, the chain to refactor is:
- * <pre>["org.example.ThingProvider getCurrentFoo", "org.example.Foo doFooThing"]</pre>
+ * <pre>
+ * ["org.example.ThingProvider getCurrentFoo", "org.example.Foo doFooThing"]
+ * </pre>
  * and the method name should be swapped to:
- * <pre>["doBarThing"]</pre>
+ * <pre>
+ * ["doBarThing"]
+ * </pre>
  */
 public class ChainedMethodInvocationRefactor implements ASTOperation {
 

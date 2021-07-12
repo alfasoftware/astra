@@ -2,8 +2,6 @@ package org.alfasoftware.astra.core.refactoring.operations.methods;
 
 import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
 import static org.alfasoftware.astra.core.utils.AstraUtils.addStaticImport;
-import static org.alfasoftware.astra.core.utils.AstraUtils.getFullyQualifiedName;
-import static org.alfasoftware.astra.core.utils.AstraUtils.removeImport;
 
 import java.io.IOException;
 import java.util.Optional;

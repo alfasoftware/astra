@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ChildPropertyDescriptor;
@@ -248,7 +249,33 @@ public class AstraUtils {
     }
   }
 
+  
+  public static String getName(AnonymousClassDeclaration anonymousClassDeclaration) {
+    ITypeBinding resolveTypeBinding = anonymousClassDeclaration.resolveBinding();
+    if (resolveTypeBinding != null &&
+        resolveTypeBinding.isLocal()) {
+      
+      // Superclass
+      String superclassName = AstraUtils.getName(resolveTypeBinding.getSuperclass());
+      if (! Object.class.getName().equals(superclassName)) {
+        return superclassName;        
+      }
+      
+      // Interface
+      if (anonymousClassDeclaration.getParent() instanceof ClassInstanceCreation &&
+          ((Expression) anonymousClassDeclaration.getParent()).resolveTypeBinding() != null) {
+        ClassInstanceCreation parent = (ClassInstanceCreation) anonymousClassDeclaration.getParent();
+        return Arrays.stream(parent.resolveTypeBinding().getInterfaces())
+                .filter(i -> parent.toString().contains("new " + AstraUtils.getSimpleName(AstraUtils.getName(i))))
+                .map(AstraUtils::getName)
+                .findFirst()
+                .orElse("");
+      }
+    }
+    return "";
+  }
 
+  
   public static String getFullyQualifiedName(ClassInstanceCreation cic) {
     return Optional.of(cic)
         .map(ClassInstanceCreation::resolveConstructorBinding)
