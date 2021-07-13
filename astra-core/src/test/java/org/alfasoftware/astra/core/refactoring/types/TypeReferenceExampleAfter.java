@@ -3,9 +3,13 @@ package org.alfasoftware.astra.core.refactoring.types;
 import java.util.List;
 
 import org.alfasoftware.astra.exampleTypes.B;
+import org.alfasoftware.astra.exampleTypes.C;
 
 /**
  * {@link B}
+ * {@link C}
+ * {@link org.alfasoftware.astra.exampleTypes.B}
+ * {@link org.alfasoftware.astra.exampleTypes.C}
  */
 public class TypeReferenceExampleAfter extends B {
   B field = new B();
