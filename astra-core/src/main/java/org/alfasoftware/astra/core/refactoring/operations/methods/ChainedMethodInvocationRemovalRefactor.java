@@ -55,8 +55,8 @@ public class ChainedMethodInvocationRemovalRefactor implements ASTOperation {
       if (methodToRemove.matches(methodInvocation, compilationUnit)) {
 
         /*
-         * Given:
-         *       object.withA().withB().withC().withD());
+         * Given
+         * :    object.withA().withB().withC().withD());
          *
          * When considering the node ".withC()"...
          *      getParent() refers to   ".withD()"

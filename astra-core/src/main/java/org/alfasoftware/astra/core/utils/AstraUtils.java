@@ -19,7 +19,6 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
-import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ChildPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -28,7 +27,6 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
@@ -37,13 +35,10 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.eclipse.jdt.core.dom.ReturnStatement;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.TextElement;
-import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -334,23 +329,6 @@ public class AstraUtils {
   }
 
 
-  public static ITypeBinding resolveGenericTypeArgumentsForSimpleName(SimpleName variableName) {
-    IBinding resolveBinding = variableName.resolveBinding();
-    if (resolveBinding instanceof IVariableBinding) {
-      IVariableBinding variableBinding = (IVariableBinding) resolveBinding;
-      ITypeBinding type = variableBinding.getType();
-      if (type != null) {
-        ITypeBinding[] typeArguments = type.getTypeArguments();
-        // If it's got type arguments
-        if (typeArguments != null && typeArguments.length == 1) {
-          return typeArguments[0];
-        }
-      }
-    }
-    return null;
-  }
-
-
   /**
    * Returns the fully qualified name of the first type declared in the
    * compilation unit.
@@ -544,14 +522,6 @@ public class AstraUtils {
   }
 
 
-  public static boolean isTypeBindingQualifiedNameEqual(ITypeBinding type, String typeToMatch) {
-    return Optional.ofNullable(type)
-        .map(ITypeBinding::getQualifiedName)
-        .filter(n -> n.equals(typeToMatch))
-        .isPresent();
-  }
-
-
   public static boolean isMethodInvocationStatic(MethodInvocation methodInvocation) {
     return Optional.ofNullable(methodInvocation.resolveMethodBinding())
             .filter(mb -> Modifier.isStatic(mb.getModifiers()))
@@ -562,37 +532,33 @@ public class AstraUtils {
   public enum MethodInvocationType {
     /*
      * The method is statically imported, so the name alone is used e.g.
-     * <pre>
-     *   import static com.package.DeclaringType.methodName;
-     *   methodName(); <<<<
-     * </pre>
+     * 
+     * :  import static com.package.DeclaringType.methodName;
+     * :  methodName(); <<<<
      */
     STATIC_METHOD_METHOD_NAME_ONLY,
 
     /*
      * The simple class is used inline e.g.
-     * <pre>
-     *   import com.package.DeclaringType;
-     *   DeclaringType.methodName(); <<<<
-     * </pre>
+     * 
+     * :  import com.package.DeclaringType;
+     * :  DeclaringType.methodName(); <<<<
      */
     STATIC_METHOD_SIMPLE_NAME,
 
     /*
      * The fully qualified name is used inline e.g.
-     * <pre>
-     *   com.package.DeclaringType.methodName(); <<<<
-     * </pre>
+     * 
+     * :  com.package.DeclaringType.methodName(); <<<<
      */
     STATIC_METHOD_FULLY_QUALIFIED_NAME,
 
     /*
      * The method is invoked on a variable of the given type e.g.
-     * <pre>
-     *   import com.package.DeclaringType;
-     *   DeclaringType a = new DeclaringType();
-     *   a.methodName(); <<<<
-     * </pre>
+     * 
+     * :  import com.package.DeclaringType;
+     * :  DeclaringType a = new DeclaringType();
+     * :  a.methodName(); <<<<
      */
     ON_CLASS_INSTANCE,
   }
@@ -701,22 +667,6 @@ public class AstraUtils {
     TextElement tagTextElement = tagElement.getAST().newTextElement();
     tagTextElement.setText(tagContent);
     tagFragementList.insertFirst(tagTextElement, null);
-  }
-
-
-  /**
-   * Adds {@code return this;} to the end of the method body declaration to turn
-   * it into a builder.
-   *
-   * @param method Method declaration to modify the body for.
-   * @param rewriter AST re-writer to apply changes.
-   */
-  public static void addReturnThisStatement(MethodDeclaration method, ASTRewrite rewriter) {
-    ReturnStatement returnStatement = method.getBody().getAST().newReturnStatement();
-    ThisExpression thisExpression = returnStatement.getAST().newThisExpression();
-    returnStatement.setExpression(thisExpression);
-    ListRewrite statementsList = rewriter.getListRewrite(method.getBody(), Block.STATEMENTS_PROPERTY);
-    statementsList.insertLast(returnStatement, null);
   }
 
 
