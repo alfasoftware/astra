@@ -61,10 +61,10 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
       // first
       MethodInvocation nextMethodInvocation = (MethodInvocation) node.getExpression();
       if (before.get(before.size() - 2).getMethodName().filter(name -> name.test(nextMethodInvocation.getName().toString())).isPresent()) {
-        // TODO make this looped, so we can handle chains of arbitrary length
+        // TODO #36 make this looped, so we can handle chains of arbitrary length
 
         // change the chain to the "after"
-        // TODO handle arbitrary "after" lengths
+        // TODO #36 handle arbitrary "after" lengths
         rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, nextMethodInvocation.getExpression(), null);
         rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(0)), null);
       }

@@ -1,31 +1,27 @@
 package org.alfasoftware.astra.core.utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
-import org.eclipse.jdt.core.dom.AnnotationTypeMemberDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.CreationReference;
-import org.eclipse.jdt.core.dom.EnhancedForStatement;
-import org.eclipse.jdt.core.dom.ExpressionMethodReference;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IDocElement;
-import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
-import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
-import org.eclipse.jdt.core.dom.MemberRef;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.MethodRef;
-import org.eclipse.jdt.core.dom.MethodRefParameter;
-import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
@@ -36,21 +32,9 @@ import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
-import org.eclipse.jdt.core.dom.TypeLiteral;
-import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.TypeParameter;
-import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
-import org.eclipse.jdt.core.dom.WildcardType;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Tracks what is seen when visiting all nodes in a compilation unit.
@@ -74,10 +58,7 @@ public class ClassVisitor extends ASTVisitor {
   private final List<ClassInstanceCreation> classInstanceCreations = new ArrayList<>();
   private final List<TagElement> tagElements = new ArrayList<>();
 
-  private final List<InfixExpression> infixExpressions = new ArrayList<>();
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
-  private final List<IfStatement> ifStatements = new ArrayList<>();
-  private final List<EnhancedForStatement> enhancedForStatements = new ArrayList<>();
   private final List<CastExpression> castExpressions = new ArrayList<>();
 
   private final List<ImportDeclaration> imports = new ArrayList<>();
@@ -218,27 +199,6 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  @Override
-  public boolean visit(IfStatement node) {
-    log.debug("If Statement: " + node);
-    ifStatements.add(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(EnhancedForStatement node) {
-    log.debug("Enhanced For Statement: " + node);
-    enhancedForStatements.add(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(InfixExpression node) {
-    log.debug("InfixExpression: " + node);
-    infixExpressions.add(node);
-    return super.visit(node);
-  }
-
 
   @Override
   public boolean visit(Javadoc node) {
@@ -273,12 +233,6 @@ public class ClassVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(VariableDeclarationExpression node) {
-    log.debug("Variable declaration expression: " + node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(FieldAccess node) {
     log.debug("Field access: " + node);
     fieldAccesses.add(node);
@@ -293,51 +247,9 @@ public class ClassVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(MethodRef node) {
-    log.debug("Method ref: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(ExpressionMethodReference node) {
-    log.debug("Exp method ref: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TypeMethodReference node) {
-    log.debug("Type method ref: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(NameQualifiedType node) {
-    log.debug("Name qual type: " + node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(QualifiedType node) {
     log.debug("Qual type: " + node);
     qualifiedTypes.add(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TypeDeclarationStatement node) {
-    log.debug("Type decl state: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TypeLiteral node) {
-    log.debug("Type literal: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(WildcardType node) {
-    log.debug("Wildcard type: " + node);
     return super.visit(node);
   }
 
@@ -348,35 +260,6 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  @Override
-  public boolean visit(CreationReference node) {
-    log.debug("Creation ref: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(MethodRefParameter node) {
-    log.debug("Method ref param: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(MemberRef node) {
-    log.debug("Member ref: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(AnnotationTypeDeclaration node) {
-    log.debug("Annotation type declaration: " + node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(AnnotationTypeMemberDeclaration node) {
-    log.debug("Annotation type member declaration: " + node);
-    return super.visit(node);
-  }
 
   /**
    * @return Types which are defined.
@@ -393,17 +276,10 @@ public class ClassVisitor extends ASTVisitor {
     return fieldDeclarations;
   }
 
-  public List<InfixExpression> getInfixExpressions() {
-    return infixExpressions;
-  }
-
   public List<FieldAccess> getFieldAccesses() {
     return fieldAccesses;
   }
 
-  public List<IfStatement> getIfStatements() {
-    return ifStatements;
-  }
 
   public List<CastExpression> getCastExpressions() {
     return castExpressions;
@@ -458,10 +334,6 @@ public class ClassVisitor extends ASTVisitor {
 
   public List<ClassInstanceCreation> getClassInstanceCreations() {
     return classInstanceCreations;
-  }
-
-  public List<EnhancedForStatement> getEnhancedForStatements() {
-    return enhancedForStatements;
   }
 
   /**
@@ -532,10 +404,7 @@ public class ClassVisitor extends ASTVisitor {
       getTagElements(),
       getImports(),
       getFieldAccesses(),
-      getIfStatements(),
-      getInfixExpressions(),
-      getCastExpressions(),
-      getEnhancedForStatements())
+      getCastExpressions())
     .flatMap(Collection::stream)
     .collect(Collectors.toSet());
   }
