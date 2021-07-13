@@ -84,6 +84,20 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
             .toType(EnumB.class.getName())
             .build())));
   }
+  
+  
+  /**
+   * This test checks that where the fully qualified names don't match, the types are not refactored.
+   */
+  @Test
+  public void testChangeTypesNegativeExample() {
+    assertRefactor(TypeReferenceNegativeExample.class,
+        new HashSet<>(Arrays.asList(
+          TypeReferenceRefactor.builder()
+            .fromType(A.class.getName())
+            .toType(B.class.getName())
+            .build())));
+  }
 
 
   /**

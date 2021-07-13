@@ -201,15 +201,15 @@ public class TypeReferenceRefactor implements ASTOperation {
               .map(ITypeBinding::getQualifiedName)
               .filter(n -> n.equals(getFromType()))
               .ifPresent(t -> types.add((SimpleName) f));
-          }
-          else if (f instanceof QualifiedName) {
+            
+          } else if (f instanceof QualifiedName) {
             Optional.of(f)
               .map(QualifiedName.class::cast)
               .map(QualifiedName::getFullyQualifiedName)
               .filter(n -> n.equals(getFromType()))
               .ifPresent(t -> types.add((QualifiedName) f));
-          }
-          else if (f instanceof MethodRef) {
+            
+          } else if (f instanceof MethodRef) {
             Optional.of(f)
               .map(MethodRef.class::cast)
               .map(MethodRef::getQualifier)
