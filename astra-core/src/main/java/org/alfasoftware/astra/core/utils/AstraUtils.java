@@ -288,8 +288,13 @@ public class AstraUtils {
   public static String getSimpleName(String fullName) {
     // Strip package and enclosing class name, if present
     for (int i = fullName.length() - 1; i >= 0; i--) {
+      
       if (finalTypeChars.contains(fullName.charAt(i))) {
-        return fullName.substring(i + 1);
+        String name = fullName.substring(i + 1);
+        if (name.isBlank() && '$' == fullName.charAt(i)) {
+          return "$";
+        }
+        return name;
       }
     }
     return fullName;

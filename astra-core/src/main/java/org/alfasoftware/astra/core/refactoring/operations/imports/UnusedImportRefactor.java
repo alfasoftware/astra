@@ -229,7 +229,7 @@ public class UnusedImportRefactor implements ASTOperation {
           .map(SimpleName::resolveBinding)
           .filter(ITypeBinding.class::isInstance)
           .isPresent()) {
-        types.add(AstraUtils.getSimpleName(node.toString()));        
+        types.add(AstraUtils.getSimpleName(node.toString()));
       }
       
       // If it's a variable name
@@ -238,7 +238,7 @@ public class UnusedImportRefactor implements ASTOperation {
           .map(SimpleName::resolveBinding)
           .filter(IVariableBinding.class::isInstance)
           .isPresent()) {
-        variables.add(AstraUtils.getSimpleName(node.toString()));        
+        variables.add(AstraUtils.getSimpleName(node.toString()));
       }
       if (node.resolveBinding() == null) {
         unresolvableReferences.add(AstraUtils.getSimpleName(node.toString()));

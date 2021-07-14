@@ -51,4 +51,8 @@ public class A implements Fooable {
   public void doFoo() {
 
   }
+  
+  public static Object[] $(Object... objects) {
+    return objects;
+  }
 }

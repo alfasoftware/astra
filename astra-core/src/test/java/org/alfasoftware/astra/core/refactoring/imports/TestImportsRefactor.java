@@ -162,4 +162,16 @@ public class TestImportsRefactor extends AbstractRefactorTest {
     assertRefactor(StaticImportSameTypeInnerClassExample.class,
         new HashSet<>(Arrays.asList(new UnusedImportRefactor())));
   }
+  
+  
+  /**
+   * Tests that static imports of methods named solely '$' are not removed.
+   * Methods should not be named this way by convention (JLS 3.8), 
+   * but they are sometimes, such as JUnit's 'JUnitParamsRunner.$'.
+   */
+  @Test
+  public void testDollarSignStaticImportsNotRemoved() {
+    assertRefactor(StaticImportDollarSignExample.class,
+      new HashSet<>(Arrays.asList(new UnusedImportRefactor())));
+  }
 }
