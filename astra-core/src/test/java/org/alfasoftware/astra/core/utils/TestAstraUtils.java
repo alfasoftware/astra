@@ -26,7 +26,7 @@ public class TestAstraUtils {
   protected static final String TEST_EXAMPLES = "./src/test/java";
   
   /**
-   * Returns the Java identifier representing the simple name from a String representation of a qualified name.
+   * Tests for a method which returns the Java simple name identifier from a qualified name.
    * The JLS section 3.8 ({@link https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.8}) defines an identifier as
    * "an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter."
    * "The 'Java letters' include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and, 
