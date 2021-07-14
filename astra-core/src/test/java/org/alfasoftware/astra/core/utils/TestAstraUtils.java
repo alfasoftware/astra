@@ -25,6 +25,48 @@ public class TestAstraUtils {
   protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
   protected static final String TEST_EXAMPLES = "./src/test/java";
   
+  /**
+   * Returns the Java identifier representing the simple name from a String representation of a qualified name.
+   * The JLS section 3.8 ({@link https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.8}) defines an identifier as
+   * "an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter."
+   * "The 'Java letters' include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and, 
+   *    for historical reasons, the ASCII dollar sign ($, or \u0024) and underscore (_, or \u005f). 
+   *    The dollar sign should be used only in mechanically generated source code or, rarely, to access pre-existing names on 
+   *    legacy systems. The underscore may be used in identifiers formed of two or more characters, but it cannot be used as a
+   *     one-character identifier due to being a keyword.
+   *  The 'Java digits' include the ASCII digits 0-9 (\u0030-\u0039)."
+   */
+  @Test
+  public void testGetSimpleName() {
+    
+    // Primitive
+    assertEquals("boolean", AstraUtils.getSimpleName("boolean"));
+    
+    // Class name already simple name
+    assertEquals("Foo", AstraUtils.getSimpleName("Foo"));
+    
+    // Fully qualified type names
+    assertEquals("Foo", AstraUtils.getSimpleName("com.Foo"));
+    assertEquals("Bar", AstraUtils.getSimpleName("com.foo.Bar"));
+    
+    // Method name qualified with class
+    assertEquals("methodName", AstraUtils.getSimpleName("com.Foo.methodName"));
+    
+    // Inner class
+    assertEquals("InnerFoo", AstraUtils.getSimpleName("com.Foo$InnerFoo"));
+    
+    // Static member with underscore
+    assertEquals("100_000", AstraUtils.getSimpleName("com.Foo.100_000"));
+    
+    // Static method named with one non-alphanumeric character
+    assertEquals("$", AstraUtils.getSimpleName("com.Foo.$"));
+    assertEquals("_", AstraUtils.getSimpleName("com.Foo._"));
+    
+    // Invalid name
+    assertEquals("", AstraUtils.getSimpleName("com.Foo.."));
+  }
+  
+  
   
   @Test
   public void testGetNameForAnonymousClassDeclaration() {
