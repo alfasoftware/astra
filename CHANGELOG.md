@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2021-08-04
+### Added
+
+### Changed
+* #63 Removing redundant code and excluding code fragments from SONAR warnings about commented out code
+* #64 Adding support for dealing with static imports of methods named solely $, as with JUnit's JunitParamsRunner.$
+* #66 Getting simple names for types now aligned with the JLS spec
+* #67 When finding method invocations, method candidates that are not found are now also included in the list of results
+
+### Fixed
+* #57 Added compatibility for fully qualified names in Javadoc in TypeReferenceRefactor (fixes #3)
+* #65 Incrementing version of javadoc plugin with fix affecting later versions (9+) of java
+
 
 ## [2.0.0] - 2021-07-12
 ### Added
