@@ -283,12 +283,19 @@ public class AstraUtils {
 
 
   /**
-   * Consider using {@link Signature#getSimpleName(String)}
+   * Returns the Java identifier representing the simple name from a String representation of a qualified name.
+   * The JLS section 3.8 ({@link https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.8}) defines an identifier as
+   * "an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter."
+   * "The 'Java letters' include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and, 
+   *    for historical reasons, the ASCII dollar sign ($, or \u0024) and underscore (_, or \u005f). 
+   *    The dollar sign should be used only in mechanically generated source code or, rarely, to access pre-existing names on 
+   *    legacy systems. The underscore may be used in identifiers formed of two or more characters, but it cannot be used as a
+   *     one-character identifier due to being a keyword.
+   *  The 'Java digits' include the ASCII digits 0-9 (\u0030-\u0039)."
    */
   public static String getSimpleName(String fullName) {
     // Strip package and enclosing class name, if present
     for (int i = fullName.length() - 1; i >= 0; i--) {
-      
       if (finalTypeChars.contains(fullName.charAt(i))) {
         String name = fullName.substring(i + 1);
         if (name.isBlank() && '$' == fullName.charAt(i)) {
@@ -538,32 +545,32 @@ public class AstraUtils {
     /*
      * The method is statically imported, so the name alone is used e.g.
      * 
-     * :  import static com.package.DeclaringType.methodName;
-     * :  methodName(); <<<<
+     *   import static com.package.DeclaringType.methodName;     //NOSONAR
+     *   methodName(); <<<<
      */
     STATIC_METHOD_METHOD_NAME_ONLY,
 
     /*
      * The simple class is used inline e.g.
      * 
-     * :  import com.package.DeclaringType;
-     * :  DeclaringType.methodName(); <<<<
+     *   import com.package.DeclaringType;                       //NOSONAR
+     *   DeclaringType.methodName(); <<<<                        
      */
     STATIC_METHOD_SIMPLE_NAME,
 
     /*
      * The fully qualified name is used inline e.g.
      * 
-     * :  com.package.DeclaringType.methodName(); <<<<
+     *   com.package.DeclaringType.methodName(); <<<<            //NOSONAR
      */
     STATIC_METHOD_FULLY_QUALIFIED_NAME,
 
     /*
      * The method is invoked on a variable of the given type e.g.
      * 
-     * :  import com.package.DeclaringType;
-     * :  DeclaringType a = new DeclaringType();
-     * :  a.methodName(); <<<<
+     *   import com.package.DeclaringType;                       //NOSONAR
+     *   DeclaringType a = new DeclaringType();
+     *   a.methodName(); <<<<
      */
     ON_CLASS_INSTANCE,
   }

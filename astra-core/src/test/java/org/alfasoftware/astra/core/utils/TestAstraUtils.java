@@ -24,6 +24,7 @@ public class TestAstraUtils {
   protected static final String SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/main/java");
   protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
   protected static final String TEST_EXAMPLES = "./src/test/java";
+
   
   /**
    * Tests for a method which returns the Java simple name identifier from a qualified name.
@@ -65,7 +66,6 @@ public class TestAstraUtils {
     // Invalid name
     assertEquals("", AstraUtils.getSimpleName("com.Foo.."));
   }
-  
   
   
   @Test

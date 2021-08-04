@@ -36,13 +36,13 @@ public class ChainedMethodInvocationRemovalRefactor implements ASTOperation {
    * Remove a method call from a chain of method calls.
    * <p>
    * Given
-   * : <pre>object.withA().withB().withC().withD());</pre>
+   * # <pre>object.withA().withB().withC().withD());</pre>
    *
    * If we are passed a MethodInvocationMatcher that will match 
-   * : <pre>withC()</pre>
+   * # <pre>withC()</pre>
    *
    * Then we modify the code such that it becomes
-   * : <pre>object.withA().withB().withD());</pre>
+   * # <pre>object.withA().withB().withD());</pre>
    *
    * @see org.alfasoftware.astra.core.utils.ASTOperation#run(org.eclipse.jdt.core.dom.CompilationUnit, org.eclipse.jdt.core.dom.ASTNode, org.eclipse.jdt.core.dom.rewrite.ASTRewrite)
    */
@@ -56,7 +56,7 @@ public class ChainedMethodInvocationRemovalRefactor implements ASTOperation {
 
         /*
          * Given
-         * :    object.withA().withB().withC().withD());
+         *      object.withA().withB().withC().withD());               //NOSONAR
          *
          * When considering the node ".withC()"...
          *      getParent() refers to   ".withD()"
