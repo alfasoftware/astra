@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.analysis.operations.AnalysisOperation;
@@ -30,10 +30,12 @@ import org.eclipse.text.edits.MalformedTreeException;
 public class FindMethodInvocationsAnalysis implements AnalysisOperation<MethodAnalysisResult> {
 
   private final Set<MethodMatcher> matchers;
-  private final Map<MethodMatcher, List<MatchedMethodResult>> matchedNodes = new HashMap<>();
+  private final Map<MethodMatcher, List<MatchedMethodResult>> matchedNodes;
 
   public FindMethodInvocationsAnalysis(Set<MethodMatcher> matchers) {
     this.matchers = matchers;
+    this.matchedNodes = matchers.stream()
+         .collect(Collectors.toMap(Function.identity(), i -> new ArrayList<>()));
   }
 
   @Override
