@@ -6,8 +6,10 @@ import java.util.HashSet;
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
 import org.alfasoftware.astra.core.refactoring.operations.annotations.AddAnnotationRefactor;
+import org.alfasoftware.astra.core.refactoring.operations.annotations.AnnotationChangeRefactor;
 import org.alfasoftware.astra.core.refactoring.operations.annotations.RemoveAnnotationRefactor;
 import org.alfasoftware.astra.core.utils.AstraUtils;
+import org.alfasoftware.astra.exampleTypes.AnnotationA;
 import org.alfasoftware.astra.exampleTypes.AnnotationB;
 import org.alfasoftware.astra.exampleTypes.AnnotationC;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -34,6 +36,32 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
         )
       )
     );
+  }
+
+  @Test
+  public void testAnnotationChange(){
+    assertRefactor(
+            AnnotationChangeExample.class,
+            new HashSet<>(Arrays.asList(
+               AnnotationChangeRefactor.builder()
+                       .from(AnnotationMatcher.builder()
+                               .withFullyQualifiedName(AnnotationA.class.getName())
+                               .withValue("")
+                               .build())
+                       .to(AnnotationB.class.getTypeName()).build(),
+                    AnnotationChangeRefactor.builder()
+                            .from(AnnotationMatcher.builder()
+                                    .withFullyQualifiedName(AnnotationA.class.getName())
+                                    .withValue("A")
+                                    .build())
+                            .to(AnnotationB.class.getTypeName()).build(),
+                    AnnotationChangeRefactor.builder()
+                            .from(AnnotationMatcher.builder()
+                                    .withFullyQualifiedName(AnnotationA.class.getName())
+                                    .withValue("BAR")
+                                    .build())
+                            .to(AnnotationB.class.getTypeName()).build()
+            )));
   }
   
   @Test
