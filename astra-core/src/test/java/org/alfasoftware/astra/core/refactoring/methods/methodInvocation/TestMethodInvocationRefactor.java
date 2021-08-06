@@ -286,7 +286,10 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
               .withMethodName("second")
               .build()),
           Arrays.asList("third")),
-        TypeReferenceRefactor.builder().fromType(A.class.getName()).toType(C.class.getName()).withNewVariableName("wrappedC").build()
+        TypeReferenceRefactor.builder()
+                .fromType(A.class.getName())
+                .toType(C.class.getName())
+                .withNewVariableName("wrappedC").build()
       ))
     );
   }

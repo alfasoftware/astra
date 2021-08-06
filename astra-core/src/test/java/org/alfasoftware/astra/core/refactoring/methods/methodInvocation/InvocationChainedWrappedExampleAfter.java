@@ -7,10 +7,10 @@ import org.alfasoftware.astra.exampleTypes.C;
 @SuppressWarnings("unused")
 public class InvocationChainedWrappedExampleAfter {
 
-  Optional<C> wrappedA = Optional.of(new C());
+  Optional<C> wrappedC = Optional.of(new C());
 
   private void a() {
-    wrappedA.get().third();
+    wrappedC.get().third();
   }
 }
 

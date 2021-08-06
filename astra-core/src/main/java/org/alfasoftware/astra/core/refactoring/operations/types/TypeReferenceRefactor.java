@@ -141,7 +141,8 @@ public class TypeReferenceRefactor implements ASTOperation {
         log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
             AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
         rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
-      } else if (newVariableName != null && binding instanceof IVariableBinding && ((IVariableBinding) binding).getType().getQualifiedName().equals(getFromType())) {
+      } else if (newVariableName != null && binding instanceof IVariableBinding
+              && ((IVariableBinding) binding).getType().getQualifiedName().contains(getFromType())) {
         log.info("Refactoring variable name [" + name.toString() + "] to [" + newVariableName + "] in [" +
             AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
         rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, newVariableName, null);
