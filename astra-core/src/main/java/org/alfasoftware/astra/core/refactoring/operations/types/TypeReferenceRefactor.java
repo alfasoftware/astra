@@ -137,12 +137,20 @@ public class TypeReferenceRefactor implements ASTOperation {
   private void updateSimpleName(CompilationUnit compilationUnit, SimpleName name, ASTRewrite rewriter) {
     IBinding binding = name.resolveBinding();
     if (binding != null) {
+      String qualifiedName = "";
+      if(binding instanceof IVariableBinding){
+        qualifiedName = ((IVariableBinding) binding).getType().getQualifiedName();
+        if(qualifiedName.contains("Optional<"))
+          qualifiedName = ((IVariableBinding) binding).getType().getQualifiedName()
+                  .substring(((IVariableBinding) binding).getType().getQualifiedName().indexOf("<")+1, ((IVariableBinding) binding).getType().getQualifiedName().indexOf(">"));
+
+      }
       if (binding instanceof ITypeBinding && ((ITypeBinding) binding).getQualifiedName().equals(getFromType())) {
         log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
             AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
         rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
       } else if (newVariableName != null && binding instanceof IVariableBinding
-              && ((IVariableBinding) binding).getType().getQualifiedName().contains(getFromType())) {
+              &&  qualifiedName.equals(getFromType())) {
         log.info("Refactoring variable name [" + name.toString() + "] to [" + newVariableName + "] in [" +
             AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
         rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, newVariableName, null);
