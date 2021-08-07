@@ -14,6 +14,7 @@ import org.junit.Test;
 
 public class TestTypeReferenceRefactor extends AbstractRefactorTest {
 
+	
   /**
    * Changing from one type to another, anywhere it occurs.
    */
@@ -27,33 +28,6 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
             .build())));
   }
 
-  /**
-   * Changing from one type to another, anywhere it occurs.
-   */
-  @Test
-  public void testBaseChangeTypesWithRename() {
-    assertRefactor(ChangeTypeAndRenameExample.class,
-        new HashSet<>(Arrays.asList(
-          TypeReferenceRefactor.builder()
-            .fromType(A.class.getName())
-            .toType(B.class.getName())
-            .withNewVariableName("b")
-            .build())));
-  }
-
-  /**
-   * Changing from one type to another, renaming variables of that type.
-   */
-  @Test
-  public void testChangeTypeWithRename() {
-    assertRefactor(RenameExample.class,
-        new HashSet<>(Arrays.asList(
-          TypeReferenceRefactor.builder()
-            .fromType(A.class.getName())
-            .toType(B.class.getName())
-            .withNewVariableName("nameAfter")
-            .build())));
-  }
 
   /**
    * Changing from one type to another, when that type is extended.
@@ -62,7 +36,7 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
    */
   @Test
   public void testChangeTypesWhenExtended() {
-    assertRefactor(ChangeTypeExtendedTypeExample.class,
+    assertRefactor(TypeReferenceExtendedTypeExample.class,
         new HashSet<>(Arrays.asList(
           TypeReferenceRefactor.builder()
             .fromType(A.class.getName())
@@ -70,6 +44,7 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
             .build())));
   }
 
+  
   /**
    * Changing from one type to another, when that type is used in an enum reference.
    * e.g.
@@ -77,7 +52,7 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
    */
   @Test
   public void testChangeTypesWhenUsedInEnum() {
-    assertRefactor(ChangeTypeInEnumExample.class,
+    assertRefactor(TypeReferenceEnumExample.class,
         new HashSet<>(Arrays.asList(
           TypeReferenceRefactor.builder()
             .fromType(EnumA.class.getName())
@@ -101,17 +76,15 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
 
 
   /**
-   * Changing from one type to another, renaming variables of that type.
+   * Changing from one type to another, where that type is parameterized.
    */
   @Test
-  @Ignore("Typed variable rename currently works for direct type references, but not when used as a parameterized type.")
-  public void testChangeWrappedTypeWithRename() {
-    assertRefactor(ChangeTypeWithRenameWrappedExample.class,
+  public void testChangeParameterizedType() {
+    assertRefactor(TypeReferenceParameterizedExample.class,
         new HashSet<>(Arrays.asList(
           TypeReferenceRefactor.builder()
             .fromType(A.class.getName())
             .toType(B.class.getName())
-            .withNewVariableName("nameAfter")
             .build())));
   }
 }

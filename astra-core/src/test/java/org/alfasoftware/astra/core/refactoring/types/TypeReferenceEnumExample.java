@@ -2,7 +2,7 @@ package org.alfasoftware.astra.core.refactoring.types;
 
 import org.alfasoftware.astra.exampleTypes.EnumA;
 
-public class ChangeTypeInEnumExample {
+class TypeReferenceEnumExample {
 
   @SuppressWarnings("unused")
   void doFoo() {

@@ -264,14 +264,12 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
         TypeReferenceRefactor.builder()
           .fromType(A.class.getName())
           .toType(C.class.getName())
-          .withNewVariableName("c")
           .build()
       ))
     );
   }
 
   @Test
-  @Ignore("Type rename currently works for direct type references, not as a parameterized type.")
   public void testInvocationChainedWrapped() {
     assertRefactor(InvocationChainedWrappedExample.class,
       new HashSet<>(Arrays.asList(
@@ -286,7 +284,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
               .withMethodName("second")
               .build()),
           Arrays.asList("third")),
-        TypeReferenceRefactor.builder().fromType(A.class.getName()).toType(C.class.getName()).withNewVariableName("wrappedC").build()
+        TypeReferenceRefactor.builder().fromType(A.class.getName()).toType(C.class.getName()).build()
       ))
     );
   }
