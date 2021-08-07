@@ -6,8 +6,8 @@ public class InvocationChainedExample {
 
   @SuppressWarnings("unused")
   private void a() {
-    A a = new A();
-    a.first().second();
+    A foo = new A();
+    foo.first().second();
   }
 }
 

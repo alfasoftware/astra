@@ -15,7 +15,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IDocElement;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.Name;
@@ -60,13 +59,11 @@ public class TypeReferenceRefactor implements ASTOperation {
 
   private final String fromType;
   private final String toType;
-  private final String newVariableName;
 
 
   private TypeReferenceRefactor(Builder builder) {
     this.fromType = builder.fromType;
     this.toType = builder.toType;
-    this.newVariableName = builder.newVariableName;
   }
 
   /**
@@ -83,7 +80,6 @@ public class TypeReferenceRefactor implements ASTOperation {
   public static class Builder {
     private String fromType;
     private String toType;
-    private String newVariableName;
     private Builder() {
       super();
     }
@@ -95,11 +91,6 @@ public class TypeReferenceRefactor implements ASTOperation {
 
     public Builder toType(String toType) {
       this.toType = toType;
-      return this;
-    }
-
-    public Builder withNewVariableName(String newVariableName) {
-      this.newVariableName = newVariableName;
       return this;
     }
 
@@ -141,10 +132,6 @@ public class TypeReferenceRefactor implements ASTOperation {
         log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
             AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
         rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
-      } else if (newVariableName != null && binding instanceof IVariableBinding && ((IVariableBinding) binding).getType().getQualifiedName().equals(getFromType())) {
-        log.info("Refactoring variable name [" + name.toString() + "] to [" + newVariableName + "] in [" +
-            AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
-        rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, newVariableName, null);
       }
     }
   }

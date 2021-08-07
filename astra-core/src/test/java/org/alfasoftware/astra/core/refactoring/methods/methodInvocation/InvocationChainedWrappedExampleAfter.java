@@ -5,12 +5,12 @@ import java.util.Optional;
 import org.alfasoftware.astra.exampleTypes.C;
 
 @SuppressWarnings("unused")
-public class InvocationChainedWrappedExampleAfter {
+class InvocationChainedWrappedExampleAfter {
 
-  Optional<C> wrappedC = Optional.of(new C());
+  Optional<C> foo = Optional.of(new C());
 
   private void a() {
-    wrappedC.get().third();
+    foo.get().third();
   }
 }
 
