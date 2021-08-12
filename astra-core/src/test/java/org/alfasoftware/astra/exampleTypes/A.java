@@ -33,6 +33,22 @@ public class A implements Fooable {
 	public B first() {
 	  return new B();
 	}
+	
+	public A getA() {
+	  return new A();
+	}
+	
+	public B getB() {
+	  return new B();
+	}
+	
+	public C getC() {
+	  return new C();
+	}
+	
+	public D getD() {
+	  return new D();
+	}
 
   public void overloaded(Object one) {
 

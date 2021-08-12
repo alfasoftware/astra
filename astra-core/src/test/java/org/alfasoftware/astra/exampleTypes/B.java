@@ -25,4 +25,12 @@ public class B {
   public C second() {
     return new C();
   }
+  
+  public A getA() {
+  	return new A();
+  }
+  
+  public C getC() {
+  	return new C();
+  }
 }

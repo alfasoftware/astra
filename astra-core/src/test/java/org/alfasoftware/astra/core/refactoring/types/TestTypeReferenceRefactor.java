@@ -9,7 +9,6 @@ import org.alfasoftware.astra.exampleTypes.A;
 import org.alfasoftware.astra.exampleTypes.B;
 import org.alfasoftware.astra.exampleTypes.EnumA;
 import org.alfasoftware.astra.exampleTypes.EnumB;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestTypeReferenceRefactor extends AbstractRefactorTest {
