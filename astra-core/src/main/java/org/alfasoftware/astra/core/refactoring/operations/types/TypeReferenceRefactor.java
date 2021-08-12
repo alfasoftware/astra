@@ -127,12 +127,12 @@ public class TypeReferenceRefactor implements ASTOperation {
 
   private void updateSimpleName(CompilationUnit compilationUnit, SimpleName name, ASTRewrite rewriter) {
     IBinding binding = name.resolveBinding();
-    if (binding != null) {
-      if (binding instanceof ITypeBinding && ((ITypeBinding) binding).getQualifiedName().equals(getFromType())) {
-        log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
-            AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
-        rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
-      }
+    if (binding != null && 
+    		binding instanceof ITypeBinding && 
+    		((ITypeBinding) binding).getQualifiedName().equals(getFromType())) {
+      log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
+          AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
+      rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
     }
   }
   

@@ -569,7 +569,7 @@ public class AstraUtils {
      * The method is invoked on a variable of the given type e.g.
      * 
      *   import com.package.DeclaringType;                       //NOSONAR
-     *   DeclaringType a = new DeclaringType();
+     *   DeclaringType a = new DeclaringType();                  //NOSONAR
      *   a.methodName(); <<<<
      */
     ON_CLASS_INSTANCE,
