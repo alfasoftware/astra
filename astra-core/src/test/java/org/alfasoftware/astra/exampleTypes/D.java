@@ -26,4 +26,8 @@ public class D {
   public D third() {
     return new D();
   }
+  
+  public C getC() {
+  	return new C();
+  }
 }

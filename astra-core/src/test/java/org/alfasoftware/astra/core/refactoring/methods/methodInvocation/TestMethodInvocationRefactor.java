@@ -268,6 +268,58 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
       ))
     );
   }
+  
+  
+  /**
+   * ChainedMethodInvocationRefactor should be able to handle chains of arbitrary length.
+   * This means we should be able to match on arbitrarily large chains of method calls,
+   * and replace them with chains of method calls.
+   * 
+   * Both the matching and replacement of method calls currently stops after two.
+   */
+  @Ignore("Illustrates issue https://github.com/alfasoftware/astra/issues/36")
+  @Test
+  public void testInvocationChainedWithLargeMatchingAndReplacementChains() {
+    assertRefactor(InvocationChainedLargeChainsExample.class,
+      new HashSet<>(Arrays.asList(
+        new ChainedMethodInvocationRefactor(
+          Arrays.asList(
+            MethodMatcher.builder()
+              .withFullyQualifiedDeclaringType(A.class.getName())
+              .withMethodName("getA")
+              .build(),
+            MethodMatcher.builder()
+              .withFullyQualifiedDeclaringType(A.class.getName())
+              .withMethodName("getB")
+              .build(),
+            MethodMatcher.builder()
+              .withFullyQualifiedDeclaringType(B.class.getName())
+              .withMethodName("getC")
+              .build(),
+            MethodMatcher.builder()
+              .withFullyQualifiedDeclaringType(C.class.getName())
+              .withMethodName("getD")
+              .build()),
+          Arrays.asList("getD", "getC", "getB", "getA")),
+        new ChainedMethodInvocationRefactor(
+            Arrays.asList(
+              MethodMatcher.builder()
+                .withFullyQualifiedDeclaringType(A.class.getName())
+                .withMethodName("getC")
+                .build(),
+              MethodMatcher.builder()
+                .withFullyQualifiedDeclaringType(C.class.getName())
+                .withMethodName("getB")
+                .build(),
+              MethodMatcher.builder()
+                .withFullyQualifiedDeclaringType(B.class.getName())
+                .withMethodName("getA")
+                .build()),
+            Arrays.asList("getA", "getB", "getC"))
+      ))
+    );
+  }
+  
 
   @Test
   public void testInvocationChainedWrapped() {

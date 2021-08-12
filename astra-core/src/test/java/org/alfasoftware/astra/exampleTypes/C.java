@@ -23,4 +23,12 @@ public class C {
   public C third() {
     return new C();
   }
+  
+  public B getB() {
+    return new B();
+  }
+  
+  public D getD() {
+    return new D();
+  }
 }
