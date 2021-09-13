@@ -19,7 +19,7 @@ import picocli.CommandLine.Option;
   header = "Change type refactor.",
   showDefaultValues = true,
   customSynopsis = "@|bold astra changetype|@ [@|yellow <options>|@...] [--] [@|yellow <pathspec>|@...]",
-  description = "Changes all references of a given fully qualified type to another type"
+  description = "Changes all references of a given fully qualified type to a different type"
 )
 class AstraChangeType implements Runnable {
 	
