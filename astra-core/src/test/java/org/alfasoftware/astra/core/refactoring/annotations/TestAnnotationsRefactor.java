@@ -24,17 +24,37 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
       new HashSet<>(
         Arrays.asList(
           AddAnnotationRefactor.builder()
-          .withNodeToAnnotate(t -> 
-            t instanceof TypeDeclaration && 
+          .withNodeToAnnotate(t ->
+            t instanceof TypeDeclaration &&
             AstraUtils.getFullyQualifiedName((TypeDeclaration) t).equals(AddAnnotationExample.class.getName()))
           .withAnnotationName("AnnotationC")
           .withOptionalAnnotationMember("A.class")
           .withAdditionalImports(
-            AnnotationC.class.getName(), 
+            AnnotationC.class.getName(),
             "org.alfasoftware.astra.exampleTypes.A")
           .build()
         )
       )
+    );
+  }
+
+  @Test
+  public void testAddMarkerAnnotation(){
+    assertRefactor(
+            AddMarkerAnnotationExample.class,
+            new HashSet<>(Arrays.asList(
+                    AddAnnotationRefactor.builder()
+                            .withNodeToAnnotate(t ->
+                                    t instanceof TypeDeclaration && AstraUtils.getFullyQualifiedName((TypeDeclaration) t)
+                                            .equals(AddMarkerAnnotationExample.class.getName()))
+                            .withAnnotationName("AnnotationA")
+                            .withOptionalAnnotationMember("")
+                            .withAdditionalImports(
+                                    AnnotationA.class.getName(),
+                                    "org.alfasoftware.astra.exampleTypes.A").build()
+                    )
+            )
+
     );
   }
 
@@ -63,7 +83,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
                             .to(AnnotationB.class.getTypeName()).build()
             )));
   }
-  
+
   @Test
   public void testRemoveAnnotation() {
     assertRefactor(
