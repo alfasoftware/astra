@@ -13,19 +13,19 @@ import org.eclipse.text.edits.MalformedTreeException;
 class ExampleWithAnonymousClassDeclaration {
 
   void foo() {
-    
+
     new UseCase() {
       @Override
       public Set<? extends ASTOperation> getOperations() {
         return null;
       }
     };
-    
+
     new ASTOperation() {
       @Override
       public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
           throws IOException, MalformedTreeException, BadLocationException {
-        return;
+        // Nothing to do
       }
     };
   }
