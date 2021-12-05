@@ -39,8 +39,8 @@ public interface UseCase {
     return new HashSet<>();
   }
 
-  String JAVA_PATH = System.getProperty("java.home"); // The JRE
-  Set<String> DEFAULT_CLASSPATH_ENTRIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(JAVA_PATH)));
+  static final String JAVA_PATH = System.getProperty("java.home"); // The JRE
+  static final Set<String> DEFAULT_CLASSPATH_ENTRIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(JAVA_PATH)));
 
   /**
    * @return The absolute classpaths required to resolve types and bindings when running the ASTOperations specified in this use case.
