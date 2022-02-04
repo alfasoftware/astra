@@ -8,8 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: foo
+        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+      - name: bar
+        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
       - name: "Maven Deploy"
         run: mvn clean deploy --settings .maven-settings.xml -B -U -Prelease
-        env:
-          GPG_OWNERTRUST: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
-          GPG_SECRET_KEYS: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
