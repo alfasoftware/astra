@@ -1,7 +1,7 @@
 name: Publish package to the Maven Central Repository
 on: 
   release:
-    types: [prereleased]
+    types: [edited]
 jobs:
   release:
     name: "Deploy"
