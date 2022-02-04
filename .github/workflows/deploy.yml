@@ -6,8 +6,15 @@ jobs:
   release:
     name: "Deploy"
     runs-on: ubuntu-latest
-    
     steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Install Java and Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
       - name: foo
         run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
       - name: bar
