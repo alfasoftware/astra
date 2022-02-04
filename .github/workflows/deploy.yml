@@ -16,9 +16,9 @@ jobs:
         with:
           java-version: 11
 
-      - name: foo
-        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
-      - name: bar
-        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+#      - name: foo
+#        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+#      - name: bar
+#        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
       - name: "Maven Deploy"
         run: mvn clean deploy --settings .maven-settings.xml -B -U -Prelease
