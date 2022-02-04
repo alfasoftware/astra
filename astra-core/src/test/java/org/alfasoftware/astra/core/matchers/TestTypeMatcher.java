@@ -11,14 +11,17 @@ import java.util.List;
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
+import org.alfasoftware.astra.exampleTypes.A;
 import org.alfasoftware.astra.exampleTypes.B;
+import org.alfasoftware.astra.exampleTypes.BaseFooable;
+import org.alfasoftware.astra.exampleTypes.Fooable;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.junit.Test;
 
 public class TestTypeMatcher {
 
-  protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
+  protected static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("\\src\\test\\java");
 
   public static final String SIMPLE_INTERFACE = "package x; public interface Test {}";
   public static final String SIMPLE_CLASS = "package x; public class Test {}";
@@ -36,7 +39,7 @@ public class TestTypeMatcher {
                   " import org.alfasoftware.astra.exampleTypes.B;\r\n" +
                   " public class Test extends B implements ExampleMarkerInterface {}\r\n";
 
-  
+
   @Test
   public void testTypeMatcherForInterface() {
     Matcher matcher = TypeMatcher.builder().asInterface().build();
@@ -44,7 +47,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testTypeMatcherForClass() {
@@ -53,7 +56,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testExactClassNameMatch() {
@@ -72,7 +75,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testExactClassNameDoesNotMatch() {
@@ -91,7 +94,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testRegularExpressionClassNameMatch() {
@@ -110,7 +113,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testRegularExpressionClassNameWithNoMatch() {
@@ -129,7 +132,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testTypeMatcherForClassImplementingInterface() {
@@ -138,7 +141,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testTypeMatcherForClassImplementingQualifiedInterface() {
@@ -147,7 +150,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testTypeMatcherForClassImplementingInterfaceAndExtendsClass() {
@@ -156,7 +159,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testTypeMatcherForClassImplementingInterfaceAndExtendsClassCheckingBoth() {
@@ -169,7 +172,7 @@ public class TestTypeMatcher {
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
 
-  
+
   @Test
   public void testClassExtendingSingleFullyQualifiedInterface() {
     // Given
@@ -204,7 +207,7 @@ public class TestTypeMatcher {
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
 
-  
+
   @Test
   public void testClassExtendingThreeFullyQualifiedInterfaces() {
     // Given
@@ -224,7 +227,76 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
+
+  /**
+   * Tests the matcher works for interfaces implemented by multilevel inheritance.
+   * Ie if child class A extends parent class B which implements grandparent interface C,
+   * and the type matcher is configured to look for implementers of interface C,
+   * then the type matcher should match class A.
+   *
+   * In this case, G extends A which implements Fooable.
+   */
+  @Test
+  public void testTypeMatcherForClassExtendingClassWhichImplementsInterface() {
+
+    String child = "package x;\r\n"
+        + "import org.alfasoftware.astra.exampleTypes.A;\r\n"
+        + "public class G extends A {}";
+
+    Matcher matcher = TypeMatcher.builder().asClass().implementingInterfaces(new HashSet<>(Arrays.asList(Fooable.class.getName()))).build();
+
+    ClassVisitor visitor = parse(child);
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertTrue(matcher.matches(typeDeclarations.get(0)));
+  }
+
+
+  /**
+   * Tests the matcher works for interfaces implemented by multilevel inheritance.
+   * Ie if child class A extends parent class B which implements grandparent interface C which extends great grandparent interface D,
+   * and the type matcher is configured to look for implementers of interface D,
+   * then the type matcher should match class A.
+   *
+   * In this case, G extends A which implements Fooable which extends BaseFooable.
+   */
+  @Test
+  public void testTypeMatcherForClassExtendingClassWhichImplementsInterfaceWhichExtendsInterface() {
+
+    String child = "package x;\r\n"
+        + "import org.alfasoftware.astra.exampleTypes.A;\r\n"
+        + "public class G extends A {}";
+
+    Matcher matcher = TypeMatcher.builder().asClass().implementingInterfaces(new HashSet<>(Arrays.asList(BaseFooable.class.getName()))).build();
+
+    ClassVisitor visitor = parse(child);
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertTrue(matcher.matches(typeDeclarations.get(0)));
+  }
+
+
+  /**
+   * Tests the matcher works for classes extended over multiple levels.
+   * Ie if child class A extends parent class B which extends grandparent class C,
+   * and the type matcher is configured to look for extensions of class C,
+   * then the type matcher should match class A.
+   *
+   * In this case, H extends G which extends A.
+   */
+  @Test
+  public void testTypeMatcherForChildClassExtendingParentClassWhichExtendsGrandparentClass() {
+
+    String child = "package x;\r\n"
+        + "import org.alfasoftware.astra.exampleTypes.G;\r\n"
+        + "public class H extends G {}";
+
+    Matcher matcher = TypeMatcher.builder().asClass().extending(A.class.getName()).build();
+
+    ClassVisitor visitor = parse(child);
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertTrue(matcher.matches(typeDeclarations.get(0)));
+  }
+
 
   @Test
   public void testClassWithSingleSimpleAnnotation() {
@@ -246,7 +318,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassWithThreeAnnotations() {
@@ -270,7 +342,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassWithSingleAnnotation() {
@@ -292,7 +364,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassWithMissingSingleAnnotation() {
@@ -314,7 +386,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassVisibilityIsPublic() {
@@ -333,7 +405,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassVisibilityIsPublicWhenItIsNot() {
@@ -352,7 +424,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassVisibilityIsPrivate() {
@@ -371,7 +443,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassVisibilityIsPrivateWhenItIsNot() {
@@ -390,7 +462,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassVisibilityIsPackage() {
@@ -409,7 +481,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassVisibilityIsPackageWhenItIsNot() {
@@ -428,7 +500,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassIsStatic() {
@@ -447,7 +519,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassIsStaticWhenItIsNot() {
@@ -466,7 +538,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassIsAbstract() {
@@ -485,7 +557,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassIsAbstractWhenItIsNot() {
@@ -504,7 +576,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testClassIsFinal() {
@@ -523,7 +595,7 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
+
 
   @Test
   public void testComplexMatchOnManyCriteria() {
@@ -551,73 +623,73 @@ public class TestTypeMatcher {
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
   }
-  
-  
+
+
   @Test
   public void testParameterizedTypeWithoutTypeParameterSpecified() {
     // Given
     String extendsMatcher = "package x;\r\n" +
         "import java.util.List;\r\n" +
         "public class Y extends List<Integer>{}";
-    
+
     String extendsMatcherNoTypeParameter = "package x;\r\n" +
         "import java.util.List;\r\n" +
         "public class Y extends List{}";
-    
+
     Matcher parameterizedTypeMatcher = TypeMatcher.builder()
         .extending("java.util.List")
         .build();
-    
+
     // When
     ClassVisitor visitor = parse(extendsMatcher);
     ClassVisitor visitorNoTypeParameter = parse(extendsMatcherNoTypeParameter);
-    
+
     // Then
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
     typeDeclarations = visitorNoTypeParameter.getTypeDeclarations();
     assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
   }
-  
-  
+
+
   @Test
   public void testParameterizedTypeWithTypeParameterSpecified() {
     // Given
     String extendsMatcher = "package x;\r\n" +
         "import java.util.List;\r\n" +
         "public class Y extends List<Integer>{}";
-    
+
     Matcher parameterizedTypeMatcher = TypeMatcher.builder()
         .extending("java.util.List<java.lang.Integer>")
         .build();
-    
+
     Matcher incorrectParameterizedTypeMatcher = TypeMatcher.builder()
         .extending("java.util.List<java.lang.Long>")
         .build();
-    
+
     // When
     ClassVisitor visitor = parse(extendsMatcher);
-    
+
     // Then
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));
     assertFalse(incorrectParameterizedTypeMatcher.matches(typeDeclarations.get(0)));
   }
-  
-  
+
+
   @Test
   public void testTypeMatcherExtendingWhereNoSupertypePresent() {
     // Given
     String extendsMatcher = "package x;\r\n" +
         "public class Y{}";
-    
+
     Matcher parameterizedTypeMatcher = TypeMatcher.builder()
         .extending("java.util.List")
         .build();
-    
+
     // When
     ClassVisitor visitor = parse(extendsMatcher);
-    
+
     // Then
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertFalse(parameterizedTypeMatcher.matches(typeDeclarations.get(0)));

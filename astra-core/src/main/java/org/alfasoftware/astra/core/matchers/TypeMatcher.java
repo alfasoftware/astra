@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -125,7 +126,7 @@ public class TypeMatcher implements Matcher {
       this.typeNamePredicate = typeNamePredicate;
       return this;
     }
-    
+
 
     /**
      * Defines a type this type must extend
@@ -137,8 +138,8 @@ public class TypeMatcher implements Matcher {
       this.superClass = superClass;
       return this;
     }
-    
-    
+
+
     /**
      * Specifies an interface name the type must implement. This can be called multiple times for multiple interfaces
      * This will match against fully qualified names
@@ -246,12 +247,12 @@ public class TypeMatcher implements Matcher {
    */
   @Override
   public boolean matches(ASTNode node) {
-    
+
     if (!(node instanceof TypeDeclaration)) {
       return false;
     }
     TypeDeclaration typeDeclaration = (TypeDeclaration) node;
-    
+
     if (! checkIsInterface(typeDeclaration)) {
       return false;
     }
@@ -291,21 +292,37 @@ public class TypeMatcher implements Matcher {
   private boolean checkSuperclass(TypeDeclaration typeDeclaration) {
     if (typeBuilder.superClass != null) {
       Type superclassType = typeDeclaration.getSuperclassType();
-      if (superclassType == null || superclassType.resolveBinding() == null) {
+      if (superclassType == null) {
         return false;
       }
+      ITypeBinding superclassBinding = superclassType.resolveBinding();
+      if (superclassBinding == null) {
+        return false;
+      }
+      Set<ITypeBinding> superClasses = getAllSuperClasses(superclassBinding, new HashSet<ITypeBinding>());
+
       // If we have specified a parameterized supertype, match on the qualified name
       if (typeBuilder.superClass.contains("<")) {
-        if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getQualifiedName())) {
+        if (superClasses.stream().noneMatch(c -> typeBuilder.superClass.equals(c.getQualifiedName()))) {
           return false;
         }
       // If we have not specified a parameterized supertype, then only match on binary type name
-      } else if (! typeBuilder.superClass.equals(superclassType.resolveBinding().getBinaryName())) {
+      } else if (superClasses.stream().noneMatch(c -> typeBuilder.superClass.equals(c.getBinaryName()))) {
         return false;
       }
     }
     return true;
   }
+
+
+  private Set<ITypeBinding> getAllSuperClasses(ITypeBinding typeBinding, Set<ITypeBinding> superClasses) {
+    if (typeBinding != null) {
+      superClasses.add(typeBinding);
+      getAllSuperClasses(typeBinding.getSuperclass(), superClasses);
+    }
+    return superClasses;
+  }
+
 
   private boolean checkIsClass(TypeDeclaration typeDeclaration) {
     return typeBuilder.isClass == null || typeBuilder.isClass != typeDeclaration.isInterface();
@@ -333,10 +350,10 @@ public class TypeMatcher implements Matcher {
    * @return true if it matches, false otherwise
    */
   private boolean checkClassNameRegex(final TypeDeclaration typeDeclaration) {
-    return typeBuilder.typeNameRegex == null || 
+    return typeBuilder.typeNameRegex == null ||
         AstraUtils.getFullyQualifiedName(typeDeclaration).matches(typeBuilder.typeNameRegex);
   }
-  
+
   /**
    * Checks the name of the type against the predicate
    *
@@ -344,7 +361,7 @@ public class TypeMatcher implements Matcher {
    * @return true if it matches, false otherwise
    */
   private boolean checkTypeNamePredicate(final TypeDeclaration typeDeclaration) {
-    return typeBuilder.typeNamePredicate == null || 
+    return typeBuilder.typeNamePredicate == null ||
         typeBuilder.typeNamePredicate.test(AstraUtils.getFullyQualifiedName(typeDeclaration));
   }
 
@@ -358,13 +375,42 @@ public class TypeMatcher implements Matcher {
     if (typeBuilder.interfaces == null) {
       return true;
     }
+
+    return getAllInterfaces(typeDeclaration).containsAll(typeBuilder.interfaces);
+  }
+
+
+  private Set<String> getAllInterfaces(TypeDeclaration typeDeclaration) {
     @SuppressWarnings("unchecked")
     List<Type> interfaces = typeDeclaration.superInterfaceTypes();
-    Set<String> actualInterfaceNames = new HashSet<>();
+    Set<String> interfaceNames = new HashSet<>();
     for (Type interfaceName : interfaces) {
-      actualInterfaceNames.add(AstraUtils.getFullyQualifiedName(interfaceName));
+      interfaceNames.add(AstraUtils.getFullyQualifiedName(interfaceName));
+      getSuperInterfaces(interfaceName.resolveBinding(), interfaceNames);
     }
-    return actualInterfaceNames.containsAll(typeBuilder.interfaces);
+    getSuperClassInterfaces(typeDeclaration.resolveBinding(), interfaceNames);
+    return interfaceNames;
+  }
+
+
+  private void getSuperClassInterfaces(ITypeBinding child, Set<String> actualInterfaceNames) {
+    if (child != null && child.getSuperclass() != null) {
+      for (ITypeBinding superClassInterface : child.getSuperclass().getInterfaces()) {
+        actualInterfaceNames.add(AstraUtils.getName(superClassInterface));
+        getSuperInterfaces(superClassInterface, actualInterfaceNames);
+      }
+      getSuperClassInterfaces(child.getSuperclass(), actualInterfaceNames);
+    }
+  }
+
+
+  private void getSuperInterfaces(ITypeBinding child, Set<String> actualInterfaceNames) {
+    if (child != null && child.getInterfaces() != null) {
+      for (ITypeBinding superClassInterface : child.getInterfaces()) {
+        actualInterfaceNames.add(AstraUtils.getName(superClassInterface));
+        getSuperInterfaces(superClassInterface, actualInterfaceNames);
+      }
+    }
   }
 
 
@@ -378,7 +424,7 @@ public class TypeMatcher implements Matcher {
     if (typeBuilder.annotationBuilders == null) {
       return true;
     }
-    
+
     for (Builder annotationBuilder : typeBuilder.annotationBuilders) {
       boolean found = false;
       for (Object modifier : typeDeclaration.modifiers()) {
@@ -395,7 +441,7 @@ public class TypeMatcher implements Matcher {
     }
     return true;
   }
-    
+
 
   /**
    * Checks the type visibility against the expected one
@@ -407,7 +453,7 @@ public class TypeMatcher implements Matcher {
     if (typeBuilder.visibility == null) {
       return true;
     }
-    
+
     boolean isPublic = checkForModifier(typeDeclaration, Modifier::isPublic);
     boolean isPrivate = checkForModifier(typeDeclaration, Modifier::isPrivate);
     return isPublic && typeBuilder.visibility == Visibility.PUBLIC ||
