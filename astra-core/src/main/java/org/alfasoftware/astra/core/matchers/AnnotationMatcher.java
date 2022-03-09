@@ -64,7 +64,8 @@ public class AnnotationMatcher implements Matcher {
     }
 
     public AnnotationBuilder withFullyQualifiedName(String annotationName) {
-      this.annotationName = annotationName;
+      // Removing $ from inner class names as this won't match with resolved type binding names
+      this.annotationName = annotationName.replaceAll("\\$", ".");
       return this;
     }
 

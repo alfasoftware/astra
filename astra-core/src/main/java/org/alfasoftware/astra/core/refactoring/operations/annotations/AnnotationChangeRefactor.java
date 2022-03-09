@@ -65,7 +65,8 @@ public class AnnotationChangeRefactor implements ASTOperation {
     }
 
     public Builder to(String toType) {
-      this.toType = toType;
+      // Removing $ from inner class names as this won't match with resolved type binding names
+      this.toType = toType.replaceAll("\\$", ".");
       return this;
     }
     public AnnotationChangeRefactor build() {
