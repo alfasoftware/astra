@@ -3,16 +3,16 @@ package org.alfasoftware.astra.core.refactoring;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import org.alfasoftware.astra.core.utils.ASTOperation;
-import org.alfasoftware.astra.core.utils.AstraCore;
-import org.eclipse.jface.text.BadLocationException;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.function.Function;
+
+import org.alfasoftware.astra.core.utils.ASTOperation;
+import org.alfasoftware.astra.core.utils.AstraCore;
+import org.eclipse.jface.text.BadLocationException;
 
 public abstract class AbstractRefactorTest {
 
@@ -55,11 +55,33 @@ public abstract class AbstractRefactorTest {
 
       expectedBefore = changesToApplyToBefore.apply(expectedBefore);
 
-      assertEquals(
-        expectedAfter,
-        expectedBefore);
+      assertEquals(expectedAfter, expectedBefore);
     } catch (IOException | BadLocationException e) {
       e.printStackTrace();
+      fail();
+    }
+  }
+
+
+  protected void assertRefactorWithSourcesAndClassPathAndTextFileExamples(String beforeClassName, String beforeClassSimpleName, Set<? extends ASTOperation> refactors, String[] sources, String[] classPath) {
+    String baseClassName = "./src/test/java/" + beforeClassName.replaceAll("\\.", "/");
+    File before = new File(baseClassName + ".java");
+    if (! before.exists()) {
+      before = new File(baseClassName + ".txt");
+    }
+    File after = new File(baseClassName + "After.java");
+    if (! after.exists()) {
+      after = new File(baseClassName + "After.txt");
+    }
+
+    try {
+      String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
+      String expectedAfter = new String(Files.readAllBytes(after.toPath()));
+      String expectedBefore = new AstraCore().applyOperationsToFile(fileContentBefore, refactors, sources, classPath).replaceAll(beforeClassSimpleName, beforeClassSimpleName + "After");
+      expectedBefore = this.changesToApplyToBefore.apply(expectedBefore);
+      assertEquals(expectedAfter, expectedBefore);
+    } catch (BadLocationException | IOException exception) {
+      exception.printStackTrace();
       fail();
     }
   }
