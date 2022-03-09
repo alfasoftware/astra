@@ -28,8 +28,8 @@ import org.eclipse.text.edits.MalformedTreeException;
 
 /**
  * This refactor changes all references to one type to another.
- * 
- * It can optionally give variables of this type a new variable name, 
+ *
+ * It can optionally give variables of this type a new variable name,
  * though this has limitations and may not work where there
  * are multiple variables of the same type in the same scope.
  *
@@ -85,12 +85,14 @@ public class TypeReferenceRefactor implements ASTOperation {
     }
 
     public Builder fromType(String fromType) {
-      this.fromType = fromType;
+      // Removing $ from inner class names as this won't match with resolved type binding names
+      this.fromType = fromType.replaceAll("\\$", ".");
       return this;
     }
 
     public Builder toType(String toType) {
-      this.toType = toType;
+      // Removing $ from inner class names as this won't match with resolved type binding names
+      this.toType = toType.replaceAll("\\$", ".");
       return this;
     }
 
@@ -123,30 +125,30 @@ public class TypeReferenceRefactor implements ASTOperation {
       updateJavadocTypes(compilationUnit, (TypeDeclaration) node, rewriter);
     }
   }
-  
+
 
   private void updateSimpleName(CompilationUnit compilationUnit, SimpleName name, ASTRewrite rewriter) {
     IBinding binding = name.resolveBinding();
-    if (binding != null && 
-    		binding instanceof ITypeBinding && 
-    		((ITypeBinding) binding).getQualifiedName().equals(getFromType())) {
+    if (binding != null &&
+    	binding instanceof ITypeBinding &&
+    	((ITypeBinding) binding).getQualifiedName().equals(getFromType())) {
       log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
           AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
       rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
     }
   }
-  
+
 
   private void updateQualifiedName(CompilationUnit compilationUnit, QualifiedName name, ASTRewrite rewriter) {
     if (name.getFullyQualifiedName().equals(getFromType())) {
       log.info("Refactoring qualified type [" + name.getFullyQualifiedName() + "] "
           + "to [" + toType + "] "
           + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
-      rewriter.set(name, QualifiedName.QUALIFIER_PROPERTY, name.getAST().newName(AstraUtils.getPackageName(toType)), null);
+      rewriter.set(name, QualifiedName.QUALIFIER_PROPERTY, name.getAST().newName(AstraUtils.getQualifier(toType)), null);
       rewriter.set(name, QualifiedName.NAME_PROPERTY, name.getAST().newName(AstraUtils.getSimpleName(toType)), null);
     }
   }
-  
+
 
   private void updateJavadocTypes(CompilationUnit compilationUnit, TypeDeclaration typeDeclaration, ASTRewrite rewriter) {
     if (typeDeclaration.resolveBinding() != null && ! typeDeclaration.resolveBinding().isNested()) {
@@ -188,14 +190,14 @@ public class TypeReferenceRefactor implements ASTOperation {
               .map(ITypeBinding::getQualifiedName)
               .filter(n -> n.equals(getFromType()))
               .ifPresent(t -> types.add((SimpleName) f));
-            
+
           } else if (f instanceof QualifiedName) {
             Optional.of(f)
               .map(QualifiedName.class::cast)
               .map(QualifiedName::getFullyQualifiedName)
               .filter(n -> n.equals(getFromType()))
               .ifPresent(t -> types.add((QualifiedName) f));
-            
+
           } else if (f instanceof MethodRef) {
             Optional.of(f)
               .map(MethodRef.class::cast)
@@ -206,7 +208,7 @@ public class TypeReferenceRefactor implements ASTOperation {
       }
       return super.visit(node);
     }
-    
+
     @SuppressWarnings("unchecked")
     private Set<TagElement> getAllTagElementsFromJavadoc(Javadoc node) {
       Set<TagElement> allTags = new HashSet<>();
@@ -216,7 +218,7 @@ public class TypeReferenceRefactor implements ASTOperation {
       }
       return allTags;
     }
-    
+
     @SuppressWarnings("unchecked")
     private Set<TagElement> getAllTagElementsFromTagElement(Set<TagElement> tagElements, TagElement tagElement) {
       tagElements.add(tagElement);

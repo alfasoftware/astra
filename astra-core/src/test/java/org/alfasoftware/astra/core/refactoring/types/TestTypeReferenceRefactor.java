@@ -4,16 +4,19 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
+import org.alfasoftware.astra.core.refactoring.annotations.AnnotationChangeInnerTypeExample;
 import org.alfasoftware.astra.core.refactoring.operations.types.TypeReferenceRefactor;
 import org.alfasoftware.astra.exampleTypes.A;
+import org.alfasoftware.astra.exampleTypes.A.InnerAnnotationA;
 import org.alfasoftware.astra.exampleTypes.B;
+import org.alfasoftware.astra.exampleTypes.B.InnerAnnotationB;
 import org.alfasoftware.astra.exampleTypes.EnumA;
 import org.alfasoftware.astra.exampleTypes.EnumB;
 import org.junit.Test;
 
 public class TestTypeReferenceRefactor extends AbstractRefactorTest {
 
-	
+
   /**
    * Changing from one type to another, anywhere it occurs.
    */
@@ -43,7 +46,7 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
             .build())));
   }
 
-  
+
   /**
    * Changing from one type to another, when that type is used in an enum reference.
    * e.g.
@@ -58,8 +61,8 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
             .toType(EnumB.class.getName())
             .build())));
   }
-  
-  
+
+
   /**
    * This test checks that where the fully qualified names don't match, the types are not refactored.
    */
@@ -85,5 +88,20 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
             .fromType(A.class.getName())
             .toType(B.class.getName())
             .build())));
+  }
+
+
+  /**
+   * Changing from one type to another, where that type is referenced as an annotation,
+   * and where that annotation is an inner type.
+   */
+  @Test
+  public void testChangeInnerTypeAnnotation() {
+    assertRefactor(AnnotationChangeInnerTypeExample.class,
+      new HashSet<>(Arrays.asList(
+        TypeReferenceRefactor.builder()
+        .fromType(InnerAnnotationA.class.getName())
+        .toType(InnerAnnotationB.class.getName())
+        .build())));
   }
 }

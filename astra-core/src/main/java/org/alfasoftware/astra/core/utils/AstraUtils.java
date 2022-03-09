@@ -109,7 +109,7 @@ public class AstraUtils {
     rewriter.rewriteAST(document, formattingOptions).apply(document);
     return document.get();
   }
-  
+
 
   /**
    * Build the fully qualified name for a type.
@@ -152,10 +152,10 @@ public class AstraUtils {
       return qualifiedNameNonStatic.get();
     }
 
-    if (isMethodInvocationStatic(mi)) {     
+    if (isMethodInvocationStatic(mi)) {
       @SuppressWarnings("unchecked")
       List<ImportDeclaration> imports = compilationUnit.imports();
-      
+
       Set<String> matches = imports.stream()
         .filter(ImportDeclaration::isStatic)
         .map(ImportDeclaration::getName)
@@ -166,7 +166,7 @@ public class AstraUtils {
       if (matches.size() == 1) {
         return matches.iterator().next();
       }
-      
+
       Set<String> onDemandMatches = new HashSet<>();
       for (ImportDeclaration importCandidate : imports) {
         if (importCandidate.isStatic() &&
@@ -193,7 +193,7 @@ public class AstraUtils {
         return onDemandMatches.iterator().next();
       }
     }
-    
+
     Optional<String> resolvedMethodBindingName = Optional.of(mi)
       .map(MethodInvocation::resolveMethodBinding)
       .map(IMethodBinding::getDeclaringClass)
@@ -204,8 +204,8 @@ public class AstraUtils {
 
     return "";
   }
-  
-  
+
+
   public static String getFullyQualifiedName(IMethodBinding methodBinding) {
     return Optional.of(methodBinding)
         .map(IMethodBinding::getDeclaringClass)
@@ -230,8 +230,8 @@ public class AstraUtils {
           .orElse("");
     }
   }
-  
-  
+
+
   public static String getName(ITypeBinding typeBinding) {
     if (typeBinding.isArray() && (typeBinding.getElementType().isTypeVariable() || typeBinding.getElementType().isParameterizedType())) {
       return typeBinding.getErasure().getQualifiedName();
@@ -244,18 +244,18 @@ public class AstraUtils {
     }
   }
 
-  
+
   public static String getName(AnonymousClassDeclaration anonymousClassDeclaration) {
     ITypeBinding resolveTypeBinding = anonymousClassDeclaration.resolveBinding();
     if (resolveTypeBinding != null &&
         resolveTypeBinding.isLocal()) {
-      
+
       // Superclass
       String superclassName = AstraUtils.getName(resolveTypeBinding.getSuperclass());
       if (! Object.class.getName().equals(superclassName)) {
-        return superclassName;        
+        return superclassName;
       }
-      
+
       // Interface
       if (anonymousClassDeclaration.getParent() instanceof ClassInstanceCreation &&
           ((Expression) anonymousClassDeclaration.getParent()).resolveTypeBinding() != null) {
@@ -270,7 +270,7 @@ public class AstraUtils {
     return "";
   }
 
-  
+
   public static String getFullyQualifiedName(ClassInstanceCreation cic) {
     return Optional.of(cic)
         .map(ClassInstanceCreation::resolveConstructorBinding)
@@ -286,9 +286,9 @@ public class AstraUtils {
    * Returns the Java identifier representing the simple name from a String representation of a qualified name.
    * The JLS section 3.8 ({@link https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.8}) defines an identifier as
    * "an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter."
-   * "The 'Java letters' include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and, 
-   *    for historical reasons, the ASCII dollar sign ($, or \u0024) and underscore (_, or \u005f). 
-   *    The dollar sign should be used only in mechanically generated source code or, rarely, to access pre-existing names on 
+   * "The 'Java letters' include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and,
+   *    for historical reasons, the ASCII dollar sign ($, or \u0024) and underscore (_, or \u005f).
+   *    The dollar sign should be used only in mechanically generated source code or, rarely, to access pre-existing names on
    *    legacy systems. The underscore may be used in identifiers formed of two or more characters, but it cannot be used as a
    *     one-character identifier due to being a keyword.
    *  The 'Java digits' include the ASCII digits 0-9 (\u0030-\u0039)."
@@ -330,6 +330,24 @@ public class AstraUtils {
    */
   public static String getPackageName(String fullyQualifiedName) {
     return fullyQualifiedName.split("\\.[A-Z]")[0];
+  }
+
+
+  /**
+   * Returns the qualifier for a fully qualified name.
+   * This is not necessarily just a package name - for inner types,
+   * this will be the fully qualified name of the outer type.
+   *
+   * <pre>
+   * For input: com.package.Foo
+   * Returns output: com.package
+   *
+   * For input: com.package.Foo.InnerFoo
+   * Returns output: com.package.Foo
+   * </pre>
+   */
+  public static String getQualifier(String fullyQualifiedName) {
+    return fullyQualifiedName.substring(0, fullyQualifiedName.lastIndexOf("."));
   }
 
 
@@ -539,12 +557,12 @@ public class AstraUtils {
             .filter(mb -> Modifier.isStatic(mb.getModifiers()))
             .isPresent();
   }
-  
+
 
   public enum MethodInvocationType {
     /*
      * The method is statically imported, so the name alone is used e.g.
-     * 
+     *
      *   import static com.package.DeclaringType.methodName;     //NOSONAR
      *   methodName(); <<<<
      */
@@ -552,22 +570,22 @@ public class AstraUtils {
 
     /*
      * The simple class is used inline e.g.
-     * 
+     *
      *   import com.package.DeclaringType;                       //NOSONAR
-     *   DeclaringType.methodName(); <<<<                        
+     *   DeclaringType.methodName(); <<<<
      */
     STATIC_METHOD_SIMPLE_NAME,
 
     /*
      * The fully qualified name is used inline e.g.
-     * 
+     *
      *   com.package.DeclaringType.methodName(); <<<<            //NOSONAR
      */
     STATIC_METHOD_FULLY_QUALIFIED_NAME,
 
     /*
      * The method is invoked on a variable of the given type e.g.
-     * 
+     *
      *   import com.package.DeclaringType;                       //NOSONAR
      *   DeclaringType a = new DeclaringType();                  //NOSONAR
      *   a.methodName(); <<<<
@@ -591,7 +609,7 @@ public class AstraUtils {
     if (isStaticallyImportedMethod(methodInvocation, compilationUnit, fullyQualifiedDeclaringType, methodName)) {
       return MethodInvocationType.STATIC_METHOD_METHOD_NAME_ONLY;
     }
-    throw new IllegalStateException("Unknown scenario for method invocation [" + methodInvocation.toString() + 
+    throw new IllegalStateException("Unknown scenario for method invocation [" + methodInvocation.toString() +
       "] in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
   }
 
