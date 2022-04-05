@@ -277,7 +277,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
    * 
    * Both the matching and replacement of method calls currently stops after two.
    */
-  @Ignore("Illustrates issue https://github.com/alfasoftware/astra/issues/36")
+//  @Ignore("Illustrates issue https://github.com/alfasoftware/astra/issues/36")
   @Test
   public void testInvocationChainedWithLargeMatchingAndReplacementChains() {
     assertRefactor(InvocationChainedLargeChainsExample.class,

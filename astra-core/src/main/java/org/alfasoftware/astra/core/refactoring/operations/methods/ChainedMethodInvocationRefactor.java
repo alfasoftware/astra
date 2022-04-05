@@ -6,9 +6,7 @@ import java.util.List;
 
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
-import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
@@ -59,14 +57,48 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
       // wrappedA.get().first()
        node.getExpression() != null && node.getExpression() instanceof MethodInvocation) {
       // first
-      MethodInvocation nextMethodInvocation = (MethodInvocation) node.getExpression();
-      if (before.get(before.size() - 2).getMethodName().filter(name -> name.test(nextMethodInvocation.getName().toString())).isPresent()) {
-        // TODO #36 make this looped, so we can handle chains of arbitrary length
+      MethodInvocation methodInvocation = null;
+      int methodIterator = 2;
+      while(methodIterator<=before.size()){
+        if(methodInvocation==null)
+          methodInvocation = (MethodInvocation) node.getExpression();
+        MethodInvocation nextMethodInvocation = methodInvocation;
+        if (before.get(before.size() - methodIterator).getMethodName().filter(name -> name.test(nextMethodInvocation.getName().toString())).isPresent()) {
+          methodIterator+=1;
+          if(before.size()==2){
+            rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, methodInvocation.getExpression(), null);
+            rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size()-1)), null);
 
-        // change the chain to the "after"
-        // TODO #36 handle arbitrary "after" lengths
-        rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, nextMethodInvocation.getExpression(), null);
-        rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(0)), null);
+          }
+          else if( methodIterator==before.size()){
+            methodInvocation = (MethodInvocation) methodInvocation.getExpression();
+            MethodInvocation newMethodInvocation = node.getAST().newMethodInvocation();
+
+            for(int i=0; i<after.size(); i++){
+              if(i==0){
+                Expression methodInvocationExpression = methodInvocation.getExpression();
+                methodInvocation.setExpression(null);
+                newMethodInvocation.setName(newMethodInvocation.getAST().newSimpleName(after.get(i)));
+                newMethodInvocation.setExpression(methodInvocationExpression);
+              }else{
+                MethodInvocation expression= node.getAST().newMethodInvocation();
+                expression.setName(expression.getAST().newSimpleName(after.get(i)));
+                expression.setExpression(newMethodInvocation);
+                newMethodInvocation = expression;
+              }
+            }
+
+            rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, newMethodInvocation.getExpression(), null);
+            rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size()-1)), null);
+
+            break;
+          }
+        }else
+          break;
+
+        if(methodIterator>before.size())
+          break;
+        methodInvocation = (MethodInvocation) methodInvocation.getExpression();
       }
     }
   }
