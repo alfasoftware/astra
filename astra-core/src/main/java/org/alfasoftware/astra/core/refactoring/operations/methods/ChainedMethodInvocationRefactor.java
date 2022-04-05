@@ -68,7 +68,7 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
           if(before.size()==2){
             rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, methodInvocation.getExpression(), null);
             rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size()-1)), null);
-
+            break;
           }
           else if( methodIterator==before.size()){
             methodInvocation = (MethodInvocation) methodInvocation.getExpression();
@@ -96,8 +96,6 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
         }else
           break;
 
-        if(methodIterator>before.size())
-          break;
         methodInvocation = (MethodInvocation) methodInvocation.getExpression();
       }
     }
