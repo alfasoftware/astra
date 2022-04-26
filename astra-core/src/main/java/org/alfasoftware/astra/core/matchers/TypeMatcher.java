@@ -299,7 +299,7 @@ public class TypeMatcher implements Matcher {
       if (superclassBinding == null) {
         return false;
       }
-      Set<ITypeBinding> superClasses = getAllSuperClasses(superclassBinding, new HashSet<ITypeBinding>());
+      Set<ITypeBinding> superClasses = getAllSuperClasses(superclassBinding, new HashSet<>());
 
       // If we have specified a parameterized supertype, match on the qualified name
       if (typeBuilder.superClass.contains("<")) {
