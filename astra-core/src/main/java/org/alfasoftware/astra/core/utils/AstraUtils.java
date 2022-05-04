@@ -621,29 +621,12 @@ public class AstraUtils {
       return false;
     }
 
-    String expressionBindingName = "";
-    String typeBindingName = "";
-    String typeQualifiedName = "";
-
     Expression expression = methodInvocation.getExpression();
-    if (expression instanceof Name) {
-      IBinding binding = ((Name) expression).resolveBinding();
-      if (binding != null) {
-        expressionBindingName = binding.getName();
-      }
 
-      ITypeBinding typeBinding = expression.resolveTypeBinding();
-      if (typeBinding != null) {
-        typeBindingName = typeBinding.getName();
-        typeQualifiedName = typeBinding.getQualifiedName();
-      }
-    }
-
-    if (expressionBindingName.isEmpty() &&
-            typeBindingName.isEmpty() &&
-            typeQualifiedName.isEmpty()) {
+    if (isEmptyExpresionNames(expression)) {
 
       String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
+
       for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
 
         String name = importDeclaration.getName().toString();
@@ -660,6 +643,28 @@ public class AstraUtils {
 
 
     return false;
+  }
+
+  private static boolean isEmptyExpresionNames(Expression expression) {
+
+    String expressionBindingName = "";
+    String typeBindingName = "";
+    String typeQualifiedName = "";
+
+    if (expression instanceof Name) {
+      IBinding binding = ((Name) expression).resolveBinding();
+      if (binding != null) {
+        expressionBindingName = binding.getName();
+      }
+
+      ITypeBinding typeBinding = expression.resolveTypeBinding();
+      if (typeBinding != null) {
+        typeBindingName = typeBinding.getName();
+        typeQualifiedName = typeBinding.getQualifiedName();
+      }
+    }
+
+    return expressionBindingName.isEmpty() && typeBindingName.isEmpty() && typeQualifiedName.isEmpty();
   }
 
   public static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
