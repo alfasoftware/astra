@@ -615,34 +615,50 @@ public class AstraUtils {
 
 
   public static boolean isStaticallyImportedMethod(MethodInvocation methodInvocation, CompilationUnit compilationUnit,
-      String fullyQualifiedDeclaringType, String methodName) {
+                                                   String fullyQualifiedDeclaringType, String methodName) {
 
-    if (! methodInvocation.getName().toString().equals(methodName)) {
+    if (!methodInvocation.getName().toString().equals(methodName)) {
       return false;
     }
 
+    String expressionBindingName = "";
+    String typeBindingName = "";
+    String typeQualifiedName = "";
+
     Expression expression = methodInvocation.getExpression();
+    if (expression instanceof Name) {
+      IBinding binding = ((Name) expression).resolveBinding();
+      if (binding != null) {
+        expressionBindingName = binding.getName();
+      }
 
+      ITypeBinding typeBinding = expression.resolveTypeBinding();
+      if (typeBinding != null) {
+        typeBindingName = typeBinding.getName();
+        typeQualifiedName = typeBinding.getQualifiedName();
+      }
+    }
 
-    if(expression instanceof Name) {
-      if(((Name) expression).resolveBinding() != null && expression.resolveTypeBinding() != null) {
+    if (expressionBindingName.isEmpty() &&
+            typeBindingName.isEmpty() &&
+            typeQualifiedName.isEmpty()) {
 
-        String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
+      String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
+      for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
 
-        for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
-            if (importDeclaration.isOnDemand()) {
+        String name = importDeclaration.getName().toString();
 
-              return importDeclaration.getName().toString().equals(fullyQualifiedDeclaringType)
-                      || importDeclaration.getName().toString()
-                      .equals(nameForImport.substring(0, nameForImport.lastIndexOf(".")));
-            }
-            if (importDeclaration.getName().toString().equals(nameForImport)) {
-              return true;
-            }
+        if (name.equals(fullyQualifiedDeclaringType) || name.equals(nameForImport.substring(0, nameForImport.lastIndexOf("."))))
+          return importDeclaration.isOnDemand();
+
+        if (name.equals(nameForImport)) {
+          return true;
         }
 
       }
     }
+
+
     return false;
   }
 
