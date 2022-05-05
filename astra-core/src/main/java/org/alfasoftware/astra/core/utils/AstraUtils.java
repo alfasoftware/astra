@@ -615,17 +615,35 @@ public class AstraUtils {
 
 
   public static boolean isStaticallyImportedMethod(MethodInvocation methodInvocation, CompilationUnit compilationUnit,
-      String fullyQualifiedDeclaringType, String methodName) {
+                                                   String fullyQualifiedDeclaringType, String methodName) {
 
-    if (! methodInvocation.getName().toString().equals(methodName)) {
+    if (!methodInvocation.getName().toString().equals(methodName)) {
       return false;
     }
 
+    Expression expression = methodInvocation.getExpression();
+    if (isExpressionNameEmpty(expression)) {
+      String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
+      for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
+        String name = importDeclaration.getName().toString();
+        if ((name.equals(fullyQualifiedDeclaringType) || name.equals(nameForImport.substring(0, nameForImport.lastIndexOf(".")))) && importDeclaration.isOnDemand()) {
+          return true;
+        }
+        if (name.equals(nameForImport)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+  private static boolean isExpressionNameEmpty(Expression expression) {
     String expressionBindingName = "";
     String typeBindingName = "";
     String typeQualifiedName = "";
-    Expression expression = methodInvocation.getExpression();
-    if (expression != null && expression instanceof Name) {
+
+    if (expression instanceof Name) {
       IBinding binding = ((Name) expression).resolveBinding();
       if (binding != null) {
         expressionBindingName = binding.getName();
@@ -637,29 +655,14 @@ public class AstraUtils {
         typeQualifiedName = typeBinding.getQualifiedName();
       }
     }
-    if (expressionBindingName.isEmpty() &&
-        typeBindingName.isEmpty() &&
-        typeQualifiedName.isEmpty()) {
-      String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
-      for (Object item : compilationUnit.imports()) {
-        if (item instanceof ImportDeclaration) {
-          ImportDeclaration importDeclaration = (ImportDeclaration) item;
-          if (importDeclaration.isOnDemand() &&
-              importDeclaration.getName().toString().equals(fullyQualifiedDeclaringType)) {
-            return true;
-          }
-          if (importDeclaration.getName().toString().equals(nameForImport)) {
-            return true;
-          }
-          if (importDeclaration.isOnDemand() &&
-              importDeclaration.getName().toString()
-              .equals(nameForImport.substring(0, nameForImport.lastIndexOf(".")))) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+
+    return expressionBindingName.isEmpty() && typeBindingName.isEmpty() && typeQualifiedName.isEmpty();
+  }
+
+
+  @SuppressWarnings("unchecked")
+  public static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
+    return compilationUnit.imports();
   }
 
 
