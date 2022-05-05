@@ -615,38 +615,30 @@ public class AstraUtils {
 
 
   public static boolean isStaticallyImportedMethod(MethodInvocation methodInvocation, CompilationUnit compilationUnit,
-                                                   String fullyQualifiedDeclaringType, String methodName) {
+      String fullyQualifiedDeclaringType, String methodName) {
 
-    if (!methodInvocation.getName().toString().equals(methodName)) {
+    if (! methodInvocation.getName().toString().equals(methodName)) {
       return false;
     }
 
     Expression expression = methodInvocation.getExpression();
-
-    if (isEmptyExpresionNames(expression)) {
-
+    if (isExpressionNameEmpty(expression)) {
       String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
-
       for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
-
         String name = importDeclaration.getName().toString();
-
-        if (name.equals(fullyQualifiedDeclaringType) || name.equals(nameForImport.substring(0, nameForImport.lastIndexOf("."))))
-          return importDeclaration.isOnDemand();
-
+        if ((name.equals(fullyQualifiedDeclaringType) || name.equals(nameForImport.substring(0, nameForImport.lastIndexOf(".")))) && importDeclaration.isOnDemand()) {
+          return true;
+        }
         if (name.equals(nameForImport)) {
           return true;
         }
-
       }
     }
-
-
     return false;
   }
 
-  private static boolean isEmptyExpresionNames(Expression expression) {
 
+  private static boolean isExpressionNameEmpty(Expression expression) {
     String expressionBindingName = "";
     String typeBindingName = "";
     String typeQualifiedName = "";
@@ -667,10 +659,10 @@ public class AstraUtils {
     return expressionBindingName.isEmpty() && typeBindingName.isEmpty() && typeQualifiedName.isEmpty();
   }
 
+
+  @SuppressWarnings("unchecked")
   public static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
-    return (List<ImportDeclaration>) compilationUnit.imports().stream()
-            .filter(item -> item instanceof ImportDeclaration)
-            .map(item -> (ImportDeclaration) item).collect(Collectors.toList());
+    return compilationUnit.imports();
   }
 
 
