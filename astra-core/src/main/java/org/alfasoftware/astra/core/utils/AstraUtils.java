@@ -622,33 +622,6 @@ public class AstraUtils {
     }
 
     Expression expression = methodInvocation.getExpression();
-<<<<<<< Updated upstream
-
-    if (isEmptyExpresionNames(expression)) {
-
-      String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
-
-      for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
-
-        String name = importDeclaration.getName().toString();
-
-        if (name.equals(fullyQualifiedDeclaringType) || name.equals(nameForImport.substring(0, nameForImport.lastIndexOf("."))))
-          return importDeclaration.isOnDemand();
-
-        if (name.equals(nameForImport)) {
-          return true;
-        }
-
-      }
-    }
-
-
-    return false;
-  }
-
-  private static boolean isEmptyExpresionNames(Expression expression) {
-
-=======
     if (isExpressionNameEmpty(expression)) {
       String nameForImport = String.join(".", fullyQualifiedDeclaringType, methodName);
       for (ImportDeclaration importDeclaration : getImportDeclarations(compilationUnit)) {
@@ -666,7 +639,6 @@ public class AstraUtils {
 
 
   private static boolean isExpressionNameEmpty(Expression expression) {
->>>>>>> Stashed changes
     String expressionBindingName = "";
     String typeBindingName = "";
     String typeQualifiedName = "";
@@ -687,17 +659,10 @@ public class AstraUtils {
     return expressionBindingName.isEmpty() && typeBindingName.isEmpty() && typeQualifiedName.isEmpty();
   }
 
-<<<<<<< Updated upstream
-  public static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
-    return (List<ImportDeclaration>) compilationUnit.imports().stream()
-            .filter(item -> item instanceof ImportDeclaration)
-            .map(item -> (ImportDeclaration) item).collect(Collectors.toList());
-=======
 
   @SuppressWarnings("unchecked")
   public static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
     return compilationUnit.imports();
->>>>>>> Stashed changes
   }
 
 
