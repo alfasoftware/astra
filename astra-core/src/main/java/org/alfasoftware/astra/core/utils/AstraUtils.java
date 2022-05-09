@@ -167,9 +167,7 @@ public class AstraUtils {
         return matches.iterator().next();
       }
 
-      Set<String> onDemandMatches = new HashSet<>();
-      //AstraUtils#getFullyQualifiedName #88 - Refactor the code to Reduce cognitive complexity
-      mapOnDemandMatches(imports, onDemandMatches, mi);
+      Set<String> onDemandMatches = getStaticAndOnDemandImportMatchesForMethodInvocation(imports, mi);
       if (onDemandMatches.size() == 1) {
         return onDemandMatches.iterator().next();
       }
@@ -186,24 +184,30 @@ public class AstraUtils {
     return "";
   }
 
-  public static void mapOnDemandMatches(List<ImportDeclaration> imports, Set<String> onDemandMatches, MethodInvocation mi){
 
-    imports.stream().filter(importCandidate -> importCandidate.isStatic() &&
-            importCandidate.isOnDemand()).forEach(importCandidate -> {
-      IBinding binding = importCandidate.resolveBinding();
-      if (binding instanceof ITypeBinding) {
-        ITypeBinding iTypeBinding = (ITypeBinding) binding;
-        Arrays.stream(iTypeBinding.getDeclaredMethods()).filter(methodBinding -> methodBinding.getName().
-                equals(mi.getName().toString())).map(methodBinding -> importCandidate.getName().toString()).
-                forEach(onDemandMatches::add);
-        if (iTypeBinding.getSuperclass() != null) {
-          Arrays.stream(iTypeBinding.getSuperclass().getDeclaredMethods()).filter(methodBinding -> methodBinding.getName().
-                  equals(mi.getName().toString())).map(methodBinding -> importCandidate.getName().toString()).
-                  forEach(onDemandMatches::add);
+  private static Set<String> getStaticAndOnDemandImportMatchesForMethodInvocation(List<ImportDeclaration> imports, MethodInvocation mi) {
+    Set<String> onDemandMatches = new HashSet<>();
+    imports.stream()
+      .filter(importCandidate -> importCandidate.isStatic() && importCandidate.isOnDemand())
+      .forEach(importCandidate -> {
+        IBinding binding = importCandidate.resolveBinding();
+        if (binding instanceof ITypeBinding) {
+          ITypeBinding iTypeBinding = (ITypeBinding) binding;
+          Arrays.stream(iTypeBinding.getDeclaredMethods())
+            .filter(methodBinding -> methodBinding.getName().equals(mi.getName().toString()))
+            .map(methodBinding -> importCandidate.getName().toString())
+            .forEach(onDemandMatches::add);
+          if (iTypeBinding.getSuperclass() != null) {
+            Arrays.stream(iTypeBinding.getSuperclass().getDeclaredMethods())
+              .filter(methodBinding -> methodBinding.getName().equals(mi.getName().toString()))
+              .map(methodBinding -> importCandidate.getName().toString())
+              .forEach(onDemandMatches::add);
+          }
         }
-      }
-    });
+      });
+    return onDemandMatches;
   }
+
 
   public static String getFullyQualifiedName(IMethodBinding methodBinding) {
     return Optional.of(methodBinding)
