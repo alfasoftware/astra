@@ -50,7 +50,6 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
             t instanceof TypeDeclaration && AstraUtils.getFullyQualifiedName((TypeDeclaration) t)
               .equals(AddMarkerAnnotationExample.class.getName()))
           .withAnnotationName("AnnotationA")
-          .withOptionalAnnotationMember("")
           .withAdditionalImports(
             AnnotationA.class.getName(),
             "org.alfasoftware.astra.exampleTypes.A").build()
