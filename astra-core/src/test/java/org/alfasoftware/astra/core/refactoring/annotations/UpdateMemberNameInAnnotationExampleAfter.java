@@ -7,7 +7,10 @@ public class UpdateMemberNameInAnnotationExampleAfter {
   @AnnotationD
   protected long someField;
 
-  @AnnotationD(othervalue="A string of no importance")
+  @AnnotationD(othervalue = "A string of no importance")
   protected String someStringField;
+
+  @AnnotationD(othervalue = "A string of no importance")
+  protected String someStringField2;
 }
 

@@ -1,13 +1,13 @@
 package org.alfasoftware.astra.core.refactoring.annotations;
 
-import org.alfasoftware.astra.exampleTypes.AnnotationD;
+import org.alfasoftware.astra.exampleTypes.AnnotationA;
 
 public class AddAndRemoveMemberFromAnnotationExample {
 
-  @AnnotationD
+  @AnnotationA
   protected long someField;
 
-  @AnnotationD(value="A string of no importance")
+  @AnnotationA(value="A string of no importance")
   protected String someStringField;
 
   /*

@@ -1,13 +1,13 @@
 package org.alfasoftware.astra.core.refactoring.annotations;
 
-import org.alfasoftware.astra.exampleTypes.AnnotationD;
+import org.alfasoftware.astra.exampleTypes.AnnotationA;
 
 public class AnnotationChangeWithPredicateAndTransformExample {
 
-  @AnnotationD
+  @AnnotationA
   protected long someField;
 
-  @AnnotationD("Foo")
+  @AnnotationA("Foo")
   protected long someOtherField;
 }
 

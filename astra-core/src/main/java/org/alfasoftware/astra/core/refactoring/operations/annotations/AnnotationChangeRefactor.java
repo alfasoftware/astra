@@ -169,29 +169,30 @@ public class AnnotationChangeRefactor implements ASTOperation {
    * as we might replace the ASTNode representing the annotation as part of a transformation.
    */
   private void rewriteAnnotation(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter) {
-    changeAnnotationName(rewriter, annotation);
-    annotation = addNewMembersToAnnotation(compilationUnit, rewriter, annotation);
-    annotation = removeMembersFromAnnotation(rewriter, annotation);
-    annotation = updateMemberNames(rewriter, annotation);
-    annotation = updateMembersByNameToValues(rewriter, annotation);
-    annotation = applyTransformation(compilationUnit, rewriter, annotation);
+    Annotation updatedAnnotation = addNewMembersToAnnotation(compilationUnit, rewriter, annotation);
+    updatedAnnotation = removeMembersFromAnnotation(rewriter, updatedAnnotation);
+    updatedAnnotation = updateMembersByNameToValues(rewriter, updatedAnnotation);
+    updatedAnnotation = updateMemberNames(rewriter, updatedAnnotation);
+    updatedAnnotation = changeAnnotationName(rewriter, updatedAnnotation);
+    applyTransformation(compilationUnit, rewriter, updatedAnnotation);
   }
 
 
-  private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
+  private Annotation changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
     Name name;
     if (annotation.getTypeName().isQualifiedName()) {
       name = annotation.getAST().newName(toType);
     } else {
       name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(toType));
     }
-    if(annotation.isSingleMemberAnnotation()) {
+    if (annotation.isSingleMemberAnnotation()) {
       rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
     } else if(annotation.isMarkerAnnotation()){
       rewriter.set(annotation, MarkerAnnotation.TYPE_NAME_PROPERTY, name, null);
     } else if (annotation.isNormalAnnotation()){
       rewriter.set(annotation, NormalAnnotation.TYPE_NAME_PROPERTY, name, null);
     }
+    return annotation;
   }
 
 
@@ -248,6 +249,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
           rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY).insertLast(memberValuePair,  null);
           rewriter.replace(annotation, normalAnnotation, null);
+          return normalAnnotation;
         }
       } else if (annotation.isNormalAnnotation()) {
         NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
