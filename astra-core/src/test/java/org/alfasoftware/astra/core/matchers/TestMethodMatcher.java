@@ -353,7 +353,7 @@ public class TestMethodMatcher {
     }
   }
 
-  
+
   /**
    * Tests the static builder from fully qualified method signature
    */
@@ -362,21 +362,21 @@ public class TestMethodMatcher {
     MethodMatcher noParams = MethodMatcher.buildMethodMatcherForFQSignature("com.Foo.doFoo()");
     MethodMatcher paramsNoSpaces = MethodMatcher.buildMethodMatcherForFQSignature("com.Foo.doFoo(int,com.Bar)");
     MethodMatcher paramsWithSpaces = MethodMatcher.buildMethodMatcherForFQSignature("com.Foo.doFoo(int, com.Bar)");
-    
+
     assertEquals("FQ Type", "com.Foo", noParams.getFullyQualifiedDeclaringTypeExactName().get());
     assertEquals("FQ Type", "com.Foo", paramsNoSpaces.getFullyQualifiedDeclaringTypeExactName().get());
     assertEquals("FQ Type", "com.Foo", paramsWithSpaces.getFullyQualifiedDeclaringTypeExactName().get());
-    
+
     assertEquals("Method name", "doFoo", noParams.getMethodNameExactName().get());
     assertEquals("Method name", "doFoo", paramsNoSpaces.getMethodNameExactName().get());
     assertEquals("Method name", "doFoo", paramsWithSpaces.getMethodNameExactName().get());
-    
+
     assertEquals("Parameters", new ArrayList<>(), noParams.getFullyQualifiedParameterNames().get());
     assertEquals("Parameters", new ArrayList<>(Arrays.asList("int", "com.Bar")), paramsNoSpaces.getFullyQualifiedParameterNames().get());
     assertEquals("Parameters", new ArrayList<>(Arrays.asList("int", "com.Bar")), paramsWithSpaces.getFullyQualifiedParameterNames().get());
   }
 
-  
+
   @Test
   public void testMethodMatcherGivenClassReferenceAsParamMatchesSameClassReference() {
     MethodMatcher classReferenceMatcher = MethodMatcher.builder()
@@ -384,11 +384,11 @@ public class TestMethodMatcher {
         .withMethodName("methodWithClassArg")
         .withFullyQualifiedParameters(new ArrayList<>(Arrays.asList(Class.class.getName())))
         .build();
-    
+
     checkMethodMatchFoundInClass(classReferenceMatcher, ExampleClassUsingMethodWithClassParameter.class);
   }
-  
-  
+
+
   @Test
   public void testMethodMatcherCustomPredicates() {
     MethodMatcher methodDeclarationMatcher = MethodMatcher.builder()
@@ -398,7 +398,7 @@ public class TestMethodMatcher {
                 "Method with no arguments",
                 node -> node instanceof MethodDeclaration && ((MethodDeclaration)node).parameters().size() == 0))
         .build();
-  
+
     MethodMatcher methodInvocationMatcher = MethodMatcher.builder()
         .withMethodName("foo")
         .withCustomPredicate(
@@ -406,7 +406,7 @@ public class TestMethodMatcher {
                 "Method with no arguments",
                 node -> node instanceof MethodInvocation && ((MethodInvocation)node).arguments().size() == 0))
         .build();
-  
+
     MethodMatcher classInstanceCreationMatcher = MethodMatcher.builder()
         .withMethodName("ExampleUsedClass")
         .withCustomPredicate(
@@ -414,7 +414,7 @@ public class TestMethodMatcher {
                 "Method with no arguments",
                 node -> node instanceof ClassInstanceCreation && ((ClassInstanceCreation)node).arguments().size() == 0))
         .build();
-  
+
     MethodMatcher classInstanceCreationMatcherNoMatch = MethodMatcher.builder()
         .withMethodName("ExampleUsedClass")
         .withCustomPredicate(
@@ -422,7 +422,7 @@ public class TestMethodMatcher {
                 "Method with no arguments",
                 node -> node instanceof ClassInstanceCreation && ((ClassInstanceCreation)node).typeArguments().size() > 0))
         .build();
-    
+
     checkMethodMatchFoundInClass(methodDeclarationMatcher, ExampleClassUsingMethodWithClassParameter.class);
     checkNoMethodMatchFoundInClass(methodInvocationMatcher, ExampleClassUsingMethodWithClassParameter.class);
     checkMethodMatchFoundInClass(classInstanceCreationMatcher, ExampleClassUsingMultipleMethods.class);

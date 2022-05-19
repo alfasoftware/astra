@@ -1,9 +1,8 @@
 package org.alfasoftware.astra.exampleTypes;
 
-public @interface AnnotationA {
+public @interface AnnotationD {
 
   String value() default "";
 
   String othervalue() default "";
 }
-
