@@ -197,15 +197,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     if(!membersAndValuesToAdd.isEmpty()) {
       final NormalAnnotation normalAnnotation;
       if (annotation.isMarkerAnnotation() || annotation.isSingleMemberAnnotation()) {
-        normalAnnotation = rewriter.getAST().newNormalAnnotation();
-        rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
-        rewriter.replace(annotation, normalAnnotation, null);
-        if(annotation.isSingleMemberAnnotation()){
-          final MemberValuePair existingMemberValuePair = rewriter.getAST().newMemberValuePair();
-          rewriter.set(existingMemberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
-          existingMemberValuePair.setName(rewriter.getAST().newSimpleName("value"));
-          rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY).insertLast(existingMemberValuePair, null);
-        }
+        normalAnnotation = convertAnnotationToNormalAnnotation(rewriter, annotation);
       } else {
         normalAnnotation = (NormalAnnotation) annotation;
       }
@@ -270,6 +262,26 @@ public class AnnotationChangeRefactor implements ASTOperation {
     return annotation;
   }
 
+  private Annotation applyTransformation(CompilationUnit compilationUnit, ASTRewrite rewriter, Annotation annotation) {
+    transform.ifPresent(t -> t.apply(compilationUnit, annotation, rewriter));
+    return annotation;
+  }
+
+  private NormalAnnotation convertAnnotationToNormalAnnotation(ASTRewrite rewriter, Annotation annotation) {
+    final NormalAnnotation normalAnnotation;
+    normalAnnotation = rewriter.getAST().newNormalAnnotation();
+    rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
+    rewriter.replace(annotation, normalAnnotation, null);
+    if(annotation.isSingleMemberAnnotation()){
+      final MemberValuePair existingMemberValuePair = rewriter.getAST().newMemberValuePair();
+      rewriter.set(existingMemberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
+      existingMemberValuePair.setName(rewriter.getAST().newSimpleName("value"));
+      rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY).insertLast(existingMemberValuePair, null);
+    }
+    return normalAnnotation;
+  }
+
+
   private MarkerAnnotation convertAnnotationToMarkerAnnotation(ASTRewrite rewriter, Annotation annotation) {
     final MarkerAnnotation markerAnnotation = rewriter.getAST().newMarkerAnnotation();
     rewriter.set(markerAnnotation, MarkerAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
@@ -290,8 +302,5 @@ public class AnnotationChangeRefactor implements ASTOperation {
     });
   }
 
-  private Annotation applyTransformation(CompilationUnit compilationUnit, ASTRewrite rewriter, Annotation annotation) {
-    transform.ifPresent(t -> t.apply(compilationUnit, annotation, rewriter));
-    return annotation;
-  }
+
 }
