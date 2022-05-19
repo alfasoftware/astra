@@ -84,15 +84,6 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return this;
     }
 
-    public AnnotationChangeRefactor build() {
-      return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
-    }
-
-    public Builder removeMemberNameValuePairs(Map<String, String> membersAndValuesToRemove) {
-      // TODO Auto-generated method stub
-      return null;
-    }
-
     public Builder updateMemberName(Map<String, String> currentToNewName) {
       // TODO Auto-generated method stub
       return null;
@@ -106,6 +97,10 @@ public class AnnotationChangeRefactor implements ASTOperation {
     public Builder updateMembersWithNameToValue(Map<String, String> updateNamesToNewValues) {
       // TODO Auto-generated method stub
       return null;
+    }
+
+    public AnnotationChangeRefactor build() {
+      return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
     }
   }
 
