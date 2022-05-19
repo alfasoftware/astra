@@ -170,7 +170,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
             AnnotationChangeRefactor.builder()
               .from(AnnotationMatcher.builder()
                 .withFullyQualifiedName(AnnotationD.class.getName())
-                .withWithMemberAndValue(null, null)
+                .withWithMemberAndValue("value", "BAR")
                 .build())
               .to(AnnotationD.class.getName())
               .removeMembersWithNames(Set.of("value"))
