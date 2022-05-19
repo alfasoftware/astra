@@ -7,4 +7,10 @@ public class AnnotationMemberChangeExampleAfter {
 
   @AnnotationD(description = "BAR")
   protected long someField;
+
+  @AnnotationD(description="A string of no importance", othervalue = "A new string")
+  protected String someStringField;
+
+  @AnnotationD(description="A")
+  protected long someOtherField;
 }
