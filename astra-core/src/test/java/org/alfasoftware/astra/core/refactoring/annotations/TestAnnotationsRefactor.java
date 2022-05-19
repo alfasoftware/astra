@@ -1,7 +1,5 @@
 package org.alfasoftware.astra.core.refactoring.annotations;
 
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -156,11 +154,6 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
    * Example covers:
    * - removing only member from an annotation
    * - removing one member from an annotation with more than one member
-   *
-   * TODO:
-   * Remove pair, only specifying member name
-   * TODO:
-   * Consider not specifying name or pair - but Predicate on pair
    */
   @Test
   public void testRemoveMemberFromAnnotation() {
@@ -181,12 +174,23 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
 
   /**
    * Example covers:
-   * - adding and removing one member from an annotation an existing member
+   * - adding and removing one member from an annotation with an existing member
    * - adding and removing one member from an annotation more than one member
    */
   @Test
   public void testAddAndRemoveMemberFromAnnotation() {
-    fail("TODO");
+    assertRefactor(
+        AddAndRemoveMemberFromAnnotationExample.class,
+          new HashSet<>(Arrays.asList(
+            AnnotationChangeRefactor.builder()
+              .from(AnnotationMatcher.builder()
+                .withFullyQualifiedName(AnnotationD.class.getName())
+                .build())
+              .to(AnnotationD.class.getName())
+              .addMemberNameValuePairs(Map.of("othervalue", "BAR"))
+              .removeMembersWithNames(Set.of("value"))
+              .build()
+      )));
   }
 
 
@@ -218,7 +222,17 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
    */
   @Test
   public void testUpdateMemberValue() {
-    fail("TODO");
+    assertRefactor(
+        UpdateMemberValueInAnnotationExample.class,
+          new HashSet<>(Arrays.asList(
+            AnnotationChangeRefactor.builder()
+              .from(AnnotationMatcher.builder()
+                .withFullyQualifiedName(AnnotationD.class.getName())
+                .build())
+              .to(AnnotationD.class.getName())
+              .updateMembersWithNameToValue(Map.of("value", "BAR"))
+              .build()
+      )));
   }
 }
 

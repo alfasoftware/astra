@@ -98,6 +98,15 @@ public class AnnotationChangeRefactor implements ASTOperation {
     public AnnotationChangeRefactor build() {
       return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
     }
+
+    public Builder updateMembersWithNameToValue(Map<String, String> updateNamesToNewValues) {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    public AnnotationChangeRefactor build() {
+      return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
+    }
   }
 
   @Override
