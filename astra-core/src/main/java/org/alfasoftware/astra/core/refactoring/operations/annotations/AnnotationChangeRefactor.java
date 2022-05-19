@@ -58,12 +58,14 @@ public class AnnotationChangeRefactor implements ASTOperation {
     return String.format("AnnotationChangeRefactor from [%s] to [%s]", fromType, toType);
   }
 
+
   /**
    * @return a new builder for this refactor
    */
   public static Builder builder() {
     return new Builder();
   }
+
 
   /**
    * Builder class for the refactor.
@@ -155,27 +157,25 @@ public class AnnotationChangeRefactor implements ASTOperation {
     }
   }
 
+
   private boolean shouldRefactor(Annotation annotation) {
     return fromType.matches(annotation);
   }
 
+
   /**
    * We have to re-assign the annotation after each transformation, rather than reusing the initial one,
-   * as we might replace the ASTNode representing the annotation as part of a transformation
+   * as we might replace the ASTNode representing the annotation as part of a transformation.
    */
   private void rewriteAnnotation(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter) {
-    // change name of annotation
     changeAnnotationName(rewriter, annotation);
-
-    // add new members
     annotation = addNewMembersToAnnotation(rewriter, annotation);
-
     annotation = removeMembersFromAnnotation(rewriter, annotation);
-
     annotation = updateMemberNames(rewriter, annotation);
-
+    annotation = updateMembersByNameToValues(rewriter, annotation);
     annotation = applyTransformation(compilationUnit, rewriter, annotation);
   }
+
 
   private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
     Name name;
@@ -193,8 +193,9 @@ public class AnnotationChangeRefactor implements ASTOperation {
     }
   }
 
+
   private Annotation addNewMembersToAnnotation(ASTRewrite rewriter, Annotation annotation) {
-    if(!membersAndValuesToAdd.isEmpty()) {
+    if (!membersAndValuesToAdd.isEmpty()) {
       final NormalAnnotation normalAnnotation;
       if (annotation.isMarkerAnnotation() || annotation.isSingleMemberAnnotation()) {
         normalAnnotation = convertAnnotationToNormalAnnotation(rewriter, annotation);
@@ -207,37 +208,37 @@ public class AnnotationChangeRefactor implements ASTOperation {
     return annotation;
   }
 
+
   private Annotation removeMembersFromAnnotation(ASTRewrite rewriter, Annotation annotation) {
-    if(!namesForMembersToRemove.isEmpty()){
-      if(annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains("value")){
+    if (!namesForMembersToRemove.isEmpty()){
+      if (annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains("value")){
         return convertAnnotationToMarkerAnnotation(rewriter, annotation);
       } else if(annotation.isNormalAnnotation()) {
         NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
         final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+        @SuppressWarnings("unchecked")
         final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
         for (MemberValuePair memberValuePair : rewrittenList) {
           if(namesForMembersToRemove.contains(memberValuePair.getName().getIdentifier())){
             listRewrite.remove(memberValuePair, null);
           }
         }
-        if(listRewrite.getRewrittenList().size() == 0) {
+        if (listRewrite.getRewrittenList().size() == 0) {
           return convertAnnotationToMarkerAnnotation(rewriter, annotation);
         } else {
           return normalAnnotation;
         }
       }
-      if(annotation.isMarkerAnnotation()){
-        log.warn("TODO");
-      }
     }
     return annotation;
   }
 
+
   private Annotation updateMemberNames(ASTRewrite rewriter, Annotation annotation) {
-    if(!memberNameUpdates.isEmpty() ) {
-      if(annotation.isSingleMemberAnnotation()) {
+    if (!memberNameUpdates.isEmpty()) {
+      if (annotation.isSingleMemberAnnotation()) {
         final String newMemberName = memberNameUpdates.get("value");
-        if(newMemberName != null) {
+        if (newMemberName != null) {
           NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
           rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
           final MemberValuePair memberValuePair = rewriter.getAST().newMemberValuePair();
@@ -250,10 +251,11 @@ public class AnnotationChangeRefactor implements ASTOperation {
       } else if (annotation.isNormalAnnotation()) {
         NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
         final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+        @SuppressWarnings("unchecked")
         final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
         for (MemberValuePair memberValuePair : rewrittenList) {
           final String newName = memberNameUpdates.get(memberValuePair.getName().getIdentifier());
-          if(newName != null) {
+          if (newName != null) {
             rewriter.set(memberValuePair, MemberValuePair.NAME_PROPERTY, rewriter.getAST().newSimpleName(newName), null);
           }
         }
@@ -262,17 +264,48 @@ public class AnnotationChangeRefactor implements ASTOperation {
     return annotation;
   }
 
+
+  private Annotation updateMembersByNameToValues(ASTRewrite rewriter, Annotation annotation) {
+    if (! memberNamesToUpdateWithNewValues.isEmpty()) {
+      if (annotation.isSingleMemberAnnotation()) {
+        if (memberNamesToUpdateWithNewValues.containsKey("value")) {
+          SingleMemberAnnotation singleMemberAnnotation = (SingleMemberAnnotation) annotation;
+          ASTNode newArgument = annotation.getAST().newStringLiteral();
+          rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, memberNamesToUpdateWithNewValues.get("value"), null);
+          rewriter.set(singleMemberAnnotation, SingleMemberAnnotation.VALUE_PROPERTY, newArgument, null);
+        }
+      } else if (annotation.isNormalAnnotation()) {
+        NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
+        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+        @SuppressWarnings("unchecked")
+        final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
+        for (MemberValuePair memberValuePair : rewrittenList) {
+          for (Map.Entry<String, String> namesToUpdateEntry : memberNamesToUpdateWithNewValues.entrySet()) {
+            if (namesToUpdateEntry.getKey().equals(memberValuePair.getName().getIdentifier())) {
+              ASTNode newArgument = annotation.getAST().newStringLiteral();
+              rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, namesToUpdateEntry.getValue(), null);
+              rewriter.set(memberValuePair, MemberValuePair.VALUE_PROPERTY, newArgument, null);
+            }
+          }
+        }
+      }
+    }
+    return annotation;
+  }
+
+
   private Annotation applyTransformation(CompilationUnit compilationUnit, ASTRewrite rewriter, Annotation annotation) {
     transform.ifPresent(t -> t.apply(compilationUnit, annotation, rewriter));
     return annotation;
   }
+
 
   private NormalAnnotation convertAnnotationToNormalAnnotation(ASTRewrite rewriter, Annotation annotation) {
     final NormalAnnotation normalAnnotation;
     normalAnnotation = rewriter.getAST().newNormalAnnotation();
     rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
     rewriter.replace(annotation, normalAnnotation, null);
-    if(annotation.isSingleMemberAnnotation()){
+    if (annotation.isSingleMemberAnnotation()) {
       final MemberValuePair existingMemberValuePair = rewriter.getAST().newMemberValuePair();
       rewriter.set(existingMemberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
       existingMemberValuePair.setName(rewriter.getAST().newSimpleName("value"));
@@ -301,6 +334,4 @@ public class AnnotationChangeRefactor implements ASTOperation {
       listRewrite.insertLast(newMemberAndValue, null);
     });
   }
-
-
 }

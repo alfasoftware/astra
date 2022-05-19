@@ -10,8 +10,16 @@ public class AddAndRemoveMemberFromAnnotationExampleAfter {
   @AnnotationD(othervalue = "BAR")
   protected String someStringField;
 
-  // TODO
-  @AnnotationD(othervalue = "Other string of no importance")
-  protected String someOtherStringField;
+  /*
+   *  TODO
+   *
+   *  Before:
+   *    @AnnotationD(value="A string of no importance", othervalue = "Other string of no importance")
+   *    protected String someOtherStringField;
+   *
+   *  After:
+   *    @AnnotationD(value = "Other string of no importance")
+   *    protected String someOtherStringField;
+   */
 }
 
