@@ -1,8 +1,8 @@
 package org.alfasoftware.astra.core.refactoring.operations.annotations;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
@@ -64,6 +64,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     private Map<String, String> membersAndValuesToAdd = Map.of();
     private Set<String> namesForMembersToRemove = Set.of();
     private Map<String, String> memberNameUpdates = Map.of();
+    private Optional<Transform> transform;
 
     private Builder() {
       super();
@@ -100,10 +101,22 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return null;
     }
 
+    public Builder withTransform(Transform transform) {
+      this.transform = Optional.of(transform);
+      return this;
+    }
+
     public AnnotationChangeRefactor build() {
       return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
     }
   }
+
+
+  @FunctionalInterface
+  public interface Transform {
+    public void apply(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter);
+  }
+
 
   @Override
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)

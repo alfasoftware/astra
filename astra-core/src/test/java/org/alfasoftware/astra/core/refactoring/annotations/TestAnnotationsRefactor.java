@@ -17,6 +17,7 @@ import org.alfasoftware.astra.exampleTypes.AnnotationB;
 import org.alfasoftware.astra.exampleTypes.AnnotationC;
 import org.alfasoftware.astra.exampleTypes.AnnotationD;
 import org.alfasoftware.astra.exampleTypes.B.InnerAnnotationB;
+import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.junit.Test;
 
@@ -233,6 +234,27 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
               .updateMembersWithNameToValue(Map.of("value", "BAR"))
               .build()
       )));
+  }
+
+
+  /**
+   * That a custom predicate can be used to identify an annotation to refactor,
+   * and that a custom transformation can be specified - in this case, that the whole annotation should be removed.
+   */
+  @Test
+  public void testAnnotationChangeWithPredicateAndTransformation() {
+    assertRefactor(
+        AnnotationChangeWithPredicateAndTransformExample.class,
+        new HashSet<>(Arrays.asList(
+            AnnotationChangeRefactor.builder()
+            .from(AnnotationMatcher.builder()
+                .withFullyQualifiedName(AnnotationD.class.getName())
+                .withAnnotationPredicate(Annotation::isMarkerAnnotation)
+                .build())
+            .to(AnnotationD.class.getName())
+            .withTransform((ci, a, rw) -> rw.remove(a, null))
+            .build()
+    )));
   }
 }
 
