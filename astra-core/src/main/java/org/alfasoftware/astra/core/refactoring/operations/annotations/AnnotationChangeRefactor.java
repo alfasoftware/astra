@@ -102,6 +102,11 @@ public class AnnotationChangeRefactor implements ASTOperation {
       // TODO Auto-generated method stub
       return null;
     }
+
+    public Builder updateMembersWithNameToValue(Map<String, String> updateNamesToNewValues) {
+      // TODO Auto-generated method stub
+      return null;
+    }
   }
 
   @Override
