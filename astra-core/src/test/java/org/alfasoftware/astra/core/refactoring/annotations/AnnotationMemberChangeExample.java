@@ -12,6 +12,6 @@ public class AnnotationMemberChangeExample {
   @AnnotationA(value="A string of no importance")
   protected String someStringField;
 
-  @AnnotationD(description="A", othervalue = "B")
+  @AnnotationD(value="A", othervalue = "B")
   protected long someOtherField;
 }

@@ -15,7 +15,6 @@ import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -61,7 +60,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
   public static class Builder {
     private AnnotationMatcher fromType;
     private String toType;
-    private Map<String, String> newMembersAndValues;
+    private Map<String, String> membersAndValuesToAdd;
 
 
     private Builder() {
@@ -79,13 +78,23 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return this;
     }
 
-    public Builder withMemberValuePairs(Map<String, String> membersAndValues){
-      this.newMembersAndValues = membersAndValues;
+    public Builder addMemberNameValuePairs(Map<String, String> membersAndValuesToAdd) {
+      this.membersAndValuesToAdd = membersAndValuesToAdd;
       return this;
     }
 
     public AnnotationChangeRefactor build() {
-      return new AnnotationChangeRefactor(fromType, toType, newMembersAndValues);
+      return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
+    }
+
+    public Builder removeMemberNameValuePairs(Map<String, String> membersAndValuesToRemove) {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    public Builder updateMemberName(Map<String, String> currentToNewName) {
+      // TODO Auto-generated method stub
+      return null;
     }
   }
 

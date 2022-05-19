@@ -2,7 +2,7 @@ package org.alfasoftware.astra.exampleTypes;
 
 public @interface AnnotationD {
 
-  String description() default "";
+  String value() default "";
 
   String othervalue() default "";
 }
