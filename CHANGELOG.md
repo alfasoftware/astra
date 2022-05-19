@@ -1,6 +1,40 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2022-05-19
+### Added
+* Feature/96 annotation change member value by @owoller and @RadikalJin in https://github.com/alfasoftware/astra/pull/97
+
+## [2.0.6] - 2022-05-10
+### Fixed
+* Fixes Issue #86 : TypeMatcher: Replace type specification in construct… by @shyamrox in https://github.com/alfasoftware/astra/pull/91
+* (#89) Reduce cognitive complexity of AstraUtils#isStaticallyImportedMethod by @cmuagab in https://github.com/alfasoftware/astra/pull/92
+* Reduce cognitive complexity of AstraUtils#getFullyQualifiedName #88 by @kapilgahlot1998 in https://github.com/alfasoftware/astra/pull/93
+
+### Changed
+* 94 Make AddAnnotationRefactor's member optional by @RadikalJin in https://github.com/alfasoftware/astra/pull/95
+
+
+## [2.0.4] - 2022-03-09
+### Added
+* #83 Support text file "before" examples for testing
+
+### Fixed
+* #81 Type reference refactor improvements to handling imports for annotations which are inner types
+
+
+## [2.0.3] - 2022-02-04
+### Added
+* #59 Added tests for AstraUtils#getPackageName(TypeDeclaration)
+* #68 Tests added for AnnotationChangeRefactor
+* #72 Added test example for refactoring chains of method invocations
+* #76 Added MarkerAnnotation unit test
+
+### Changed
+* #71 Removed type reference variable rename
+* #75 Changed description of AstraChangeType cli command for readability
+
+
 ## [2.0.1] - 2021-08-04
 ### Added
 
