@@ -153,7 +153,7 @@ public class AnnotationMatcher implements Matcher {
     for (MemberValuePair pair : values) {
       final String key = pair.getName().getIdentifier();
       final Object expectedValue = annotationBuilder.properties.get(key);
-      if(expectedValue != null) {
+      if (expectedValue != null) {
         matches = matches && compareExpression(expectedValue.toString(), pair.getValue().toString());
       }
     }
