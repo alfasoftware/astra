@@ -16,7 +16,6 @@ import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -151,46 +150,47 @@ public class AnnotationChangeRefactor implements ASTOperation {
       name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(after));
     }
 
+    // change name of annotation
+    changeAnnotationName(rewriter, annotation, name);
+
     // add new members
-//    addNewMembersToAnnotation(rewriter, annotation);
-
-    if (annotation instanceof NormalAnnotation) {
-      rewriteNormalAnnotation(rewriter, name, (NormalAnnotation) annotation);
-
-    } else if (annotation instanceof MarkerAnnotation) {
-      if(!newMembersAndValues.isEmpty()){
-        // Need to change MarkerAnnotation to a NormalAnnotation if we are adding new members.
-        final NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
-        rewriteNormalAnnotation(rewriter, name, normalAnnotation);
-        rewriter.replace(annotation, normalAnnotation, null);
-      } else {
-        rewriter.set(annotation, MarkerAnnotation.TYPE_NAME_PROPERTY, name, null);
-      }
-
-    } else if (annotation instanceof SingleMemberAnnotation) {
-      if(!newMembersAndValues.isEmpty()){
-        // Need to change MarkerAnnotation to a NormalAnnotation if we are adding new members.
-        final NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
-
-        final MemberValuePair memberValuePair = annotation.getAST().newMemberValuePair();
-
-        memberValuePair.setName(annotation.getAST().newSimpleName("value"));
-        rewriter.set(memberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
-
-        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
-        listRewrite.insertLast(memberValuePair, null);
-
-        rewriteNormalAnnotation(rewriter, name, normalAnnotation);
-        rewriter.replace(annotation, normalAnnotation, null);
-      } else {
-        rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
-      }
-    }
+    final Annotation annotationWithNewMembers = addNewMembersToAnnotation(rewriter, annotation);
 
   }
 
-  private void rewriteNormalAnnotation(ASTRewrite rewriter, Name name, NormalAnnotation normalAnnotation) {
-    rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, name, null);
+  private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation, Name name) {
+    if(annotation.isSingleMemberAnnotation()) {
+      rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
+    } else if(annotation.isMarkerAnnotation()){
+      rewriter.set(annotation, MarkerAnnotation.TYPE_NAME_PROPERTY, name, null);
+    } else if (annotation.isNormalAnnotation()){
+      rewriter.set(annotation, NormalAnnotation.TYPE_NAME_PROPERTY, name, null);
+    }
+  }
+
+  private Annotation addNewMembersToAnnotation(ASTRewrite rewriter, Annotation annotation) {
+    if(!newMembersAndValues.isEmpty()) {
+      final NormalAnnotation normalAnnotation;
+      if (annotation.isMarkerAnnotation() || annotation.isSingleMemberAnnotation()) {
+        normalAnnotation = rewriter.getAST().newNormalAnnotation();
+        rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
+        rewriter.replace(annotation, normalAnnotation, null);
+        if(annotation.isSingleMemberAnnotation()){
+          final MemberValuePair existingMemberValuePair = rewriter.getAST().newMemberValuePair();
+          rewriter.set(existingMemberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
+          existingMemberValuePair.setName(rewriter.getAST().newSimpleName("value"));
+          rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY).insertLast(existingMemberValuePair, null);
+        }
+      } else {
+        normalAnnotation = (NormalAnnotation) annotation;
+      }
+      addMembersToNormalAnnotation(rewriter, normalAnnotation);
+      return normalAnnotation;
+    }
+    return annotation;
+  }
+
+  private void addMembersToNormalAnnotation(ASTRewrite rewriter, NormalAnnotation normalAnnotation) {
     final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
     newMembersAndValues.forEach((memberName, value) -> {
       MemberValuePair newMemberAndValue = rewriter.getAST().newMemberValuePair();
