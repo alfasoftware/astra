@@ -4,10 +4,13 @@ import org.alfasoftware.astra.exampleTypes.AnnotationD;
 
 public class AddMemberToAnnotationExampleAfter {
 
-  @AnnotationD(value = "BAR")
+  @AnnotationD(othervalue = "BAR")
   protected long someField;
 
-  @AnnotationD(othervalue="A string of no importance", value = "BAR")
+  @AnnotationD(value = "Foo", othervalue = "BAR")
+  protected long someOtherField;
+
+  @AnnotationD(value="A string of no importance", othervalue = "BAR")
   protected String someStringField;
 }
 

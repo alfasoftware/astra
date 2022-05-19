@@ -95,10 +95,6 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return this;
     }
 
-    public AnnotationChangeRefactor build() {
-      return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
-    }
-
     public Builder updateMembersWithNameToValue(Map<String, String> updateNamesToNewValues) {
       // TODO Auto-generated method stub
       return null;
@@ -144,8 +140,8 @@ public class AnnotationChangeRefactor implements ASTOperation {
       rewriteNormalAnnotation(rewriter, name, (NormalAnnotation) annotation);
 
     } else if (annotation instanceof MarkerAnnotation) {
-      // Need to change MarkerAnnotation to a NormalAnnotation if we are adding new members.
       if(!newMembersAndValues.isEmpty()){
+        // Need to change MarkerAnnotation to a NormalAnnotation if we are adding new members.
         final NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
         rewriteNormalAnnotation(rewriter, name, normalAnnotation);
         rewriter.replace(annotation, normalAnnotation, null);
