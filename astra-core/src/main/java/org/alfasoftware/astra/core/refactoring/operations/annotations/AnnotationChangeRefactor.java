@@ -74,8 +74,8 @@ public class AnnotationChangeRefactor implements ASTOperation {
     private Map<String, String> membersAndValuesToAdd = Map.of();
     private Set<String> namesForMembersToRemove = Set.of();
     private Map<String, String> memberNameUpdates = Map.of();
-    private Optional<Transform> transform;
-    private Map<String, String> memberNamesToUpdateWithNewValues;
+    private Optional<Transform> transform = Optional.empty();
+    private Map<String, String> memberNamesToUpdateWithNewValues = Map.of();
 
     private Builder() {
       super();
@@ -150,7 +150,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
           AstraUtils.updateImport(compilationUnit, fromType.getFullyQualifiedName(), toType, rewriter);
         }
 
-        rewriteAnnotation(rewriter, annotation);
+        rewriteAnnotation(compilationUnit, annotation, rewriter);
       }
     }
   }
@@ -163,7 +163,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
    * We have to re-assign the annotation after each transformation, rather than reusing the initial one,
    * as we might replace the ASTNode representing the annotation as part of a transformation
    */
-  private void rewriteAnnotation(ASTRewrite rewriter, Annotation annotation) {
+  private void rewriteAnnotation(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter) {
     // change name of annotation
     changeAnnotationName(rewriter, annotation);
 
@@ -174,6 +174,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
     annotation = updateMemberNames(rewriter, annotation);
 
+    annotation = applyTransformation(compilationUnit, rewriter, annotation);
   }
 
   private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
@@ -283,5 +284,10 @@ public class AnnotationChangeRefactor implements ASTOperation {
       newMemberAndValue.setValue(valueLiteral);
       listRewrite.insertLast(newMemberAndValue, null);
     });
+  }
+
+  private Annotation applyTransformation(CompilationUnit compilationUnit, ASTRewrite rewriter, Annotation annotation) {
+    transform.ifPresent(t -> t.apply(compilationUnit, annotation, rewriter));
+    return annotation;
   }
 }
