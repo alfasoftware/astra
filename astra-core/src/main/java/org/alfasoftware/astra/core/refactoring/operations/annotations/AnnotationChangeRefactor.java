@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
@@ -169,7 +170,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
    */
   private void rewriteAnnotation(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter) {
     changeAnnotationName(rewriter, annotation);
-    annotation = addNewMembersToAnnotation(rewriter, annotation);
+    annotation = addNewMembersToAnnotation(compilationUnit, rewriter, annotation);
     annotation = removeMembersFromAnnotation(rewriter, annotation);
     annotation = updateMemberNames(rewriter, annotation);
     annotation = updateMembersByNameToValues(rewriter, annotation);
@@ -194,7 +195,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
   }
 
 
-  private Annotation addNewMembersToAnnotation(ASTRewrite rewriter, Annotation annotation) {
+  private Annotation addNewMembersToAnnotation(CompilationUnit compilationUnit, ASTRewrite rewriter, Annotation annotation) {
     if (!membersAndValuesToAdd.isEmpty()) {
       final NormalAnnotation normalAnnotation;
       if (annotation.isMarkerAnnotation() || annotation.isSingleMemberAnnotation()) {
@@ -202,7 +203,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
       } else {
         normalAnnotation = (NormalAnnotation) annotation;
       }
-      addMembersToNormalAnnotation(rewriter, normalAnnotation, membersAndValuesToAdd);
+      addMembersToNormalAnnotation(compilationUnit, rewriter, normalAnnotation, membersAndValuesToAdd);
       return normalAnnotation;
     }
     return annotation;
@@ -323,9 +324,18 @@ public class AnnotationChangeRefactor implements ASTOperation {
   }
 
 
-  private void addMembersToNormalAnnotation(ASTRewrite rewriter, NormalAnnotation normalAnnotation, Map<String, String> membersAndValuesToAdd) {
+  private void addMembersToNormalAnnotation(CompilationUnit compilationUnit, ASTRewrite rewriter, NormalAnnotation normalAnnotation, Map<String, String> membersAndValuesToAdd) {
     final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+    @SuppressWarnings("unchecked")
+    List<MemberValuePair> originalMembers = listRewrite.getOriginalList();
+    final List<String> originalMemberNames = originalMembers.stream().map(memberValuePair -> memberValuePair.getName().getIdentifier()).collect(Collectors.toList());
     membersAndValuesToAdd.forEach((memberName, value) -> {
+      if(originalMemberNames.contains(memberName)) {
+        log.warn("A new member value pair with name " + memberName +
+                " was not added to annotation in this type " +  AstraUtils.getNameForCompilationUnit(compilationUnit) + " as it already exists. " +
+                "If you wish to overwrite the existing value, please configure the " + AnnotationChangeRefactor.class.getSimpleName() + "to update the value for an existing member name.");
+        return;
+      }
       MemberValuePair newMemberAndValue = rewriter.getAST().newMemberValuePair();
       newMemberAndValue.setName(rewriter.getAST().newSimpleName(memberName));
       final StringLiteral valueLiteral = rewriter.getAST().newStringLiteral();
