@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
@@ -172,7 +173,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
                 .withWithMemberAndValue(null, null)
                 .build())
               .to(AnnotationD.class.getName())
-              .removeMembersWithName("value")
+              .removeMembersWithNames(Set.of("value"))
               .build()
       )));
   }
