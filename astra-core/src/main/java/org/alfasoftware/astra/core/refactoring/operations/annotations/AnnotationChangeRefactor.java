@@ -172,6 +172,8 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
     annotation = removeMembersFromAnnotation(rewriter, annotation);
 
+    annotation = updateMemberNames(rewriter, annotation);
+
   }
 
   private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
@@ -234,6 +236,31 @@ public class AnnotationChangeRefactor implements ASTOperation {
       if(annotation.isMarkerAnnotation()){
         log.warn("TODO");
       }
+    }
+    return annotation;
+  }
+
+  private Annotation updateMemberNames(ASTRewrite rewriter, Annotation annotation) {
+    if(!memberNameUpdates.isEmpty() ) {
+      if(annotation.isSingleMemberAnnotation()) {
+        final String newMemberName = memberNameUpdates.get("value");
+        if(newMemberName != null) {
+          NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
+          rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
+          final MemberValuePair memberValuePair = rewriter.getAST().newMemberValuePair();
+          rewriter.set(memberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
+          memberValuePair.setName(rewriter.getAST().newSimpleName(newMemberName));
+
+          rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY).insertLast(memberValuePair,  null);
+          rewriter.replace(annotation, normalAnnotation, null);
+        }
+      } else if (annotation.isNormalAnnotation()) {
+        NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
+        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+        final List rewrittenList = listRewrite.getRewrittenList();
+//        rewrittenList. TODO
+      }
+
     }
     return annotation;
   }
