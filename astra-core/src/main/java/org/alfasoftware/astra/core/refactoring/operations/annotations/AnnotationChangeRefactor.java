@@ -257,10 +257,14 @@ public class AnnotationChangeRefactor implements ASTOperation {
       } else if (annotation.isNormalAnnotation()) {
         NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
         final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
-        final List rewrittenList = listRewrite.getRewrittenList();
-//        rewrittenList. TODO
+        final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
+        for (MemberValuePair memberValuePair : rewrittenList) {
+          final String newName = memberNameUpdates.get(memberValuePair.getName().getIdentifier());
+          if(newName != null) {
+            rewriter.set(memberValuePair, MemberValuePair.NAME_PROPERTY, rewriter.getAST().newSimpleName(newName), null);
+          }
+        }
       }
-
     }
     return annotation;
   }
