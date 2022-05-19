@@ -3,6 +3,7 @@ package org.alfasoftware.astra.core.refactoring.operations.annotations;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
@@ -96,6 +97,11 @@ public class AnnotationChangeRefactor implements ASTOperation {
       // TODO Auto-generated method stub
       return null;
     }
+
+    public Builder removeMembersWithNames(Set<String> namesForMembersToRemove) {
+      // TODO Auto-generated method stub
+      return null;
+    }
   }
 
   @Override
@@ -132,6 +138,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     if (annotation instanceof NormalAnnotation) {
       rewriter.set(annotation, NormalAnnotation.TYPE_NAME_PROPERTY, name, null);
       final ListRewrite listRewrite = rewriter.getListRewrite(annotation, NormalAnnotation.VALUES_PROPERTY);
+      @SuppressWarnings("unchecked")
       List<MemberValuePair> currentList = listRewrite.getRewrittenList();
       // clear down existing list
       currentList.forEach(i -> listRewrite.remove(i, null));

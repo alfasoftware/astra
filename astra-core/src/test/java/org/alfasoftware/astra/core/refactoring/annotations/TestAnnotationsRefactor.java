@@ -142,7 +142,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
           new HashSet<>(Arrays.asList(
             AnnotationChangeRefactor.builder()
               .from(AnnotationMatcher.builder()
-                .withFullyQualifiedName(AnnotationA.class.getName())
+                .withFullyQualifiedName(AnnotationD.class.getName())
                 .build())
               .to(AnnotationD.class.getName())
               .addMemberNameValuePairs(Map.of("value", "BAR"))
@@ -168,10 +168,11 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
           new HashSet<>(Arrays.asList(
             AnnotationChangeRefactor.builder()
               .from(AnnotationMatcher.builder()
-                .withFullyQualifiedName(AnnotationA.class.getName())
+                .withFullyQualifiedName(AnnotationD.class.getName())
+                .withWithMemberAndValue(null, null)
                 .build())
               .to(AnnotationD.class.getName())
-              .removeMemberNameValuePairs(Map.of("value", "BAR"))
+              .removeMembersWithName("value")
               .build()
       )));
   }
