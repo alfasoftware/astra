@@ -16,6 +16,7 @@ import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -149,6 +150,10 @@ public class AnnotationChangeRefactor implements ASTOperation {
     } else {
       name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(after));
     }
+
+    // add new members
+//    addNewMembersToAnnotation(rewriter, annotation);
+
     if (annotation instanceof NormalAnnotation) {
       rewriteNormalAnnotation(rewriter, name, (NormalAnnotation) annotation);
 
@@ -163,8 +168,23 @@ public class AnnotationChangeRefactor implements ASTOperation {
       }
 
     } else if (annotation instanceof SingleMemberAnnotation) {
-      rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
+      if(!newMembersAndValues.isEmpty()){
+        // Need to change MarkerAnnotation to a NormalAnnotation if we are adding new members.
+        final NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
 
+        final MemberValuePair memberValuePair = annotation.getAST().newMemberValuePair();
+
+        memberValuePair.setName(annotation.getAST().newSimpleName("value"));
+        rewriter.set(memberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
+
+        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+        listRewrite.insertLast(memberValuePair, null);
+
+        rewriteNormalAnnotation(rewriter, name, normalAnnotation);
+        rewriter.replace(annotation, normalAnnotation, null);
+      } else {
+        rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
+      }
     }
 
   }
