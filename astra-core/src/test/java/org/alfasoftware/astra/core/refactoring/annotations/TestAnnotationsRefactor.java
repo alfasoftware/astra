@@ -137,7 +137,17 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
    */
   @Test
   public void testAddMemberToAnnotation() {
-    fail("TODO");
+    assertRefactor(
+        AddMemberToAnnotationExample.class,
+          new HashSet<>(Arrays.asList(
+            AnnotationChangeRefactor.builder()
+              .from(AnnotationMatcher.builder()
+                .withFullyQualifiedName(AnnotationA.class.getName())
+                .build())
+              .to(AnnotationD.class.getName())
+                .withMemberValuePairs(Map.of("description", "BAR"))
+                .build()
+      )));
   }
 
 
