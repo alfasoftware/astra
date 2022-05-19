@@ -1,5 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.annotations;
 
+import static org.junit.Assert.fail;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,7 +45,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
   }
 
   @Test
-  public void testAddMarkerAnnotation(){
+  public void testAddMarkerAnnotation() {
     assertRefactor(
       AddMarkerAnnotationExample.class,
       new HashSet<>(Arrays.asList(
@@ -61,7 +63,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
   }
 
   @Test
-  public void testAnnotationChange(){
+  public void testAnnotationChange() {
     assertRefactor(
       AnnotationChangeExample.class,
       new HashSet<>(Arrays.asList(
@@ -99,7 +101,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
 
 
   @Test
-  public void testAnnotationInnerTypeChange(){
+  public void testAnnotationInnerTypeChange() {
     assertRefactor(
       AnnotationChangeInnerTypeExample.class,
       new HashSet<>(Arrays.asList(
@@ -112,19 +114,74 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
   }
 
   @Test
-  public void testAnnotationMemberNameChange(){
+  public void testAnnotationMemberNameChange() {
     assertRefactor(
-            AnnotationMemberChangeExample.class,
-            new HashSet<>(Arrays.asList(
-                    AnnotationChangeRefactor.builder()
-                            .from(AnnotationMatcher.builder()
-                                    .withFullyQualifiedName(AnnotationA.class.getName())
-                                    .withValue("FOO")
-                                    .build())
-                            .to(AnnotationD.class.getName())
-                            .withMemberValuePairs(Map.of("description", "BAR"))
-                            .build()
-            )));
+      AnnotationMemberChangeExample.class,
+        new HashSet<>(Arrays.asList(
+          AnnotationChangeRefactor.builder()
+            .from(AnnotationMatcher.builder()
+              .withFullyQualifiedName(AnnotationA.class.getName())
+              .withValue("FOO")
+              .build())
+            .to(AnnotationD.class.getName())
+              .withMemberValuePairs(Map.of("description", "BAR"))
+              .build()
+    )));
+  }
+
+
+  /**
+   * Example covers:
+   * - annotation without members
+   * - annotation with existing member
+   */
+  @Test
+  public void testAddMemberToAnnotation() {
+    fail("TODO");
+  }
+
+
+  /**
+   * Example covers:
+   * - removing only member from an annotation
+   * - removing one member from an annotation with more than one member
+   */
+  @Test
+  public void testRemoveMemberFromAnnotation() {
+    fail("TODO");
+  }
+
+
+  /**
+   * Example covers:
+   * - adding and removing one member from an annotation an existing member
+   * - adding and removing one member from an annotation more than one member
+   */
+  @Test
+  public void testAddAndRemoveMemberFromAnnotation() {
+    fail("TODO");
+  }
+
+
+  /**
+   * Example covers:
+   * - updating the name of an annotation with the name specified
+   * - that no changes are made to an annotation with just the value shown
+   */
+  @Test
+  public void testUpdateMemberName() {
+    fail("TODO");
+  }
+
+
+  /**
+   * Example covers:
+   * - updating the value of an annotation where just the value is shown
+   * - updating the value of an annotation where a name-value pair is shown
+   */
+  @Test
+  public void testUpdateMemberValue() {
+    fail("TODO");
   }
 }
 
