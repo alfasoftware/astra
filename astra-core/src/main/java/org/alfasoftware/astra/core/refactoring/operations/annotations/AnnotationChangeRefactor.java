@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.operations.annotations;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -33,19 +34,28 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   private static final Logger log = Logger.getLogger(AnnotationChangeRefactor.class);
 
-  private final AnnotationMatcher before;
-  private final String after;
-  private Map<String, String> newMembersAndValues;
+  private final AnnotationMatcher fromType;
+  private final String toType;
+  private final Map<String, String> membersAndValuesToAdd;
+  private final Set<String> namesForMembersToRemove;
+  private final Map<String, String> memberNameUpdates;
+  private final Map<String, String> memberNamesToUpdateWithNewValues;
+  private final Optional<Transform> transform;
 
-  private AnnotationChangeRefactor(AnnotationMatcher before, String after, Map<String, String> newMembersAndValues) {
-    this.before = before;
-    this.after = after;
-    this.newMembersAndValues = newMembersAndValues;
+  public AnnotationChangeRefactor(AnnotationMatcher fromType, String toType, Map<String, String> membersAndValuesToAdd, Set<String> namesForMembersToRemove, Map<String, String> memberNameUpdates, Map<String, String> memberNamesToUpdateWithNewValues, Optional<Transform> transform) {
+    this.fromType = fromType;
+    this.toType = toType;
+    this.membersAndValuesToAdd = membersAndValuesToAdd;
+    this.namesForMembersToRemove = namesForMembersToRemove;
+    this.memberNameUpdates = memberNameUpdates;
+    this.memberNamesToUpdateWithNewValues = memberNamesToUpdateWithNewValues;
+    this.transform = transform;
   }
+
 
   @Override
   public String toString() {
-    return String.format("AnnotationChangeRefactor from [%s] to [%s]", before, after);
+    return String.format("AnnotationChangeRefactor from [%s] to [%s]", fromType, toType);
   }
 
   /**
@@ -65,6 +75,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     private Set<String> namesForMembersToRemove = Set.of();
     private Map<String, String> memberNameUpdates = Map.of();
     private Optional<Transform> transform;
+    private Map<String, String> memberNamesToUpdateWithNewValues;
 
     private Builder() {
       super();
@@ -97,8 +108,8 @@ public class AnnotationChangeRefactor implements ASTOperation {
     }
 
     public Builder updateMembersWithNameToValue(Map<String, String> updateNamesToNewValues) {
-      // TODO Auto-generated method stub
-      return null;
+      this.memberNamesToUpdateWithNewValues = updateNamesToNewValues;
+      return this;
     }
 
     public Builder withTransform(Transform transform) {
@@ -107,7 +118,13 @@ public class AnnotationChangeRefactor implements ASTOperation {
     }
 
     public AnnotationChangeRefactor build() {
-      return new AnnotationChangeRefactor(fromType, toType, membersAndValuesToAdd);
+      return new AnnotationChangeRefactor(fromType,
+              toType,
+              membersAndValuesToAdd,
+              namesForMembersToRemove,
+              memberNameUpdates,
+              memberNamesToUpdateWithNewValues,
+              transform);
     }
   }
 
@@ -125,12 +142,12 @@ public class AnnotationChangeRefactor implements ASTOperation {
       Annotation annotation = (Annotation) node;
 
       if (shouldRefactor(annotation)) {
-        log.info("Refactoring annotation [" + before + "] "
-            + "to [" + after + "] "
+        log.info("Refactoring annotation [" + fromType + "] "
+            + "to [" + toType + "] "
             + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
 
-        if (! AstraUtils.getSimpleName(after).equals(AstraUtils.getSimpleName(annotation.getTypeName().getFullyQualifiedName()))) {
-          AstraUtils.updateImport(compilationUnit, before.getFullyQualifiedName(), after, rewriter);
+        if (! AstraUtils.getSimpleName(toType).equals(AstraUtils.getSimpleName(annotation.getTypeName().getFullyQualifiedName()))) {
+          AstraUtils.updateImport(compilationUnit, fromType.getFullyQualifiedName(), toType, rewriter);
         }
 
         rewriteAnnotation(rewriter, annotation);
@@ -139,24 +156,30 @@ public class AnnotationChangeRefactor implements ASTOperation {
   }
 
   private boolean shouldRefactor(Annotation annotation) {
-    return before.matches(annotation);
+    return fromType.matches(annotation);
   }
 
+  /**
+   * We have to re-assign the annotation after each transformation, rather than reusing the initial one,
+   * as we might replace the ASTNode representing the annotation as part of a transformation
+   */
   private void rewriteAnnotation(ASTRewrite rewriter, Annotation annotation) {
     // change name of annotation
     changeAnnotationName(rewriter, annotation);
 
     // add new members
-    final Annotation annotationWithNewMembers = addNewMembersToAnnotation(rewriter, annotation);
+    annotation = addNewMembersToAnnotation(rewriter, annotation);
+
+    annotation = removeMembersFromAnnotation(rewriter, annotation);
 
   }
 
   private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
     Name name;
     if (annotation.getTypeName().isQualifiedName()) {
-      name = annotation.getAST().newName(after);
+      name = annotation.getAST().newName(toType);
     } else {
-      name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(after));
+      name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(toType));
     }
     if(annotation.isSingleMemberAnnotation()) {
       rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
@@ -168,7 +191,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
   }
 
   private Annotation addNewMembersToAnnotation(ASTRewrite rewriter, Annotation annotation) {
-    if(!newMembersAndValues.isEmpty()) {
+    if(!membersAndValuesToAdd.isEmpty()) {
       final NormalAnnotation normalAnnotation;
       if (annotation.isMarkerAnnotation() || annotation.isSingleMemberAnnotation()) {
         normalAnnotation = rewriter.getAST().newNormalAnnotation();
@@ -183,15 +206,49 @@ public class AnnotationChangeRefactor implements ASTOperation {
       } else {
         normalAnnotation = (NormalAnnotation) annotation;
       }
-      addMembersToNormalAnnotation(rewriter, normalAnnotation);
+      addMembersToNormalAnnotation(rewriter, normalAnnotation, membersAndValuesToAdd);
       return normalAnnotation;
     }
     return annotation;
   }
 
-  private void addMembersToNormalAnnotation(ASTRewrite rewriter, NormalAnnotation normalAnnotation) {
+  private Annotation removeMembersFromAnnotation(ASTRewrite rewriter, Annotation annotation) {
+    if(!namesForMembersToRemove.isEmpty()){
+      if(annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains("value")){
+        return convertAnnotationToMarkerAnnotation(rewriter, annotation);
+      } else if(annotation.isNormalAnnotation()) {
+        NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
+        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+        final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
+        for (MemberValuePair memberValuePair : rewrittenList) {
+          if(namesForMembersToRemove.contains(memberValuePair.getName().getIdentifier())){
+            listRewrite.remove(memberValuePair, null);
+          }
+        }
+        if(listRewrite.getRewrittenList().size() == 0) {
+          return convertAnnotationToMarkerAnnotation(rewriter, annotation);
+        } else {
+          return normalAnnotation;
+        }
+      }
+      if(annotation.isMarkerAnnotation()){
+        log.warn("TODO");
+      }
+    }
+    return annotation;
+  }
+
+  private MarkerAnnotation convertAnnotationToMarkerAnnotation(ASTRewrite rewriter, Annotation annotation) {
+    final MarkerAnnotation markerAnnotation = rewriter.getAST().newMarkerAnnotation();
+    rewriter.set(markerAnnotation, MarkerAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
+    rewriter.replace(annotation, markerAnnotation, null);
+    return markerAnnotation;
+  }
+
+
+  private void addMembersToNormalAnnotation(ASTRewrite rewriter, NormalAnnotation normalAnnotation, Map<String, String> membersAndValuesToAdd) {
     final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
-    newMembersAndValues.forEach((memberName, value) -> {
+    membersAndValuesToAdd.forEach((memberName, value) -> {
       MemberValuePair newMemberAndValue = rewriter.getAST().newMemberValuePair();
       newMemberAndValue.setName(rewriter.getAST().newSimpleName(memberName));
       final StringLiteral valueLiteral = rewriter.getAST().newStringLiteral();

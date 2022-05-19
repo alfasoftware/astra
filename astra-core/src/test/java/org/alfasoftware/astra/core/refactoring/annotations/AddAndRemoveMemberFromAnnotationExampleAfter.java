@@ -4,10 +4,10 @@ import org.alfasoftware.astra.exampleTypes.AnnotationD;
 
 public class AddAndRemoveMemberFromAnnotationExampleAfter {
 
-  @AnnotationD(othervalue="BAR")
+  @AnnotationD(othervalue = "BAR")
   protected long someField;
 
-  @AnnotationD(othervalue="BAR")
+  @AnnotationD(othervalue = "BAR")
   protected String someStringField;
 
   // TODO
