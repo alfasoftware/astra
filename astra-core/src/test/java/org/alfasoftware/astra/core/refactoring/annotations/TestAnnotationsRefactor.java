@@ -2,6 +2,7 @@ package org.alfasoftware.astra.core.refactoring.annotations;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
@@ -13,6 +14,7 @@ import org.alfasoftware.astra.exampleTypes.A.InnerAnnotationA;
 import org.alfasoftware.astra.exampleTypes.AnnotationA;
 import org.alfasoftware.astra.exampleTypes.AnnotationB;
 import org.alfasoftware.astra.exampleTypes.AnnotationC;
+import org.alfasoftware.astra.exampleTypes.AnnotationD;
 import org.alfasoftware.astra.exampleTypes.B.InnerAnnotationB;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.junit.Test;
@@ -107,6 +109,22 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
             .build())
           .to(InnerAnnotationB.class.getName()).build()
       )));
+  }
+
+  @Test
+  public void testAnnotationMemberNameChange(){
+    assertRefactor(
+            AnnotationMemberChangeExample.class,
+            new HashSet<>(Arrays.asList(
+                    AnnotationChangeRefactor.builder()
+                            .from(AnnotationMatcher.builder()
+                                    .withFullyQualifiedName(AnnotationA.class.getName())
+                                    .withValue("FOO")
+                                    .build())
+                            .to(AnnotationD.class.getName())
+                            .withMemberValuePairs(Map.of("description", "BAR"))
+                            .build()
+            )));
   }
 }
 

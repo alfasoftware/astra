@@ -1,6 +1,8 @@
 package org.alfasoftware.astra.core.refactoring.operations.annotations;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
@@ -10,10 +12,14 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
+import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
+import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
 
@@ -29,10 +35,12 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   private final AnnotationMatcher before;
   private final String after;
+  private Map<String, String> newMembersAndValues;
 
-  private AnnotationChangeRefactor(AnnotationMatcher before, String after) {
+  private AnnotationChangeRefactor(AnnotationMatcher before, String after, Map<String, String> newMembersAndValues) {
     this.before = before;
     this.after = after;
+    this.newMembersAndValues = newMembersAndValues;
   }
 
   @Override
@@ -53,6 +61,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
   public static class Builder {
     private AnnotationMatcher fromType;
     private String toType;
+    private Map<String, String> newMembersAndValues;
 
 
     private Builder() {
@@ -69,8 +78,14 @@ public class AnnotationChangeRefactor implements ASTOperation {
       this.toType = toType.replaceAll("\\$", ".");
       return this;
     }
+
+    public Builder withMemberValuePairs(Map<String, String> membersAndValues){
+      this.newMembersAndValues = membersAndValues;
+      return this;
+    }
+
     public AnnotationChangeRefactor build() {
-      return new AnnotationChangeRefactor(fromType, toType);
+      return new AnnotationChangeRefactor(fromType, toType, newMembersAndValues);
     }
   }
 
@@ -107,10 +122,27 @@ public class AnnotationChangeRefactor implements ASTOperation {
     }
     if (annotation instanceof NormalAnnotation) {
       rewriter.set(annotation, NormalAnnotation.TYPE_NAME_PROPERTY, name, null);
+      final ListRewrite listRewrite = rewriter.getListRewrite(annotation, NormalAnnotation.VALUES_PROPERTY);
+      List<MemberValuePair> currentList = listRewrite.getRewrittenList();
+      // clear down existing list
+      currentList.forEach(i -> listRewrite.remove(i, null));
+
+      newMembersAndValues.forEach((memberName, value) -> {
+        MemberValuePair newMemberAndValue = annotation.getAST().newMemberValuePair();
+        newMemberAndValue.setName(annotation.getAST().newSimpleName(memberName));
+        final StringLiteral valueLiteral = annotation.getAST().newStringLiteral();
+        valueLiteral.setLiteralValue(value);
+        newMemberAndValue.setValue(valueLiteral);
+        listRewrite.insertLast(newMemberAndValue, null);
+      });
+
+
     } else if (annotation instanceof MarkerAnnotation) {
       rewriter.set(annotation, MarkerAnnotation.TYPE_NAME_PROPERTY, name, null);
     } else if (annotation instanceof SingleMemberAnnotation) {
       rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
+
     }
+
   }
 }
