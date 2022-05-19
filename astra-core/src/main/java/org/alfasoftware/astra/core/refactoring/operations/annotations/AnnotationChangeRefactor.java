@@ -143,22 +143,21 @@ public class AnnotationChangeRefactor implements ASTOperation {
   }
 
   private void rewriteAnnotation(ASTRewrite rewriter, Annotation annotation) {
-    Name name = null;
-    if (annotation.getTypeName().isQualifiedName()) {
-      name = annotation.getAST().newName(after);
-    } else {
-      name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(after));
-    }
-
     // change name of annotation
-    changeAnnotationName(rewriter, annotation, name);
+    changeAnnotationName(rewriter, annotation);
 
     // add new members
     final Annotation annotationWithNewMembers = addNewMembersToAnnotation(rewriter, annotation);
 
   }
 
-  private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation, Name name) {
+  private void changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
+    Name name;
+    if (annotation.getTypeName().isQualifiedName()) {
+      name = annotation.getAST().newName(after);
+    } else {
+      name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(after));
+    }
     if(annotation.isSingleMemberAnnotation()) {
       rewriter.set(annotation, SingleMemberAnnotation.TYPE_NAME_PROPERTY, name, null);
     } else if(annotation.isMarkerAnnotation()){
