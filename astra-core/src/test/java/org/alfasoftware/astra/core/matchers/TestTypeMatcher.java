@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
@@ -149,6 +150,31 @@ public class TestTypeMatcher {
     ClassVisitor visitor = parse(CLASS_IMPLEMENTS_QUALIFIED_INTERFACE);
     List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
     assertTrue(matcher.matches(typeDeclarations.get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForParameterizedInterface() {
+    // Given
+    String classWithName = "package x;" +
+        "import java.util.List;" +
+        "public class TestName implements List<String> {}";
+    Matcher simpleMatcher = TypeMatcher.builder()
+        .asClass()
+        .implementingInterfaces(Set.of("java.util.List"))
+        .build();
+    Matcher parameterizedMatcher = TypeMatcher.builder()
+        .asClass()
+        .implementingInterfaces(Set.of("java.util.List<java.lang.String>"))
+        .build();
+
+    // When
+    ClassVisitor visitor = parse(classWithName);
+
+    // Then
+    List<TypeDeclaration> typeDeclarations = visitor.getTypeDeclarations();
+    assertTrue(simpleMatcher.matches(typeDeclarations.get(0)));
+    assertTrue(parameterizedMatcher.matches(typeDeclarations.get(0)));
   }
 
 

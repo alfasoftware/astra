@@ -376,39 +376,53 @@ public class TypeMatcher implements Matcher {
       return true;
     }
 
-    return getAllInterfaces(typeDeclaration).containsAll(typeBuilder.interfaces);
-  }
+    final Set<ITypeBinding> allInterfaces = getAllInterfaces(typeDeclaration);
 
-
-  private Set<String> getAllInterfaces(TypeDeclaration typeDeclaration) {
-    @SuppressWarnings("unchecked")
-    List<Type> interfaces = typeDeclaration.superInterfaceTypes();
-    Set<String> interfaceNames = new HashSet<>();
-    for (Type interfaceName : interfaces) {
-      interfaceNames.add(AstraUtils.getFullyQualifiedName(interfaceName));
-      getSuperInterfaces(interfaceName.resolveBinding(), interfaceNames);
+    for (String interfaceToFind : typeBuilder.interfaces) {
+      // If we have specified a parameterized supertype, match on the qualified name
+      if (interfaceToFind.contains("<")) {
+        if (allInterfaces.stream().noneMatch(c -> interfaceToFind.equals(c.getQualifiedName()))) {
+          return false;
+        }
+        // If we have not specified a parameterized supertype, then only match on binary type name
+      } else if (allInterfaces.stream().noneMatch(c -> interfaceToFind.equals(c.getBinaryName()))) {
+        return false;
+      }
     }
-    getSuperClassInterfaces(typeDeclaration.resolveBinding(), interfaceNames);
-    return interfaceNames;
+
+    return true;
   }
 
 
-  private void getSuperClassInterfaces(ITypeBinding child, Set<String> actualInterfaceNames) {
+  private Set<ITypeBinding> getAllInterfaces(TypeDeclaration typeDeclaration) {
+    @SuppressWarnings("unchecked")
+    List<Type> superInterfaceTypes = typeDeclaration.superInterfaceTypes();
+    Set<ITypeBinding> interfaces = new HashSet<>();
+    for (Type interfaceName : superInterfaceTypes) {
+      interfaces.add(interfaceName.resolveBinding());
+      getSuperInterfaces(interfaceName.resolveBinding(), interfaces);
+    }
+    getSuperClassInterfaces(typeDeclaration.resolveBinding(), interfaces);
+    return interfaces;
+  }
+
+
+  private void getSuperClassInterfaces(ITypeBinding child, Set<ITypeBinding> interfaces) {
     if (child != null && child.getSuperclass() != null) {
       for (ITypeBinding superClassInterface : child.getSuperclass().getInterfaces()) {
-        actualInterfaceNames.add(AstraUtils.getName(superClassInterface));
-        getSuperInterfaces(superClassInterface, actualInterfaceNames);
+        interfaces.add(superClassInterface);
+        getSuperInterfaces(superClassInterface, interfaces);
       }
-      getSuperClassInterfaces(child.getSuperclass(), actualInterfaceNames);
+      getSuperClassInterfaces(child.getSuperclass(), interfaces);
     }
   }
 
 
-  private void getSuperInterfaces(ITypeBinding child, Set<String> actualInterfaceNames) {
+  private void getSuperInterfaces(ITypeBinding child, Set<ITypeBinding> interfaces) {
     if (child != null && child.getInterfaces() != null) {
       for (ITypeBinding superClassInterface : child.getInterfaces()) {
-        actualInterfaceNames.add(AstraUtils.getName(superClassInterface));
-        getSuperInterfaces(superClassInterface, actualInterfaceNames);
+        interfaces.add(superClassInterface);
+        getSuperInterfaces(superClassInterface, interfaces);
       }
     }
   }
