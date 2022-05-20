@@ -33,6 +33,8 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class AnnotationChangeRefactor implements ASTOperation {
 
+  private static final String VALUE = "value";
+
   private static final Logger log = Logger.getLogger(AnnotationChangeRefactor.class);
 
   private final AnnotationMatcher fromType;
@@ -171,9 +173,9 @@ public class AnnotationChangeRefactor implements ASTOperation {
   private void rewriteAnnotation(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter) {
     Annotation updatedAnnotation = addNewMembersToAnnotation(compilationUnit, rewriter, annotation);
     updatedAnnotation = removeMembersFromAnnotation(rewriter, updatedAnnotation);
-    updatedAnnotation = updateMembersByNameToValues(rewriter, updatedAnnotation);
     updatedAnnotation = updateMemberNames(rewriter, updatedAnnotation);
-    updatedAnnotation = changeAnnotationName(rewriter, updatedAnnotation);
+    updateMembersByNameToValues(rewriter, updatedAnnotation);
+    changeAnnotationName(rewriter, updatedAnnotation);
     applyTransformation(compilationUnit, rewriter, updatedAnnotation);
   }
 
@@ -213,7 +215,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   private Annotation removeMembersFromAnnotation(ASTRewrite rewriter, Annotation annotation) {
     if (!namesForMembersToRemove.isEmpty()){
-      if (annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains("value")){
+      if (annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains(VALUE)) {
         return convertAnnotationToMarkerAnnotation(rewriter, annotation);
       } else if(annotation.isNormalAnnotation()) {
         NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
@@ -225,7 +227,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
             listRewrite.remove(memberValuePair, null);
           }
         }
-        if (listRewrite.getRewrittenList().size() == 0) {
+        if (listRewrite.getRewrittenList().isEmpty()) {
           return convertAnnotationToMarkerAnnotation(rewriter, annotation);
         } else {
           return normalAnnotation;
@@ -239,7 +241,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
   private Annotation updateMemberNames(ASTRewrite rewriter, Annotation annotation) {
     if (!memberNameUpdates.isEmpty()) {
       if (annotation.isSingleMemberAnnotation()) {
-        final String newMemberName = memberNameUpdates.get("value");
+        final String newMemberName = memberNameUpdates.get(VALUE);
         if (newMemberName != null) {
           NormalAnnotation normalAnnotation = rewriter.getAST().newNormalAnnotation();
           rewriter.set(normalAnnotation, NormalAnnotation.TYPE_NAME_PROPERTY, annotation.getTypeName(), null);
@@ -271,29 +273,33 @@ public class AnnotationChangeRefactor implements ASTOperation {
   private Annotation updateMembersByNameToValues(ASTRewrite rewriter, Annotation annotation) {
     if (! memberNamesToUpdateWithNewValues.isEmpty()) {
       if (annotation.isSingleMemberAnnotation()) {
-        if (memberNamesToUpdateWithNewValues.containsKey("value")) {
+        if (memberNamesToUpdateWithNewValues.containsKey(VALUE)) {
           SingleMemberAnnotation singleMemberAnnotation = (SingleMemberAnnotation) annotation;
           ASTNode newArgument = annotation.getAST().newStringLiteral();
-          rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, memberNamesToUpdateWithNewValues.get("value"), null);
+          rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, memberNamesToUpdateWithNewValues.get(VALUE), null);
           rewriter.set(singleMemberAnnotation, SingleMemberAnnotation.VALUE_PROPERTY, newArgument, null);
         }
       } else if (annotation.isNormalAnnotation()) {
-        NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
-        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
-        @SuppressWarnings("unchecked")
-        final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
-        for (MemberValuePair memberValuePair : rewrittenList) {
-          for (Map.Entry<String, String> namesToUpdateEntry : memberNamesToUpdateWithNewValues.entrySet()) {
-            if (namesToUpdateEntry.getKey().equals(memberValuePair.getName().getIdentifier())) {
-              ASTNode newArgument = annotation.getAST().newStringLiteral();
-              rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, namesToUpdateEntry.getValue(), null);
-              rewriter.set(memberValuePair, MemberValuePair.VALUE_PROPERTY, newArgument, null);
-            }
-          }
-        }
+        updateMembersByNameToValuesInNormalAnnotation(rewriter, (NormalAnnotation) annotation);
       }
     }
     return annotation;
+  }
+
+
+  private void updateMembersByNameToValuesInNormalAnnotation(ASTRewrite rewriter, NormalAnnotation normalAnnotation) {
+    final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+    @SuppressWarnings("unchecked")
+    final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
+    for (MemberValuePair memberValuePair : rewrittenList) {
+      for (Map.Entry<String, String> namesToUpdateEntry : memberNamesToUpdateWithNewValues.entrySet()) {
+        if (namesToUpdateEntry.getKey().equals(memberValuePair.getName().getIdentifier())) {
+          ASTNode newArgument = normalAnnotation.getAST().newStringLiteral();
+          rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, namesToUpdateEntry.getValue(), null);
+          rewriter.set(memberValuePair, MemberValuePair.VALUE_PROPERTY, newArgument, null);
+        }
+      }
+    }
   }
 
 
@@ -311,7 +317,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     if (annotation.isSingleMemberAnnotation()) {
       final MemberValuePair existingMemberValuePair = rewriter.getAST().newMemberValuePair();
       rewriter.set(existingMemberValuePair, MemberValuePair.VALUE_PROPERTY, ((SingleMemberAnnotation) annotation).getValue(), null);
-      existingMemberValuePair.setName(rewriter.getAST().newSimpleName("value"));
+      existingMemberValuePair.setName(rewriter.getAST().newSimpleName(VALUE));
       rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY).insertLast(existingMemberValuePair, null);
     }
     return normalAnnotation;
