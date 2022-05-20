@@ -68,8 +68,8 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
         )
     );
   }
-  
-  
+
+
   /**
    * Changes an invocation of a method inherited from a class with a specific name, to another method.
    * Method invocations with the same name, but declared on a different class to the one specified,
@@ -88,6 +88,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
                 .toNewMethodName("getClass")))));
   }
 
+
   /*
    * Uses the JavaPattern framework to change an invocation of a method inherited from a class with a specific name, to another method.
    */
@@ -103,7 +104,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
     );
   }
 
-  
+
   /**
    * Changes an invocation of a method inherited from an interface with a specific name, to another method.
    * Method invocations with the same name, but declared on a different class to the one specified,
@@ -121,8 +122,8 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
               .to(new Changes()
                 .toNewMethodName("getClass")))));
   }
-  
-  
+
+
   /**
    * Changes an invocation of a method inherited from an interface which extends another interface, to another method.
    * Method invocations with the same name, but declared on a different class to the one specified,
@@ -140,7 +141,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
               .to(new Changes()
                 .toNewMethodName("getClass")))));
   }
-  
+
 
   /**
    * Changes a static method invocation target.
@@ -268,16 +269,13 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
       ))
     );
   }
-  
-  
+
+
   /**
    * ChainedMethodInvocationRefactor should be able to handle chains of arbitrary length.
    * This means we should be able to match on arbitrarily large chains of method calls,
    * and replace them with chains of method calls.
-   * 
-   * Both the matching and replacement of method calls currently stops after two.
    */
-//  @Ignore("Illustrates issue https://github.com/alfasoftware/astra/issues/36")
   @Test
   public void testInvocationChainedWithLargeMatchingAndReplacementChains() {
     assertRefactor(InvocationChainedLargeChainsExample.class,
@@ -319,7 +317,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
       ))
     );
   }
-  
+
 
   @Test
   public void testInvocationChainedWrapped() {
@@ -388,19 +386,19 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
 
 
   @Test
-  @Ignore("In this case, we find that we can't resolve bindings inside a lambda, where the lambda has any prior unknown types." + 
-    " Here, that means that even though we have the class files for a method invocation, because we're missing the class" + 
-    " files for a type referenced in the lambda, we cannot resolve the method invocation." + 
-    " We need this information for type inference - https://docs.oracle.com/javase/specs/jls/se8/html/jls-18.html" + 
-    " Because we don't have that type information, we don't know the return type, which means we are also missing" + 
-    " the type which could be used as a type parameter, or an argument to a later function - so we can't determine which" + 
-    " of a number of overloaded methods are being called, or if we have met the specific type criteria for a method." + 
-    " The best we could do is match a method which uses 'Object'. In a later release, it's possible that Eclipse JDT Core" + 
-    " may attempt a 'best guess' - but this sounds like it's not planned, and is considered a difficult problem to solve." + 
-    " In this test, the unknown type is 'ASTNode'. If we provided the classpath for org.eclipse.jdt.core, the ASTNode type" + 
-    " would be resolved, the rest of the lambda would be evaluated, the method identified and refactored, and the test would pass." + 
-    " The 'proper' solution for this tool is to run with all the class files provided to the AST - but this makes the tool" + 
-    " take significantly longer to run, due to the extra time taken to generate each file's AST." + 
+  @Ignore("In this case, we find that we can't resolve bindings inside a lambda, where the lambda has any prior unknown types." +
+    " Here, that means that even though we have the class files for a method invocation, because we're missing the class" +
+    " files for a type referenced in the lambda, we cannot resolve the method invocation." +
+    " We need this information for type inference - https://docs.oracle.com/javase/specs/jls/se8/html/jls-18.html" +
+    " Because we don't have that type information, we don't know the return type, which means we are also missing" +
+    " the type which could be used as a type parameter, or an argument to a later function - so we can't determine which" +
+    " of a number of overloaded methods are being called, or if we have met the specific type criteria for a method." +
+    " The best we could do is match a method which uses 'Object'. In a later release, it's possible that Eclipse JDT Core" +
+    " may attempt a 'best guess' - but this sounds like it's not planned, and is considered a difficult problem to solve." +
+    " In this test, the unknown type is 'ASTNode'. If we provided the classpath for org.eclipse.jdt.core, the ASTNode type" +
+    " would be resolved, the rest of the lambda would be evaluated, the method identified and refactored, and the test would pass." +
+    " The 'proper' solution for this tool is to run with all the class files provided to the AST - but this makes the tool" +
+    " take significantly longer to run, due to the extra time taken to generate each file's AST." +
     " If 100% accuracy is required, provide all the class files and accept the slow run.")
   public void testInvocationInLambdaWithUnknownType() {
     assertRefactor(
