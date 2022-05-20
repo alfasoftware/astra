@@ -3,6 +3,7 @@ bin/
 log/*
 .idea
 .svn*
+.mvn*
 .project*
 .settings/org.eclipse.core.resources.prefs
 *.classpath
