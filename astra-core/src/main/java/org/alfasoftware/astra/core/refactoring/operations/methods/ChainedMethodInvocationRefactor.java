@@ -70,7 +70,7 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
       // first
       MethodInvocation methodInvocation = (MethodInvocation) node.getExpression();
       int methodIterator = 2;
-      while (methodIterator <= before.size() ) {
+      while (methodIterator <= before.size()) {
         MethodInvocation nextMethodInvocation = methodInvocation;
         if (before.get(before.size() - methodIterator)
                   .getMethodName()
