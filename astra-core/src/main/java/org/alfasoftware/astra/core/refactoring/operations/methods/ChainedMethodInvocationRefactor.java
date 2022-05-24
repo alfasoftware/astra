@@ -72,43 +72,49 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
       int methodIterator = 2;
       while (methodIterator <= before.size()) {
         MethodInvocation nextMethodInvocation = methodInvocation;
-        if (before.get(before.size() - methodIterator).getMethodName()
-            .filter(name -> name.test(nextMethodInvocation.getName().toString()))
-            .isPresent()) {
+        if (before.get(before.size() - methodIterator)
+                  .getMethodName()
+                  .filter(name -> name.test(nextMethodInvocation.getName().toString()))
+                  .isPresent()) {
           methodIterator += 1;
-          if (before.size() == 2) {
-            rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, methodInvocation.getExpression(), null);
-            rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size() - 1)), null);
-            break;
-          } else if (methodIterator == before.size()) {
-            methodInvocation = (MethodInvocation) methodInvocation.getExpression();
-            MethodInvocation newMethodInvocation = node.getAST().newMethodInvocation();
-
-            for (int i = 0; i < after.size(); i++) {
-              if (i == 0) {
-                Expression methodInvocationExpression = methodInvocation.getExpression();
-                methodInvocation.setExpression(null);
-                newMethodInvocation.setName(newMethodInvocation.getAST().newSimpleName(after.get(i)));
-                newMethodInvocation.setExpression(methodInvocationExpression);
-              } else {
-                MethodInvocation expression = node.getAST().newMethodInvocation();
-                expression.setName(expression.getAST().newSimpleName(after.get(i)));
-                expression.setExpression(newMethodInvocation);
-                newMethodInvocation = expression;
-              }
-            }
-
-            rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, newMethodInvocation.getExpression(), null);
-            rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size() - 1)), null);
-
+          methodInvocation = updateNextChainedMethod(node, rewriter, methodInvocation, methodIterator);
+          if (methodInvocation == null) {
             break;
           }
-        } else {
-          break;
+          methodInvocation = (MethodInvocation) methodInvocation.getExpression();
         }
-
-        methodInvocation = (MethodInvocation) methodInvocation.getExpression();
       }
     }
+  }
+
+  private MethodInvocation updateNextChainedMethod(MethodInvocation node, ASTRewrite rewriter, MethodInvocation methodInvocation, int methodIterator) {
+    if (before.size() == 2) {
+      rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, methodInvocation.getExpression(), null);
+      rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size() - 1)), null);
+      return null;
+    } else if (methodIterator == before.size()) {
+      methodInvocation = (MethodInvocation) methodInvocation.getExpression();
+      MethodInvocation newMethodInvocation = node.getAST().newMethodInvocation();
+
+      for (int i = 0; i < after.size(); i++) {
+        if (i == 0) {
+          Expression methodInvocationExpression = methodInvocation.getExpression();
+          methodInvocation.setExpression(null);
+          newMethodInvocation.setName(newMethodInvocation.getAST().newSimpleName(after.get(i)));
+          newMethodInvocation.setExpression(methodInvocationExpression);
+        } else {
+          MethodInvocation expression = node.getAST().newMethodInvocation();
+          expression.setName(expression.getAST().newSimpleName(after.get(i)));
+          expression.setExpression(newMethodInvocation);
+          newMethodInvocation = expression;
+        }
+      }
+
+      rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, newMethodInvocation.getExpression(), null);
+      rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size() - 1)), null);
+
+      return null;
+    }
+    return methodInvocation;
   }
 }
