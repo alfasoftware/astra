@@ -77,15 +77,17 @@ public class ChainedMethodInvocationRefactor implements ASTOperation {
                   .filter(name -> name.test(nextMethodInvocation.getName().toString()))
                   .isPresent()) {
           methodIterator += 1;
-          methodInvocation = processNode(node, rewriter, methodInvocation, methodIterator);
-          if (methodInvocation == null) break;
+          methodInvocation = updateNextChainedMethod(node, rewriter, methodInvocation, methodIterator);
+          if (methodInvocation == null) {
+            break;
+          }
           methodInvocation = (MethodInvocation) methodInvocation.getExpression();
         }
       }
     }
   }
 
-  private MethodInvocation processNode(MethodInvocation node, ASTRewrite rewriter, MethodInvocation methodInvocation, int methodIterator) {
+  private MethodInvocation updateNextChainedMethod(MethodInvocation node, ASTRewrite rewriter, MethodInvocation methodInvocation, int methodIterator) {
     if (before.size() == 2) {
       rewriter.set(node, MethodInvocation.EXPRESSION_PROPERTY, methodInvocation.getExpression(), null);
       rewriter.set(node, MethodInvocation.NAME_PROPERTY, node.getAST().newSimpleName(after.get(after.size() - 1)), null);
