@@ -216,10 +216,9 @@ public class AnnotationChangeRefactor implements ASTOperation {
   private Annotation removeMembersFromAnnotation(ASTRewrite rewriter, Annotation annotation) {
     if (namesForMembersToRemove.isEmpty()){
       return annotation;
-    }
-    if ( annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains(VALUE)) {
+    } else if ( annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains(VALUE)) {
       return convertAnnotationToMarkerAnnotation(rewriter, annotation);
-    } else if(annotation.isNormalAnnotation()) {
+    } else if (annotation.isNormalAnnotation()) {
       NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
       final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
       @SuppressWarnings("unchecked")
