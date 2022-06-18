@@ -214,24 +214,25 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
 
   private Annotation removeMembersFromAnnotation(ASTRewrite rewriter, Annotation annotation) {
-    if (!namesForMembersToRemove.isEmpty()){
-      if (annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains(VALUE)) {
+    if (namesForMembersToRemove.isEmpty()){
+      return annotation;
+    }
+    if ( annotation.isSingleMemberAnnotation() && namesForMembersToRemove.contains(VALUE)) {
+      return convertAnnotationToMarkerAnnotation(rewriter, annotation);
+    } else if(annotation.isNormalAnnotation()) {
+      NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
+      final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
+      @SuppressWarnings("unchecked")
+      final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
+      for (MemberValuePair memberValuePair : rewrittenList) {
+        if(namesForMembersToRemove.contains(memberValuePair.getName().getIdentifier())){
+          listRewrite.remove(memberValuePair, null);
+        }
+      }
+      if (listRewrite.getRewrittenList().isEmpty()) {
         return convertAnnotationToMarkerAnnotation(rewriter, annotation);
-      } else if(annotation.isNormalAnnotation()) {
-        NormalAnnotation normalAnnotation = (NormalAnnotation) annotation;
-        final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
-        @SuppressWarnings("unchecked")
-        final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
-        for (MemberValuePair memberValuePair : rewrittenList) {
-          if(namesForMembersToRemove.contains(memberValuePair.getName().getIdentifier())){
-            listRewrite.remove(memberValuePair, null);
-          }
-        }
-        if (listRewrite.getRewrittenList().isEmpty()) {
-          return convertAnnotationToMarkerAnnotation(rewriter, annotation);
-        } else {
-          return normalAnnotation;
-        }
+      } else {
+        return normalAnnotation;
       }
     }
     return annotation;
