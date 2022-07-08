@@ -70,7 +70,7 @@ public class InlineInterfaceRefactor implements ASTOperation {
     if (!(node instanceof TypeDeclaration)) {
       return;
     }
-    
+
     TypeDeclaration typeDeclaration = (TypeDeclaration) node;
     Type interfaceType = findMatch(typeDeclaration);
     if (interfaceType == null) {
@@ -92,15 +92,14 @@ public class InlineInterfaceRefactor implements ASTOperation {
       List<?> parameters = existingMethod.parameters();
       List<String> existingMethodParameters = Stream.ofNullable(parameters)
         .flatMap(Collection::stream)
-        .filter(obj -> obj instanceof SingleVariableDeclaration)
-        .map(obj -> ((SingleVariableDeclaration)obj).getType())
-        .map(param -> param.toString())
+        .filter(SingleVariableDeclaration.class::isInstance)
+        .map(SingleVariableDeclaration.class::cast)
+        .map(SingleVariableDeclaration::getType)
+        .map(Type::toString)
         .collect(Collectors.toList());
       existingMethodNamesToArgumentTypes.put(
-        new AbstractMap.SimpleEntry<>(
-          existingMethod.getName().toString(), existingMethodParameters),
-          existingMethod
-        );
+          new AbstractMap.SimpleEntry<>(existingMethod.getName().toString(), existingMethodParameters),
+          existingMethod);
     }
 
 
@@ -109,11 +108,12 @@ public class InlineInterfaceRefactor implements ASTOperation {
       List<?> superTypeParameters = method.parameters();
       List<String>  superTypeParamTypes = Stream.ofNullable(superTypeParameters)
         .flatMap(Collection::stream)
-        .filter(obj -> obj instanceof SingleVariableDeclaration)
-        .map(param -> ((SingleVariableDeclaration)param).getType())
+        .filter(SingleVariableDeclaration.class::isInstance)
+        .map(SingleVariableDeclaration.class::cast)
+        .map(SingleVariableDeclaration::getType)
         .filter(type -> interfaceParamType != null && type.toString().equals(interfaceParamType.toString()))
         .map(type -> type = parameterType)
-        .filter(type -> type != null)
+        .filter(Objects::nonNull)
         .map(Objects::toString)
         .collect(Collectors.toList());
       @SuppressWarnings("rawtypes")
@@ -123,17 +123,18 @@ public class InlineInterfaceRefactor implements ASTOperation {
         List<?> modifiers = matchingExistingMethod.modifiers();
         Stream.ofNullable(modifiers)
           .flatMap(Collection::stream)
-          .filter(obj -> obj instanceof MarkerAnnotation)
-          .filter(obj -> Override.class.getSimpleName().equals(((MarkerAnnotation)obj).getTypeName().toString()))
-          .forEach(annotation -> {
+          .filter(MarkerAnnotation.class::isInstance)
+          .map(MarkerAnnotation.class::cast)
+          .filter(markerAnnotation -> Override.class.getSimpleName().equals(markerAnnotation.getTypeName().toString()))
+          .forEach(markerAnnotation -> {
               final ListRewrite modifiersList = rewriter.getListRewrite(matchingExistingMethod, MethodDeclaration.MODIFIERS2_PROPERTY);
-              modifiersList.remove((MarkerAnnotation)annotation, null);
+              modifiersList.remove(markerAnnotation, null);
           });
         continue;
       }
 
 
-      MethodDeclaration newMethodDeclaration =(MethodDeclaration) MethodDeclaration.copySubtree(typeDeclaration.getAST(), method);
+      MethodDeclaration newMethodDeclaration = (MethodDeclaration) MethodDeclaration.copySubtree(typeDeclaration.getAST(), method);
       bodyRewriter.insertLast(newMethodDeclaration, null);
       rewriteGenericType(newMethodDeclaration, interfaceParamType, parameterType, rewriter);
     }
@@ -148,12 +149,12 @@ public class InlineInterfaceRefactor implements ASTOperation {
     Stream.ofNullable(interfaceVisitor.getImports())
       .flatMap(Collection::stream)
       .forEach(imp -> addImport(compilationUnit, imp.getName().getFullyQualifiedName(), rewriter));
-      
+
 
     log.info("Inlining interface [" + interfaceName + "] onto [" + typeDeclaration.getName().toString() + "]");
   }
 
-  
+
   private SimpleType extractParameterizedType(Type interfaceType) {
     if (interfaceType instanceof ParameterizedType) {
       ParameterizedType parameterizedInterfaceType = (ParameterizedType) interfaceType;
@@ -189,7 +190,7 @@ public class InlineInterfaceRefactor implements ASTOperation {
     }
     return null;
   }
-  
+
   private void rewriteGenericType(MethodDeclaration newMethodDeclaration,
       TypeParameter interfaceParamType,
       SimpleType parameterType,
@@ -203,14 +204,14 @@ public class InlineInterfaceRefactor implements ASTOperation {
           .forEach(type -> rewriter.set(type.getName(), SimpleName.IDENTIFIER_PROPERTY, parameterType.getName(), null));
       }
   }
-  
+
   private void removeImportForInterface(CompilationUnit compilationUnit, ASTRewrite rewriter) {
     final ListRewrite importList = rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY);
     @SuppressWarnings("unchecked")
     List<ImportDeclaration> currentList = importList.getRewrittenList();
     Stream.ofNullable(currentList)
       .flatMap(Collection::stream)
-      .filter(existingImport ->existingImport.getName().getFullyQualifiedName().equals(interfaceName))
+      .filter(existingImport -> existingImport.getName().getFullyQualifiedName().equals(interfaceName))
       .forEach(existingImport -> importList.remove(existingImport, null));
   }
 }
