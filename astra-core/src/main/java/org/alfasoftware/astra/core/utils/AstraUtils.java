@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.Signature;
@@ -19,6 +20,7 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ChildPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -117,7 +119,7 @@ public class AstraUtils {
    * @param type The type for which to build a class name.
    * @return fully qualified class name.
    */
-  public static String getFullyQualifiedName(final TypeDeclaration type) {
+  public static String getFullyQualifiedName(final AbstractTypeDeclaration type) {
     StringBuilder fullName = new StringBuilder(type.getName().toString());
     ASTNode parent = type.getParent();
     while (true) {
@@ -427,6 +429,26 @@ public class AstraUtils {
 
 
   /**
+   * @return true if the body declaration has an annotation with a fully qualified name matching the argument.
+   */
+  public static boolean isAnnotatedWith(BodyDeclaration bodyDeclaration, String fqAnnotationToMatch) {
+    AnnotationMatcher annotationMatcher = AnnotationMatcher.builder()
+        .withFullyQualifiedName(fqAnnotationToMatch)
+        .build();
+
+    for (Object modifier : bodyDeclaration.modifiers()) {
+      if (modifier instanceof Annotation) {
+        Annotation annotation = (Annotation) modifier;
+        if (annotationMatcher.matches(annotation)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+  /**
    * Adds a new import to the compilation unit.
    *
    * @param compilationUnit Compilation unit to add the import to.
@@ -666,6 +688,13 @@ public class AstraUtils {
   @SuppressWarnings("unchecked")
   public static List<ImportDeclaration> getImportDeclarations(CompilationUnit compilationUnit) {
     return compilationUnit.imports();
+  }
+
+
+  public static Set<AbstractTypeDeclaration> getTypesDeclaredInCompilationUnit(CompilationUnit compilationUnit) {
+    ClassVisitor visitor = new ClassVisitor();
+    compilationUnit.accept(visitor);
+    return new HashSet<>(visitor.getAbstractTypeDeclarations());
   }
 
 

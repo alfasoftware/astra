@@ -10,10 +10,13 @@ import java.util.stream.Stream;
 import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IDocElement;
@@ -43,7 +46,7 @@ public class ClassVisitor extends ASTVisitor {
 
   private static final Logger log = Logger.getLogger(ClassVisitor.class);
 
-  private final List<TypeDeclaration> typeDeclarations = new ArrayList<>();
+  private final List<AbstractTypeDeclaration> abstractTypeDeclarations = new ArrayList<>();
   private final List<TypeParameter> typeParameters = new ArrayList<>();
   private final List<ParameterizedType> parameterizedTypes = new ArrayList<>();
   private final List<VariableDeclarationFragment> variableDeclarationFragments = new ArrayList<>();
@@ -85,13 +88,22 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  /**
-   * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.TypeDeclaration)
-   */
   @Override
   public boolean visit(TypeDeclaration node) {
     log.debug("Type declar: " + node);
-    typeDeclarations.add(node);
+    abstractTypeDeclarations.add(node);
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(AnnotationTypeDeclaration node) {
+    abstractTypeDeclarations.add(node);
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(EnumDeclaration node) {
+    abstractTypeDeclarations.add(node);
     return super.visit(node);
   }
 
@@ -147,9 +159,6 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  /**
-   * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.NormalAnnotation)
-   */
   @Override
   public boolean visit(NormalAnnotation node) {
     log.debug("Normal annotation: " + node);
@@ -157,9 +166,6 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  /**
-   * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.SingleMemberAnnotation)
-   */
   @Override
   public boolean visit(SingleMemberAnnotation node) {
     log.debug("Single member annotation: " + node);
@@ -167,9 +173,6 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  /**
-   * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.MarkerAnnotation)
-   */
   @Override
   public boolean visit(MarkerAnnotation node) {
     log.debug("Marker annotation: " + node);
@@ -191,14 +194,12 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-
   @Override
   public boolean visit(ClassInstanceCreation node) {
     log.debug("Class instance creation: " + node);
     this.classInstanceCreations.add(node);
     return super.visit(node);
   }
-
 
   @Override
   public boolean visit(Javadoc node) {
@@ -261,11 +262,15 @@ public class ClassVisitor extends ASTVisitor {
   }
 
 
-  /**
-   * @return Types which are defined.
-   */
+  public List<AbstractTypeDeclaration> getAbstractTypeDeclarations() {
+    return abstractTypeDeclarations;
+  }
+
   public List<TypeDeclaration> getTypeDeclarations() {
-    return typeDeclarations;
+    return abstractTypeDeclarations.stream()
+        .filter(TypeDeclaration.class::isInstance)
+        .map(TypeDeclaration.class::cast)
+        .collect(Collectors.toList());
   }
 
   public List<ParameterizedType> getParameterizedTypes() {
@@ -279,7 +284,6 @@ public class ClassVisitor extends ASTVisitor {
   public List<FieldAccess> getFieldAccesses() {
     return fieldAccesses;
   }
-
 
   public List<CastExpression> getCastExpressions() {
     return castExpressions;
@@ -301,9 +305,6 @@ public class ClassVisitor extends ASTVisitor {
     return imports;
   }
 
-  /**
-   * @return Types which are defined.
-   */
   public List<TypeParameter> getTypeParameters() {
     return typeParameters;
   }
@@ -336,33 +337,18 @@ public class ClassVisitor extends ASTVisitor {
     return classInstanceCreations;
   }
 
-  /**
-   * @return Methods which are called.
-   */
   public List<MethodInvocation> getMethodInvocations() {
     return methodInvocations;
   }
 
-
-  /**
-   * @return Normal (multi-argument) annotations which are defined.
-   */
   public List<NormalAnnotation> getNormalAnnotations() {
     return normalAnnotations;
   }
 
-
-  /**
-   * @return Single argument annotations which are defined.
-   */
   public List<SingleMemberAnnotation> getSingleMemberAnnotations() {
     return singleMemberAnnotations;
   }
 
-
-  /**
-   * @return Marker annotations which are defined.
-   */
   public List<MarkerAnnotation> getMarkerAnnotations() {
     return markerAnnotations;
   }
@@ -374,15 +360,15 @@ public class ClassVisitor extends ASTVisitor {
   public List<QualifiedName> getQualifiedNames() {
     return qualifiedNames;
   }
-  
+
   /**
    * @return A set of all the nodes visited and collected by this visitor.
-   * 
+   *
    * Note that if the node type is not explicitly handled by this visitor, they won't be returned.
    */
   public Set<ASTNode> getVisitedNodes() {
     return Stream.of(
-      getTypeDeclarations(),
+      getAbstractTypeDeclarations(),
       getMethodInvocations(),
       getMethodDeclarations(),
       getTypeParameters(),
