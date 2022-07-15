@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2022-07-15
+### Changed
+* Addressing sonar issues following AnnotationChangeRefactor updates by @RadikalJin in https://github.com/alfasoftware/astra/pull/99
+* Adding .mvn to .gitignore by @RadikalJin in https://github.com/alfasoftware/astra/pull/100
+* 101 TypeMatcher matches on parameterized interface types by @RadikalJin in https://github.com/alfasoftware/astra/pull/102
+* Issue #36 resolved. by @monjurmorshed793 in https://github.com/alfasoftware/astra/pull/85
+* Fix/issue 104 reduce cognitive complexity by @mohannaidu in https://github.com/alfasoftware/astra/pull/105
+* Fix/issue 103 reduce cognitive complexity of AnnotationChangeRefactor#removeMembersFromAnnotation by @Dafodils in https://github.com/alfasoftware/astra/pull/106
+* #87 InlineInterfaceRefactor method refactoring by @Vichukano in https://github.com/alfasoftware/astra/pull/107
+* 108 Broaden applicability of AstraUtils functions by @RadikalJin in https://github.com/alfasoftware/astra/pull/109
+
 ## [2.1.0] - 2022-05-19
 ### Added
 * Feature/96 annotation change member value by @owoller and @RadikalJin in https://github.com/alfasoftware/astra/pull/97
