@@ -199,6 +199,12 @@
                   <goal>prepare-agent</goal>
                 </goals>
               </execution>
+              <execution>
+                <id>jacoco-report</id>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
             </executions>
           </plugin>
         </plugins>
