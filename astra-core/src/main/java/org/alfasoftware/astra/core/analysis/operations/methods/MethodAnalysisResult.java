@@ -10,7 +10,7 @@ import org.alfasoftware.astra.core.matchers.MethodMatcher;
  * Method based AnalysisResult implementation mapping method matchers to matched methods.
  * This allows the same implementation to cover both method invocations and declarations.
  */
-class MethodAnalysisResult extends AnalysisResult implements Map.Entry<MethodMatcher, List<MatchedMethodResult>> {
+public class MethodAnalysisResult extends AnalysisResult implements Map.Entry<MethodMatcher, List<MatchedMethodResult>> {
 
   MethodMatcher methodToMatch;
   List<MatchedMethodResult> matches;
@@ -51,14 +51,11 @@ class MethodAnalysisResult extends AnalysisResult implements Map.Entry<MethodMat
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    MethodAnalysisResult other = (MethodAnalysisResult) obj;
-    if (matches == null) {
-      if (other.matches != null) return false;
-    } else if (!matches.equals(other.matches)) return false;
-    if (methodToMatch == null) {
-      if (other.methodToMatch != null) return false;
-    } else if (!methodToMatch.equals(other.methodToMatch)) return false;
-    return true;
+    return this.toString().equals(obj.toString());
+  }
+
+  @Override
+  public String toString(){
+    return methodToMatch.toString() + matches.toString();
   }
 }
