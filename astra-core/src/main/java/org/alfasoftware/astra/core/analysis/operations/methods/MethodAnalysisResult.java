@@ -51,11 +51,14 @@ public class MethodAnalysisResult extends AnalysisResult implements Map.Entry<Me
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (obj == null) return false;
-    return this.toString().equals(obj.toString());
-  }
-
-  @Override
-  public String toString(){
-    return methodToMatch.toString() + matches.toString();
+    if (getClass() != obj.getClass()) return false;
+    MethodAnalysisResult other = (MethodAnalysisResult) obj;
+    if (matches == null) {
+      if (other.matches != null) return false;
+    } else if (!matches.equals(other.matches)) return false;
+    if (methodToMatch == null) {
+      if (other.methodToMatch != null) return false;
+    } else if (!methodToMatch.equals(other.methodToMatch)) return false;
+    return true;
   }
 }

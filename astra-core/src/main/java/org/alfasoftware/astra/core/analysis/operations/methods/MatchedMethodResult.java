@@ -27,6 +27,32 @@ public class MatchedMethodResult {
   }
 
   @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + foundInFullyQualifiedType.hashCode(); 
+    result = prime * result + matchedNode.hashCode();
+    result = prime * result + lineNumber;
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj){
+    if(obj == this){
+      return true;  
+    }
+    boolean isEqual = true;
+    if (obj == null || getClass() != obj.getClass()) {
+      isEqual = false;
+    }
+    MatchedMethodResult other = (MatchedMethodResult) obj;
+    if(other != null && hashCode() != other.hashCode()){
+      isEqual = false;
+    }
+    return isEqual;
+  }
+
+  @Override
   public String toString() {
     return "[" + foundInFullyQualifiedType + "][" + lineNumber + "]: [" + matchedNode + "]";
   }
