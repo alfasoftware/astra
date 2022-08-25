@@ -30,5 +30,29 @@ public class DescribedPredicate<T> implements Predicate<T> {
   public String toString() {
     return description;
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + description.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj){
+    if(obj == this){
+      return true;  
+    }
+    boolean isEqual = true;
+    if (obj == null || getClass() != obj.getClass()) {
+      isEqual = false;
+    }
+    DescribedPredicate<?> other = (DescribedPredicate<?>) obj;
+    if(other != null && !description.equals(other.description)){
+      isEqual = false;
+    }
+    return isEqual;
+  }
 }
 

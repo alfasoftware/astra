@@ -10,7 +10,7 @@ import org.alfasoftware.astra.core.matchers.MethodMatcher;
  * Method based AnalysisResult implementation mapping method matchers to matched methods.
  * This allows the same implementation to cover both method invocations and declarations.
  */
-class MethodAnalysisResult extends AnalysisResult implements Map.Entry<MethodMatcher, List<MatchedMethodResult>> {
+public class MethodAnalysisResult extends AnalysisResult implements Map.Entry<MethodMatcher, List<MatchedMethodResult>> {
 
   MethodMatcher methodToMatch;
   List<MatchedMethodResult> matches;
