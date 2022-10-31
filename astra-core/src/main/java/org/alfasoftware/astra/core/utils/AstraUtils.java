@@ -126,8 +126,8 @@ public class AstraUtils {
       if (parent instanceof CompilationUnit) {
         fullName.insert(0, ((CompilationUnit) parent).getPackage().getName().toString() + ".");
         break;
-      } else if (parent instanceof TypeDeclaration) {
-        fullName.insert(0, ((TypeDeclaration) parent).getName().toString() + ".");
+      } else if (parent instanceof AbstractTypeDeclaration) {
+        fullName.insert(0, ((AbstractTypeDeclaration) parent).getName().toString() + ".");
         parent = parent.getParent();
       }
     }
