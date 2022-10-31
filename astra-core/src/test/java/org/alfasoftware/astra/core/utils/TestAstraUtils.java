@@ -1,12 +1,8 @@
 package org.alfasoftware.astra.core.utils;
 
-import org.alfasoftware.astra.core.refactoring.UseCase;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,8 +10,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.alfasoftware.astra.core.refactoring.UseCase;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.junit.Test;
 
 /**
  * Tests for the general purpose utilities provided in {@link AstraUtils}.
@@ -110,6 +112,30 @@ public class TestAstraUtils {
   }
 
 
+  @Test
+  public void testGetFullyQualifiedNameOfEnumInEnum() {
+    // Given
+    String source = "package com.foo;\n"
+        + "\n"
+        + "public enum Foo {\n"
+        + "  ONE,\n"
+        + "  TWO;\n"
+        + "\n"
+        + "  static class Bar {\n"
+        + "  }\n"
+        + "}";
+    List<AbstractTypeDeclaration> typeDeclarations = new TestingSourceParser(source)
+      .getClassVisitor()
+      .getAbstractTypeDeclarations();
+
+    // When
+    String fullyQualifiedName = AstraUtils.getFullyQualifiedName(typeDeclarations.get(1));
+
+    // Then
+    assertEquals("com.foo.Foo.Bar", fullyQualifiedName);
+  }
+
+
   private PackageDeclaration getPackageDeclarationFromSource(String source) {
     List<TypeDeclaration> typeDeclarations = new TestingSourceParser(source)
       .getClassVisitor()
@@ -118,7 +144,7 @@ public class TestAstraUtils {
     return AstraUtils.getPackageName(typeDeclarations.get(0));
   }
 
-  
+
   /**
    * Used to parse test source files for use in unit tests.
    */
