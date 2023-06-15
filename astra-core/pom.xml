@@ -19,6 +19,33 @@
       <artifactId>org.eclipse.jdt.core</artifactId>
       <version>3.26.0</version>
     </dependency>
+    
+    <dependency>    
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.text</artifactId>
+      <scope>compile</scope>
+      <!-- required as 3.13.+ seems to require jdk17 runtime -->
+      <version>3.12.300</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.core.runtime</artifactId>
+      <!-- required as 3.27.+ seems to require jdk17 runtime -->
+      <version>3.26.100</version>
+    </dependency>        
+    <dependency>    
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.core.resources</artifactId>
+      <scope>compile</scope>
+      <!-- required as 3.19.+ seems to require jdk17 runtime -->
+      <version>3.18.200</version>
+    </dependency>    
+    <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.core.filesystem</artifactId>
+      <!-- required as 1.10.+ seems to require jdk17 runtime -->
+      <version>1.9.500</version>
+    </dependency>    
   </dependencies>
   
   <build>
