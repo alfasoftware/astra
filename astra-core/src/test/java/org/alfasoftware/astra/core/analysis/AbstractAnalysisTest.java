@@ -49,7 +49,7 @@ public abstract class AbstractAnalysisTest {
     try {
       File file = new File(TEST_EXAMPLES + "/" + fileToAnalyse.getName().replaceAll("\\.", "/") + ".java");
       String fileContent = new String(Files.readAllBytes(Paths.get(file.getAbsolutePath())));
-      new AstraCore().applyOperationsToFile(fileContent, Collections.singleton(analysisOperation), sources, classPath);
+      new AstraCore().applyOperationsToFile(file, fileContent, Collections.singleton(analysisOperation), sources, classPath);
     } catch (IOException | BadLocationException e) {
       fail();
     }

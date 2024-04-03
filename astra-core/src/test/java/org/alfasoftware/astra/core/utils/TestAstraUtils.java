@@ -153,15 +153,17 @@ public class TestAstraUtils {
     private static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
     private static final String TEST_EXAMPLES = "./src/test/java";
 
+    private final File before;
     private final String source;
 
 
     TestingSourceParser(String source) {
+      this.before = new File("");
       this.source = source;
     }
 
     TestingSourceParser(Class<?> source) throws IOException {
-      File before = new File(TEST_EXAMPLES + "/" + source.getName().replaceAll("\\.", "/") + ".java");
+      this.before = new File(TEST_EXAMPLES + "/" + source.getName().replaceAll("\\.", "/") + ".java");
       this.source = new String(Files.readAllBytes(before.toPath()));
     }
 
@@ -173,7 +175,7 @@ public class TestAstraUtils {
     }
 
     CompilationUnit buildCompilationUnit() {
-      return AstraUtils.readAsCompilationUnit(source, new String[]{SOURCE, TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+      return AstraUtils.readAsCompilationUnit(before, source, new String[]{SOURCE, TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
     }
   }
 

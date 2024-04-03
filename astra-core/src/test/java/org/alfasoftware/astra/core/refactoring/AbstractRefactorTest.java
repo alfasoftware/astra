@@ -50,7 +50,7 @@ public abstract class AbstractRefactorTest {
     try {
       String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
       String expectedAfter = new String(Files.readAllBytes(after.toPath()));
-      String expectedBefore = new AstraCore().applyOperationsToFile(fileContentBefore, refactors, sources, classPath)
+      String expectedBefore = new AstraCore().applyOperationsToFile(before, fileContentBefore, refactors, sources, classPath)
         .replaceAll(beforeClass.getSimpleName(), beforeClass.getSimpleName() + "After");
 
       expectedBefore = changesToApplyToBefore.apply(expectedBefore);
@@ -77,7 +77,7 @@ public abstract class AbstractRefactorTest {
     try {
       String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
       String expectedAfter = new String(Files.readAllBytes(after.toPath()));
-      String expectedBefore = new AstraCore().applyOperationsToFile(fileContentBefore, refactors, sources, classPath).replaceAll(beforeClassSimpleName, beforeClassSimpleName + "After");
+      String expectedBefore = new AstraCore().applyOperationsToFile(before, fileContentBefore, refactors, sources, classPath).replaceAll(beforeClassSimpleName, beforeClassSimpleName + "After");
       expectedBefore = this.changesToApplyToBefore.apply(expectedBefore);
       assertEquals(expectedAfter, expectedBefore);
     } catch (BadLocationException | IOException exception) {

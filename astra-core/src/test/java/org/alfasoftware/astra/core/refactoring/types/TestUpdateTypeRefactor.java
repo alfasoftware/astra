@@ -17,9 +17,14 @@ import org.alfasoftware.astra.core.refactoring.types.newpackage.UpdatedTypeExamp
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
 import org.eclipse.jface.text.BadLocationException;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class TestUpdateTypeRefactor extends AbstractRefactorTest {
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * Verify that the "from" type itself is updated correctly - this means:
@@ -34,7 +39,7 @@ public class TestUpdateTypeRefactor extends AbstractRefactorTest {
    */
   @Test
   @SuppressWarnings("rawtypes")
-  public void testUpdateTypeNameAndPackageInFromFile() {
+  public void testUpdateTypeNameAndPackageInFromFile() throws IOException {
     
     Class beforeClass = UpdateTypeToChangeExample.class;
     Class afterClass = UpdatedTypeExampleAfter.class;
@@ -45,19 +50,24 @@ public class TestUpdateTypeRefactor extends AbstractRefactorTest {
         .toType(afterClass.getName())
         .build()
     ));
-    
+
+    File temporaryFolderRoot = temporaryFolder.getRoot();
     
     File before = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
+    File beforeTmpFile = Files.copy(before.toPath(), temporaryFolderRoot.toPath().resolve(before.getName())).toFile();
     File after = new File(TEST_EXAMPLES + "/" + afterClass.getName().replaceAll("\\.", "/") + ".java");
+    File afterTmpFile = Files.copy(after.toPath(), temporaryFolderRoot.toPath().resolve(after.getName())).toFile();
 
     try {
-      String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
-      String expectedAfter = new String(Files.readAllBytes(after.toPath()));
+      String fileContentBefore = new String(Files.readAllBytes(beforeTmpFile.toPath()));
+      String expectedAfter = new String(Files.readAllBytes(afterTmpFile.toPath()));
       String expectedBefore = new AstraCore().applyOperationsToFile(
-        fileContentBefore, 
-        operations, 
-        new HashSet<>(Arrays.asList(TEST_SOURCE)).toArray(new String[0]),
-        UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+          beforeTmpFile,
+          fileContentBefore,
+          operations,
+          new HashSet<>(Arrays.asList(TEST_SOURCE)).toArray(new String[0]),
+          UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0])
+      );
 
       expectedBefore = changesToApplyToBefore.apply(expectedBefore);
 

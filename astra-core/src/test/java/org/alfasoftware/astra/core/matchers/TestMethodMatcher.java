@@ -316,7 +316,7 @@ public class TestMethodMatcher {
       fail("IOException when reading file : " + e);
     }
 
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(fileContentBefore, new String[] {TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(new File(""), fileContentBefore, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
 
     final ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);

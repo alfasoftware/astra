@@ -4,6 +4,7 @@ import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -52,8 +53,10 @@ public class InlineInterfaceRefactor implements ASTOperation {
   public InlineInterfaceRefactor(String interfaceName, String interfacePath) {
     this.interfaceName = interfaceName;
     try {
+      Path filePath = Paths.get(interfacePath);
       final CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(
-          new String(Files.readAllBytes(Paths.get(interfacePath))),
+          filePath.toFile(),
+          new String(Files.readAllBytes(filePath)),
           new String[] {""}, new String[] {System.getProperty("java.home") + "/lib/rt.jar"});
       interfaceVisitor = new ClassVisitor();
       compilationUnit.accept(interfaceVisitor);

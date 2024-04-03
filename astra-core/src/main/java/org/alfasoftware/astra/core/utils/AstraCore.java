@@ -172,12 +172,13 @@ public class AstraCore {
 
   /**
    * Applies the operations to a source file and then overwrites that file with the result.
+   * Operations that result in an empty file, will cause the file to be deleted.
    */
   protected void applyOperationsAndSave(File javaFile, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) {
     try {
       String fileContentBefore = new String(Files.readAllBytes(Paths.get(javaFile.getAbsolutePath())));
       // apply the operations
-      final String fileContentAfter = applyOperationsToFile(fileContentBefore, operations, sources, classpath);
+      final String fileContentAfter = applyOperationsToFile(javaFile, fileContentBefore, operations, sources, classpath);
       
       // If the file content has changed
       if (! fileContentAfter.equals(fileContentBefore)) {
@@ -201,16 +202,16 @@ public class AstraCore {
    * @param fileContentBefore Source file content before any operations are applied
    * @param operations Operations to apply
    */
-  public String applyOperationsToFile(String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws BadLocationException {
+  public String applyOperationsToFile(File file, String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws BadLocationException {
 
-    String fileContentAfter = applyOperationsToSource(operations, sources, classpath, fileContentBefore);
+    String fileContentAfter = applyOperationsToSource(operations, sources, classpath, file, fileContentBefore);
 
     // If file hasn't changed, return as-is
     if (fileContentAfter.equals(fileContentBefore)) {
       return fileContentAfter;
     } else {
       // If we've modified the file, remove any unused imports
-      return applyOperationsToSource(new HashSet<>(Arrays.asList(new UnusedImportRefactor())), sources, classpath, fileContentAfter);
+      return applyOperationsToSource(new HashSet<>(Arrays.asList(new UnusedImportRefactor())), sources, classpath, file, fileContentAfter);
     }
   }
 
@@ -218,9 +219,9 @@ public class AstraCore {
   /**
    * Runs operations over the source file, and returns the result of running those operations
    */
-  protected String applyOperationsToSource(Set<? extends ASTOperation> operations, String[] sources, String[] classpath, String source)
+  private String applyOperationsToSource(Set<? extends ASTOperation> operations, String[] sources, String[] classpath, File file, String source)
       throws BadLocationException {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, sources, classpath);
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(file, source, sources, classpath);
     ASTRewrite rewriter = runOperations(operations, compilationUnit);
     return makeChangesFromAST(source, rewriter);
   }

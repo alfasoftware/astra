@@ -43,7 +43,7 @@ class JavaPatternFileParser {
 
   public void buildMatchersWithSourcesAndClassPath(File javaFile, String[] sources, String[] classpath) throws IOException {
     String matcherFile = new String(Files.readAllBytes(Paths.get(javaFile.getAbsolutePath())));
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(matcherFile, sources, classpath);
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(javaFile, matcherFile, sources, classpath);
 
     MethodDeclarationVisitor visitor = new MethodDeclarationVisitor();
     compilationUnit.accept(visitor);
