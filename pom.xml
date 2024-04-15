@@ -42,6 +42,7 @@
     <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
     <sonar.organization>alfasoftware</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.java.source>11</sonar.java.source>
   </properties>
   
   <dependencyManagement>
@@ -177,11 +178,20 @@
           </execution>
         </executions>
       </plugin>        
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>3.7.0.1746</version>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.10</version>
+      </plugin>
     </plugins>
   </build>
   
   <profiles>
-    <!--
     <profile>
       <id>coverage</id>
       <build>
@@ -211,7 +221,6 @@
         </plugins>
       </build>
     </profile>
-    -->
     
     <profile>
       <id>release</id>
