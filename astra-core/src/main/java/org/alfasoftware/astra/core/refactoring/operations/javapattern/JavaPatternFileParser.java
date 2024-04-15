@@ -1,9 +1,8 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,16 +32,16 @@ class JavaPatternFileParser {
   private final Collection<MethodDeclaration> substituteMethods = new ArrayList<>();
   private ASTNode patternToRefactorTo;
 
-  public void buildMatchers(File javaFile) throws IOException {
+  public void buildMatchers(Path javaFile) throws IOException {
     buildMatchersWithSourcesAndClassPath(javaFile, new String[]{}, new String[]{});
   }
 
-  public void buildMatchersWithSources(File javaFile, String[] sources) throws IOException {
+  public void buildMatchersWithSources(Path javaFile, String[] sources) throws IOException {
     buildMatchersWithSourcesAndClassPath(javaFile, sources, new String[]{});
   }
 
-  public void buildMatchersWithSourcesAndClassPath(File javaFile, String[] sources, String[] classpath) throws IOException {
-    String matcherFile = new String(Files.readAllBytes(Paths.get(javaFile.getAbsolutePath())));
+  public void buildMatchersWithSourcesAndClassPath(Path javaFile, String[] sources, String[] classpath) throws IOException {
+    String matcherFile = new String(Files.readAllBytes(javaFile.toAbsolutePath()));
     CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(javaFile, matcherFile, sources, classpath);
 
     MethodDeclarationVisitor visitor = new MethodDeclarationVisitor();

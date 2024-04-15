@@ -3,7 +3,7 @@ package org.alfasoftware.astra.core.matchers;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -724,7 +724,7 @@ public class TestTypeMatcher {
 
 
   private ClassVisitor parse(String source) {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(new File(""), source, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
     ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
     return visitor;

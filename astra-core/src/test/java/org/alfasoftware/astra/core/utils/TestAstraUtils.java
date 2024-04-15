@@ -3,9 +3,9 @@ package org.alfasoftware.astra.core.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -153,18 +153,18 @@ public class TestAstraUtils {
     private static final String TEST_SOURCE = Paths.get(".").toAbsolutePath().normalize().toString().concat("/src/test/java");
     private static final String TEST_EXAMPLES = "./src/test/java";
 
-    private final File before;
+    private final Path before;
     private final String source;
 
 
     TestingSourceParser(String source) {
-      this.before = new File("");
+      this.before = Path.of("");
       this.source = source;
     }
 
     TestingSourceParser(Class<?> source) throws IOException {
-      this.before = new File(TEST_EXAMPLES + "/" + source.getName().replaceAll("\\.", "/") + ".java");
-      this.source = new String(Files.readAllBytes(before.toPath()));
+      this.before = Path.of(TEST_EXAMPLES + "/" + source.getName().replaceAll("\\.", "/") + ".java");
+      this.source = new String(Files.readAllBytes(before));
     }
 
     ClassVisitor getClassVisitor() {

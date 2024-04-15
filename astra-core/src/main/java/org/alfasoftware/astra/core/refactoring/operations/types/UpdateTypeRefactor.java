@@ -90,8 +90,8 @@ public class UpdateTypeRefactor implements ASTOperation {
   public String getFromType() {
     return fromType;
   }
-  
-  
+
+
 
   @Override
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
@@ -132,7 +132,15 @@ public class UpdateTypeRefactor implements ASTOperation {
     }
 
     try {
-      Path fileAbsolutePath = Path.of((String) compilationUnit.getProperty(CompilationUnitProperty.ABSOLUTE_PATH));
+      Path fileAbsolutePath = null;
+      Object property = compilationUnit.getProperty(CompilationUnitProperty.ABSOLUTE_PATH);
+      if (property instanceof String) {
+        fileAbsolutePath = Path.of((String) property);
+      } else if (property instanceof Path) {
+        fileAbsolutePath = (Path) property;
+      } else {
+        throw new RuntimeException("Unknown property type for [" + property + "]");
+      }
 
       // Compute new file location
       String fromTypePath = fromType.replace(".", File.separator);
@@ -170,30 +178,30 @@ public class UpdateTypeRefactor implements ASTOperation {
       }
     });
   }
-  
-  
+
+
   private void updatePackageDeclaration(CompilationUnit compilationUnit, ASTRewrite rewriter) {
     if (! AstraUtils.getPackageName(fromType).equals(AstraUtils.getPackageName(toType))) {
-      
+
       log.info("Refactoring package declaration [" + AstraUtils.getPackageName(fromType) + "] "
           + "to [" + AstraUtils.getPackageName(toType) + "] "
           + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
-      
+
       rewriter.replace(
-        compilationUnit.getPackage().getName(), 
-        rewriter.createStringPlaceholder(AstraUtils.getPackageName(toType), ASTNode.STRING_LITERAL), 
+        compilationUnit.getPackage().getName(),
+        rewriter.createStringPlaceholder(AstraUtils.getPackageName(toType), ASTNode.STRING_LITERAL),
         null);
     }
   }
-  
-  
+
+
   /*
    * Imports need to be added for types not previously imported due to being in the same package.
    */
   private void addImportsFromOldPackage(CompilationUnit compilationUnit, ASTRewrite rewriter) {
     ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
-    
+
     Stream.of(
       visitor.getSimpleTypes(),
       visitor.getQualifiedTypes()

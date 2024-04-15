@@ -55,7 +55,7 @@ public class InlineInterfaceRefactor implements ASTOperation {
     try {
       Path filePath = Paths.get(interfacePath);
       final CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(
-          filePath.toFile(),
+          filePath,
           new String(Files.readAllBytes(filePath)),
           new String[] {""}, new String[] {System.getProperty("java.home") + "/lib/rt.jar"});
       interfaceVisitor = new ClassVisitor();

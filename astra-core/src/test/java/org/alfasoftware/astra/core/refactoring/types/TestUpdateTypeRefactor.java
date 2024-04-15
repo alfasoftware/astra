@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,19 +32,19 @@ public class TestUpdateTypeRefactor extends AbstractRefactorTest {
    * <ul>
    *  <li>updating the name in the type declaration</li>
    *  <li>updating the package declaration</li>
-   *  <li>update all references to the simple or qualified name of the "from" type, 
+   *  <li>update all references to the simple or qualified name of the "from" type,
    *      just as we do in external references to the type</li>
    *  <li>adding imports for all referenced types, as if the type is moved to a new package, some types which were not imported
-   *      due to being in the same package will need to be explicitly imported 
+   *      due to being in the same package will need to be explicitly imported
    * </ul>
    */
   @Test
   @SuppressWarnings("rawtypes")
   public void testUpdateTypeNameAndPackageInFromFile() throws IOException {
-    
+
     Class beforeClass = UpdateTypeToChangeExample.class;
     Class afterClass = UpdatedTypeExampleAfter.class;
-    
+
     Set<ASTOperation> operations = new HashSet<>(Arrays.asList(
       UpdateTypeRefactor.builder()
         .fromType(beforeClass.getName())
@@ -52,14 +53,14 @@ public class TestUpdateTypeRefactor extends AbstractRefactorTest {
     ));
 
     File temporaryFolderRoot = temporaryFolder.getRoot();
-    
-    File before = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
-    File beforeTmpFile = Files.copy(before.toPath(), temporaryFolderRoot.toPath().resolve(before.getName())).toFile();
+
+    Path before = Path.of(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
+    Path beforeTmpFile = Files.copy(before, temporaryFolderRoot.toPath().resolve(before.toFile().getName()));
     File after = new File(TEST_EXAMPLES + "/" + afterClass.getName().replaceAll("\\.", "/") + ".java");
     File afterTmpFile = Files.copy(after.toPath(), temporaryFolderRoot.toPath().resolve(after.getName())).toFile();
 
     try {
-      String fileContentBefore = new String(Files.readAllBytes(beforeTmpFile.toPath()));
+      String fileContentBefore = new String(Files.readAllBytes(beforeTmpFile));
       String expectedAfter = new String(Files.readAllBytes(afterTmpFile.toPath()));
       String expectedBefore = new AstraCore().applyOperationsToFile(
           beforeTmpFile,

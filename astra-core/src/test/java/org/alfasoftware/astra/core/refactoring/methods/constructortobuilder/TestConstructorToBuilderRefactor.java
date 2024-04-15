@@ -1,7 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.methods.constructortobuilder;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -89,13 +89,13 @@ public class TestConstructorToBuilderRefactor extends AbstractRefactorTest {
         new HashSet<>(
             Arrays.asList(
             new JavaPatternASTOperation(
-                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithThreeParameters.class.getName().replaceAll("\\.", "/") + ".java")
+              Path.of(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithThreeParameters.class.getName().replaceAll("\\.", "/") + ".java")
             ),
             new JavaPatternASTOperation(
-                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithVarargs.class.getName().replaceAll("\\.", "/") + ".java")
+              Path.of(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithVarargs.class.getName().replaceAll("\\.", "/") + ".java")
             ),
             new JavaPatternASTOperation(
-                new File(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithParameterMovedToVarargs.class.getName().replaceAll("\\.", "/") + ".java")
+              Path.of(TEST_EXAMPLES + "/" + ConstructorToBuilderInnerClassBuilderExampleMatcherWithParameterMovedToVarargs.class.getName().replaceAll("\\.", "/") + ".java")
             )
           )
         )

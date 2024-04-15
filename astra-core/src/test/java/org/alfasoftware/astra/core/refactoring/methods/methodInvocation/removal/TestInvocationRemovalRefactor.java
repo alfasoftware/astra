@@ -1,7 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.methods.methodInvocation.removal;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,7 +49,7 @@ public class TestInvocationRemovalRefactor extends AbstractRefactorTest {
         RemoveChainedInvocationExample.class,
         Collections.singleton(
             new JavaPatternASTOperation(
-                new File(TEST_EXAMPLES + "/" + RemoveChainedInvocationExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
+              Path.of(TEST_EXAMPLES + "/" + RemoveChainedInvocationExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
                 new String[]{TEST_SOURCE}
             )
         )
