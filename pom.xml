@@ -178,21 +178,6 @@
           </execution>
         </executions>
       </plugin>        
-      <plugin>
-        <groupId>org.sonarsource.scanner.maven</groupId>
-        <artifactId>sonar-maven-plugin</artifactId>
-        <version>3.7.0.1746</version>
-      </plugin>
-      <plugin>
-        <groupId>org.sonarsource.python</groupId>
-        <artifactId>sonar-python-plugin</artifactId>
-        <version>4.1.0.11333</version>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.10</version>
-      </plugin>
     </plugins>
   </build>
   
