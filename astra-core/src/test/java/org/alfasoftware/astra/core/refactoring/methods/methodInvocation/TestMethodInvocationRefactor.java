@@ -1,7 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.methods.methodInvocation;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -61,7 +61,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
         new HashSet<>(
             Arrays.asList(
               new JavaPatternASTOperation(
-		  new File(TEST_EXAMPLES + "/" + InvocationChangeOutsideClassQualifiedExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
+                Path.of(TEST_EXAMPLES + "/" + InvocationChangeOutsideClassQualifiedExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
                   new String[]{TEST_SOURCE}
               )
             )
@@ -98,7 +98,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
         new HashSet<>(
             Collections.singletonList(
                 new JavaPatternASTOperation(
-		  new File(TEST_EXAMPLES + "/" + InvocationChangeInheritedFromSuperclassMatcher.class.getName().replaceAll("\\.", "/") + ".java"))
+                  Path.of(TEST_EXAMPLES + "/" + InvocationChangeInheritedFromSuperclassMatcher.class.getName().replaceAll("\\.", "/") + ".java"))
             )
         )
     );
@@ -378,7 +378,7 @@ public class TestMethodInvocationRefactor extends AbstractRefactorTest {
     assertRefactor(InvocationTransformExample.class,
         new HashSet<>(Collections.singletonList(
             new JavaPatternASTOperation(
-                new File(TEST_EXAMPLES + "/" + InvocationTransformExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
+              Path.of(TEST_EXAMPLES + "/" + InvocationTransformExampleMatcher.class.getName().replaceAll("\\.", "/") + ".java"),
                 new String[]{TEST_SOURCE}))
         )
     );

@@ -78,7 +78,7 @@ public class AstraCore {
     AtomicLong currentPercentage = new AtomicLong();
     log.info("Counting files (this may take a few seconds)");
     Instant startTime = Instant.now();
-    
+
     List<Path> javaFilesInDirectory;
     try (Stream<Path> walk = Files.walk(Paths.get(directoryPath))) {
       javaFilesInDirectory = walk
@@ -99,14 +99,14 @@ public class AstraCore {
 
     for (Path f : filteredJavaFiles) {
       // TODO Naively we can multi-thread here (i.e. per file) but simple testing indicated that this slowed us down.
-      applyOperationsAndSave(new File(f.toString()), operations, sources, classPath);
+      applyOperationsAndSave(f, operations, sources, classPath);
       long newPercentage = currentFileIndex.incrementAndGet() * 100 / filteredJavaFiles.size();
       if (newPercentage != currentPercentage.get()) {
         currentPercentage.set(newPercentage);
         logProgress(currentFileIndex.get(), currentPercentage.get(), startTime, filteredJavaFiles.size());
       }
     }
-    
+
     log.info(getPrintableDuration(Duration.between(startTime, Instant.now())));
   }
 
@@ -131,7 +131,7 @@ public class AstraCore {
     log.info(progressMessage);
   }
 
-  
+
   private String getPrintableDuration(Duration duration) {
     long minutes = duration.toMinutes();
     long seconds = TimeUnit.MILLISECONDS.toSeconds(duration.minusMinutes(minutes).toMillis());
@@ -149,7 +149,7 @@ public class AstraCore {
     }
     return builder.append(".").toString();
   }
-  
+
 
   /**
    * Validates that the provided source and classpath entries exist
@@ -172,17 +172,18 @@ public class AstraCore {
 
   /**
    * Applies the operations to a source file and then overwrites that file with the result.
+   * Operations that result in an empty file, will cause the file to be deleted.
    */
-  protected void applyOperationsAndSave(File javaFile, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) {
+  protected void applyOperationsAndSave(Path javaFile, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) {
     try {
-      String fileContentBefore = new String(Files.readAllBytes(Paths.get(javaFile.getAbsolutePath())));
+      String fileContentBefore = new String(Files.readAllBytes(javaFile.toAbsolutePath()));
       // apply the operations
-      final String fileContentAfter = applyOperationsToFile(fileContentBefore, operations, sources, classpath);
-      
+      final String fileContentAfter = applyOperationsToFile(javaFile, fileContentBefore, operations, sources, classpath);
+
       // If the file content has changed
       if (! fileContentAfter.equals(fileContentBefore)) {
         // save the file (over the original)
-        Files.write(Paths.get(javaFile.getAbsolutePath()), fileContentAfter.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);        
+        Files.write(javaFile.toAbsolutePath(), fileContentAfter.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
       }
     } catch (IOException e) {
       log.error("ioE: " + e);
@@ -193,7 +194,7 @@ public class AstraCore {
     }
   }
 
-  
+
   /**
    * For a given Java source file, this models the effect of applying a set of operations to the source,
    * and then removing any unused imports if a change was made.
@@ -201,31 +202,31 @@ public class AstraCore {
    * @param fileContentBefore Source file content before any operations are applied
    * @param operations Operations to apply
    */
-  public String applyOperationsToFile(String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws BadLocationException {
+  public String applyOperationsToFile(Path file, String fileContentBefore, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) throws BadLocationException {
 
-    String fileContentAfter = applyOperationsToSource(operations, sources, classpath, fileContentBefore);
+    String fileContentAfter = applyOperationsToSource(operations, sources, classpath, file, fileContentBefore);
 
     // If file hasn't changed, return as-is
     if (fileContentAfter.equals(fileContentBefore)) {
       return fileContentAfter;
     } else {
       // If we've modified the file, remove any unused imports
-      return applyOperationsToSource(new HashSet<>(Arrays.asList(new UnusedImportRefactor())), sources, classpath, fileContentAfter);
+      return applyOperationsToSource(new HashSet<>(Arrays.asList(new UnusedImportRefactor())), sources, classpath, file, fileContentAfter);
     }
   }
 
-  
+
   /**
    * Runs operations over the source file, and returns the result of running those operations
    */
-  protected String applyOperationsToSource(Set<? extends ASTOperation> operations, String[] sources, String[] classpath, String source)
+  private String applyOperationsToSource(Set<? extends ASTOperation> operations, String[] sources, String[] classpath, Path file, String source)
       throws BadLocationException {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(source, sources, classpath);
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(file, source, sources, classpath);
     ASTRewrite rewriter = runOperations(operations, compilationUnit);
     return makeChangesFromAST(source, rewriter);
   }
 
-  
+
   /**
    * Run the provided operations over the ASTNodes in the compilation unit,
    * recording any changes to be made to that compilation unit in the ASTRewrite.

@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.utils;
 
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,10 +58,11 @@ public class AstraUtils {
   private static final Logger log = Logger.getLogger(AstraUtils.class);
   public static final String CLASSPATHS_MISSING_WARNING = "This may be a sign that classpaths for the operation need to be supplied. ";
 
-  public static CompilationUnit readAsCompilationUnit(String fileSource, String[] sources, String[] classPath) {
+  public static CompilationUnit readAsCompilationUnit(Path file, String fileSource, String[] sources, String[] classPath) {
     ASTParser parser = createParser(fileSource, sources, classPath);
 
     CompilationUnit compilationUnit = (CompilationUnit) parser.createAST(null);
+    compilationUnit.setProperty(CompilationUnitProperty.ABSOLUTE_PATH, file.toAbsolutePath());
     compilationUnit.recordModifications();
     return compilationUnit;
   }

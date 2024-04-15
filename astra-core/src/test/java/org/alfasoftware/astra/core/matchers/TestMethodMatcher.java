@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -316,7 +317,7 @@ public class TestMethodMatcher {
       fail("IOException when reading file : " + e);
     }
 
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(fileContentBefore, new String[] {TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), fileContentBefore, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
 
     final ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);

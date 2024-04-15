@@ -1,7 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.alfasoftware.astra.core.utils.ASTOperation;
@@ -33,7 +33,7 @@ public class JavaPatternASTOperation implements ASTOperation {
    * @param refactorFile the reference to the Matcher file to use
    * @throws IOException
    */
-  public JavaPatternASTOperation(File refactorFile) throws IOException {
+  public JavaPatternASTOperation(Path refactorFile) throws IOException {
     javaPatternFileParser = new JavaPatternFileParser();
     javaPatternFileParser.buildMatchers(refactorFile);
   }
@@ -45,7 +45,7 @@ public class JavaPatternASTOperation implements ASTOperation {
    * @param sources the sources to use to resolve bindings
    * @throws IOException
    */
-  public JavaPatternASTOperation(File refactorFile, String[] sources) throws IOException {
+  public JavaPatternASTOperation(Path refactorFile, String[] sources) throws IOException {
     javaPatternFileParser = new JavaPatternFileParser();
     javaPatternFileParser.buildMatchersWithSources(refactorFile, sources);
   }
@@ -59,7 +59,7 @@ public class JavaPatternASTOperation implements ASTOperation {
    * @param classpath the classpath to use to resolve bindings
    * @throws IOException
    */
-  public JavaPatternASTOperation(File refactorFile, String[] sources, String[] classpath) throws IOException {
+  public JavaPatternASTOperation(Path refactorFile, String[] sources, String[] classpath) throws IOException {
     javaPatternFileParser = new JavaPatternFileParser();
     javaPatternFileParser.buildMatchersWithSourcesAndClassPath(refactorFile, sources, classpath);
   }

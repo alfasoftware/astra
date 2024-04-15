@@ -4,9 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,9 +47,9 @@ public abstract class AbstractAnalysisTest {
   protected <T extends AnalysisResult> void assertAnalysisWithSourcesAndClassPath(Class<?> fileToAnalyse, AnalysisOperation<T> analysisOperation, Collection<T> expectedResults, String[] sources, String[] classPath) {
 
     try {
-      File file = new File(TEST_EXAMPLES + "/" + fileToAnalyse.getName().replaceAll("\\.", "/") + ".java");
-      String fileContent = new String(Files.readAllBytes(Paths.get(file.getAbsolutePath())));
-      new AstraCore().applyOperationsToFile(fileContent, Collections.singleton(analysisOperation), sources, classPath);
+      Path file = Path.of(TEST_EXAMPLES + "/" + fileToAnalyse.getName().replaceAll("\\.", "/") + ".java");
+      String fileContent = new String(Files.readAllBytes(file.toAbsolutePath()));
+      new AstraCore().applyOperationsToFile(file, fileContent, Collections.singleton(analysisOperation), sources, classPath);
     } catch (IOException | BadLocationException e) {
       fail();
     }

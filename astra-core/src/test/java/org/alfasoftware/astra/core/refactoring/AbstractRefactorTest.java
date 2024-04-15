@@ -3,9 +3,9 @@ package org.alfasoftware.astra.core.refactoring;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.function.Function;
@@ -41,16 +41,16 @@ public abstract class AbstractRefactorTest {
 
   protected void assertRefactorWithSourcesAndClassPath(Class<?> beforeClass, Set<? extends ASTOperation> refactors, String[] sources, String[] classPath) {
 
-    File before = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
-    File after = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.java");
-    if (! after.exists()) {
-      after = new File(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.txt");
+    Path before = Path.of(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + ".java");
+    Path after = Path.of(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.java");
+    if (! after.toFile().exists()) {
+      after = Path.of(TEST_EXAMPLES + "/" + beforeClass.getName().replaceAll("\\.", "/") + "After.txt");
     }
 
     try {
-      String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
-      String expectedAfter = new String(Files.readAllBytes(after.toPath()));
-      String expectedBefore = new AstraCore().applyOperationsToFile(fileContentBefore, refactors, sources, classPath)
+      String fileContentBefore = new String(Files.readAllBytes(before));
+      String expectedAfter = new String(Files.readAllBytes(after));
+      String expectedBefore = new AstraCore().applyOperationsToFile(before, fileContentBefore, refactors, sources, classPath)
         .replaceAll(beforeClass.getSimpleName(), beforeClass.getSimpleName() + "After");
 
       expectedBefore = changesToApplyToBefore.apply(expectedBefore);
@@ -65,19 +65,19 @@ public abstract class AbstractRefactorTest {
 
   protected void assertRefactorWithSourcesAndClassPathAndTextFileExamples(String beforeClassName, String beforeClassSimpleName, Set<? extends ASTOperation> refactors, String[] sources, String[] classPath) {
     String baseClassName = "./src/test/java/" + beforeClassName.replaceAll("\\.", "/");
-    File before = new File(baseClassName + ".java");
-    if (! before.exists()) {
-      before = new File(baseClassName + ".txt");
+    Path before = Path.of(baseClassName + ".java");
+    if (! before.toFile().exists()) {
+      before = Path.of(baseClassName + ".txt");
     }
-    File after = new File(baseClassName + "After.java");
-    if (! after.exists()) {
-      after = new File(baseClassName + "After.txt");
+    Path after = Path.of(baseClassName + "After.java");
+    if (! after.toFile().exists()) {
+      after = Path.of(baseClassName + "After.txt");
     }
 
     try {
-      String fileContentBefore = new String(Files.readAllBytes(before.toPath()));
-      String expectedAfter = new String(Files.readAllBytes(after.toPath()));
-      String expectedBefore = new AstraCore().applyOperationsToFile(fileContentBefore, refactors, sources, classPath).replaceAll(beforeClassSimpleName, beforeClassSimpleName + "After");
+      String fileContentBefore = new String(Files.readAllBytes(before));
+      String expectedAfter = new String(Files.readAllBytes(after));
+      String expectedBefore = new AstraCore().applyOperationsToFile(before, fileContentBefore, refactors, sources, classPath).replaceAll(beforeClassSimpleName, beforeClassSimpleName + "After");
       expectedBefore = this.changesToApplyToBefore.apply(expectedBefore);
       assertEquals(expectedAfter, expectedBefore);
     } catch (BadLocationException | IOException exception) {
