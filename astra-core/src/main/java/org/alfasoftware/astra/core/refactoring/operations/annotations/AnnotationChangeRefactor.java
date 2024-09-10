@@ -1,6 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.operations.annotations;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -348,34 +349,34 @@ public class AnnotationChangeRefactor implements ASTOperation {
     List<MemberValuePair> originalMembers = listRewrite.getOriginalList();
     final List<String> originalMemberNames = originalMembers.stream().map(memberValuePair -> memberValuePair.getName().getIdentifier()).collect(Collectors.toList());
 
-    membersAndValuesToAdd.forEach((memberName, value) -> {
-      if(originalMemberNames.contains(memberName)) {
-        logWarning(compilationUnit, memberName);
+    membersAndValuesToAdd.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+      if(originalMemberNames.contains(entry.getKey())) {
+        logWarning(compilationUnit, entry.getKey());
         return;
       }
       MemberValuePair newMemberAndValue = rewriter.getAST().newMemberValuePair();
-      newMemberAndValue.setName(rewriter.getAST().newSimpleName(memberName));
+      newMemberAndValue.setName(rewriter.getAST().newSimpleName(entry.getKey()));
       final StringLiteral valueLiteral = rewriter.getAST().newStringLiteral();
-      valueLiteral.setLiteralValue(value);
+      valueLiteral.setLiteralValue(entry.getValue());
       newMemberAndValue.setValue(valueLiteral);
       listRewrite.insertLast(newMemberAndValue, null);
     });
 
-    membersAndTypesToAdd.forEach((memberName, value) -> {
-      if(originalMemberNames.contains(memberName)) {
-        logWarning(compilationUnit, memberName);
+    membersAndTypesToAdd.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+      if(originalMemberNames.contains(entry.getKey())) {
+        logWarning(compilationUnit, entry.getKey());
         return;
       }
       MemberValuePair newMemberAndValue = rewriter.getAST().newMemberValuePair();
-      newMemberAndValue.setName(rewriter.getAST().newSimpleName(memberName));
+      newMemberAndValue.setName(rewriter.getAST().newSimpleName(entry.getKey()));
       final TypeLiteral typeLiteral = rewriter.getAST().newTypeLiteral();
 
       // Handle both qualified and simple types
-      if (value.contains(".")) {
-        String[] qualifiedName = value.split("\\.");
+      if (entry.getValue().contains(".")) {
+        String[] qualifiedName = entry.getValue().split("\\.");
         typeLiteral.setType(rewriter.getAST().newNameQualifiedType(rewriter.getAST().newName(qualifiedName[0]), rewriter.getAST().newSimpleName(qualifiedName[1])));
       } else {
-        typeLiteral.setType(rewriter.getAST().newSimpleType(rewriter.getAST().newSimpleName(value)));
+        typeLiteral.setType(rewriter.getAST().newSimpleType(rewriter.getAST().newSimpleName(entry.getValue())));
       }
 
       newMemberAndValue.setValue(typeLiteral);

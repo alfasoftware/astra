@@ -5,10 +5,10 @@ import org.alfasoftware.astra.exampleTypes.WithNestedClass;
 
 public class UpdateMemberTypeInAnnotationExampleAfter {
 
-  @AnnotationE(type = Integer.class, anotherType = WithNestedClass.NestedClass.class)
+  @AnnotationE(anotherType = WithNestedClass.NestedClass.class, type = Integer.class)
   protected long someField;
 
-  @AnnotationE(value = "A string of no importance", type = Integer.class, anotherType = WithNestedClass.NestedClass.class)
+  @AnnotationE(value = "A string of no importance", anotherType = WithNestedClass.NestedClass.class, type = Integer.class)
   protected String anotherField;
 }
 
