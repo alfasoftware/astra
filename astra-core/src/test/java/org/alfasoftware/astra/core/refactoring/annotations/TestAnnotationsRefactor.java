@@ -16,10 +16,13 @@ import org.alfasoftware.astra.exampleTypes.AnnotationA;
 import org.alfasoftware.astra.exampleTypes.AnnotationB;
 import org.alfasoftware.astra.exampleTypes.AnnotationC;
 import org.alfasoftware.astra.exampleTypes.AnnotationD;
+import org.alfasoftware.astra.exampleTypes.AnnotationE;
 import org.alfasoftware.astra.exampleTypes.B.InnerAnnotationB;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.junit.Test;
+
+import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
 
 public class TestAnnotationsRefactor extends AbstractRefactorTest {
 
@@ -218,6 +221,28 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
               .updateMembersWithNameToValue(Map.of("value", "\"BAR\""))
               .build()
       )));
+  }
+
+
+  /**
+   * Example covers:
+   * - updating the member of an annotation with a simple type literal
+   * - updating the member of an annotation with a qualified type literal
+   */
+  @Test
+  public void testUpdateMemberType() {
+    assertRefactor(
+            UpdateMemberTypeInAnnotationExample.class,
+            new HashSet<>(Arrays.asList(
+                    AnnotationChangeRefactor.builder()
+                            .from(AnnotationMatcher.builder()
+                                    .withFullyQualifiedName(AnnotationE.class.getName())
+                                    .build())
+                            .to(AnnotationE.class.getName())
+                            .addMemberNameTypePairs(Map.of("type", "Integer", "anotherType", "WithNestedClass.NestedClass"))
+                            .withTransform((cu, a, rw) -> addImport(cu, "org.alfasoftware.astra.exampleTypes.WithNestedClass", rw))
+                            .build()
+            )));
   }
 
 
