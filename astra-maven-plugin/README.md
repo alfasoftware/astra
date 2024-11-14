@@ -4,7 +4,7 @@
 
 ## Description
 
-The purpose of this plugin is to run an Astra UseCase over the maven module(s) source code.
+The purpose of this plugin is to run an Astra UseCase over the Maven module(s) source code.
 
 ## Plugin Attributes
 
