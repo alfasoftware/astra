@@ -21,17 +21,24 @@
     <module>astra-example</module>
     <module>astra-cli</module>
     <module>astra-testing</module>
+    <module>astra-maven-plugin</module>
   </modules>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     
     <!-- plugin versions -->
     <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+    <maven-plugin-annotations.version>3.11.0</maven-plugin-annotations.version>
+    <maven-plugin-plugin.version>3.13.1</maven-plugin-plugin.version>
+    
+    <!-- maven version for plugin -->
+    <maven.baseVersion>3.8.2</maven.baseVersion>
 
     <!-- dependency versions -->
     <log4j.version>1.2.16</log4j.version>
@@ -63,6 +70,24 @@
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
         <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-plugin-api</artifactId>
+        <version>${maven.baseVersion}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-core</artifactId>
+        <version>${maven.baseVersion}</version>
+        <scope>provided</scope>
+      </dependency>    
+      <dependency>
+        <groupId>org.apache.maven.plugin-tools</groupId>
+        <artifactId>maven-plugin-annotations</artifactId>
+        <version>${maven-plugin-annotations.version}</version>
       </dependency>
           
       <dependency>
@@ -179,6 +204,14 @@
         </executions>
       </plugin>        
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <version>${maven-plugin-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>  
   </build>
   
   <profiles>
