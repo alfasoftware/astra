@@ -12,11 +12,7 @@
   <artifactId>astra-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
   <name>ASTRA maven plugin</name>
-
-  <properties>
-    <maven.baseVersion>3.8.2</maven.baseVersion>
-  </properties>
-  
+ 
   <dependencies>
     <dependency>
       <groupId>org.alfasoftware</groupId>
@@ -26,18 +22,15 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
-      <version>${maven.baseVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.11.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
-      <version>${maven.baseVersion}</version>
       <scope>provided</scope>
     </dependency>    
   </dependencies>
