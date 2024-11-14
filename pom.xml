@@ -21,6 +21,7 @@
     <module>astra-example</module>
     <module>astra-cli</module>
     <module>astra-testing</module>
+    <module>astra-maven-plugin</module>
   </modules>
 
   <properties>
