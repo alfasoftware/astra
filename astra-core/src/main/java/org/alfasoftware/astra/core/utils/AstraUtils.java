@@ -291,7 +291,7 @@ public class AstraUtils {
 
   /**
    * Returns the Java identifier representing the simple name from a String representation of a qualified name.
-   * The JLS section 3.8 ({@link https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.8}) defines an identifier as
+   * The JLS section 3.8 (see the <a href="https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.8">oracle documentation</a>) defines an identifier as
    * "an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter."
    * "The 'Java letters' include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and,
    *    for historical reasons, the ASCII dollar sign ($, or \u0024) and underscore (_, or \u005f).
