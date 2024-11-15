@@ -14,7 +14,7 @@ Does not bind by default to any lifecycle phase - it can be run as a standalone 
 
 | Name | Type  | Property | Description |
 | -----|-------|----------|-------------|
-| usecase | String | astra.usecase | The refactoring UseCase to run. Must be a fully-qualified class name on the class path either of the project or the plugin. |
+| usecase | String | astra.usecase | The refactoring UseCase to run. Must be a fully qualified class name on the class path either of the project or the plugin. |
 
 ## Optional Parameters
 
