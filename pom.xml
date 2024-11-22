@@ -31,11 +31,13 @@
 
     
     <!-- plugin versions -->
-    <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
-    <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-    <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+    <maven-javadoc-plugin.version>3.13.1</maven-javadoc-plugin.version>
+    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-plugin-annotations.version>3.11.0</maven-plugin-annotations.version>
     <maven-plugin-plugin.version>3.12.0</maven-plugin-plugin.version>
+    <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+    <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     
     <!-- maven version for plugin -->
     <maven.baseVersion>3.8.2</maven.baseVersion>
@@ -49,7 +51,7 @@
     <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
     <sonar.organization>alfasoftware</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-    <sonar.java.source>11</sonar.java.source>
+    <sonar.java.source>${maven.compiler.source}</sonar.java.source>
   </properties>
   
   <dependencyManagement>
@@ -255,7 +257,7 @@
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
             <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.7</version>
+            <version>${nexus-staging-maven-plugin.version}</version>
             <extensions>true</extensions>
             <configuration>
               <serverId>ossrh</serverId>
@@ -266,7 +268,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
+            <version>${maven-gpg-plugin.version}</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
@@ -276,7 +278,6 @@
                 </goals>
                 <configuration>
                   <keyname>${gpg.keyname}</keyname>
-                  <passphraseServerId>${gpg.keyname}</passphraseServerId>
                 </configuration>
               </execution>
             </executions>
