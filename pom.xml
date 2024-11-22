@@ -35,7 +35,7 @@
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
     <maven-plugin-annotations.version>3.11.0</maven-plugin-annotations.version>
-    <maven-plugin-plugin.version>3.13.1</maven-plugin-plugin.version>
+    <maven-plugin-plugin.version>3.12.0</maven-plugin-plugin.version>
     
     <!-- maven version for plugin -->
     <maven.baseVersion>3.8.2</maven.baseVersion>
