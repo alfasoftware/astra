@@ -31,7 +31,7 @@
 
     
     <!-- plugin versions -->
-    <maven-javadoc-plugin.version>3.13.1</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.11.1</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-plugin-annotations.version>3.11.0</maven-plugin-annotations.version>
@@ -43,8 +43,8 @@
     <maven.baseVersion>3.8.2</maven.baseVersion>
 
     <!-- dependency versions -->
-    <log4j.version>1.2.16</log4j.version>
-    <junit.version>4.11</junit.version>
+    <log4j.version>1.2.17</log4j.version>
+    <junit.version>4.13.2</junit.version>
     
     <!-- sonar properties -->
     <sonar.projectKey>alfasoftware_astra</sonar.projectKey>
