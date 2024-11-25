@@ -4,7 +4,7 @@
 
   <groupId>org.alfasoftware</groupId>
   <artifactId>astra</artifactId>
-  <version>2.4.2-SNAPSHOT</version>
+  <version>2.4.2</version>
   <packaging>pom</packaging>
   
   <name>astra</name>
@@ -294,7 +294,7 @@
     <connection>scm:git:https://github.com/alfasoftware/astra.git</connection>
     <developerConnection>scm:git:git@github.com:alfasoftware/astra.git</developerConnection>
     <url>https://github.com/alfasoftware/astra</url>
-    <tag>HEAD</tag>
+    <tag>astra-2.4.2</tag>
   </scm>
   
   <distributionManagement>
