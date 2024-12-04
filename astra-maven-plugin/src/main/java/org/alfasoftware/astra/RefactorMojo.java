@@ -84,7 +84,9 @@ public class RefactorMojo extends AbstractMojo {
 
       @Override
       public Set<String> getAdditionalClassPathEntries() {
+        // This is a Maven plugin that can access the full classpath required for the source code Astra is running over - no additional help required.
         return Set.of();
+
       }
     });
 
