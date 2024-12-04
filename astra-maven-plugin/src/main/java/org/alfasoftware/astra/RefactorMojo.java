@@ -59,17 +59,15 @@ public class RefactorMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException {
 
-	List<String> testClasspathElements;
-	try {
+    List<String> testClasspathElements;
+    try {
 	    testClasspathElements = project.getTestClasspathElements();
     } catch (DependencyResolutionRequiredException e) {
       throw new MojoExecutionException("Unable to resolve test class path for the project", e);
     }
 
-    // remove anything within this projects target directory as it has been
+    // remove anything within this projects target directory as this will invalidate it
     testClasspathElements.removeIf(s -> s.startsWith(targetDirectory));
-  
-    // might need to add source from other projects if running multi-module??
   
     UseCase useCaseInstance = getUseCaseInstance();
     AstraCore.run(sourceDirectory.getAbsolutePath(), new UseCase() {
@@ -86,9 +84,9 @@ public class RefactorMojo extends AbstractMojo {
 
       @Override
       public Set<String> getAdditionalClassPathEntries() {
-        HashSet<String> additionalClassPath = new HashSet<>(useCaseInstance.getAdditionalClassPathEntries());
-        additionalClassPath.addAll(testClasspathElements);
-        return additionalClassPath;
+        // This is a Maven plugin that can access the full classpath required for the source code Astra is running over - no additional help required.
+        return Set.of();
+
       }
     });
 
