@@ -24,14 +24,6 @@ import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.junit.Test;
 
-/**
- * TODO TestAnnotationsRefactor class-level Javadoc.
- *
- * <p>...</p>
- *
- * @author Copyright (c) Alfa Financial Software Limited. 2025
- */
-
 public class TestAnnotationsRefactor extends AbstractRefactorTest {
 
   @Test
