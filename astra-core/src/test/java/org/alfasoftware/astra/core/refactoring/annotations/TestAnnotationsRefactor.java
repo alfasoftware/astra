@@ -1,5 +1,7 @@
 package org.alfasoftware.astra.core.refactoring.annotations;
 
+import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,7 +24,13 @@ import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.junit.Test;
 
-import static org.alfasoftware.astra.core.utils.AstraUtils.addImport;
+/**
+ * TODO TestAnnotationsRefactor class-level Javadoc.
+ *
+ * <p>...</p>
+ *
+ * @author Copyright (c) Alfa Financial Software Limited. 2025
+ */
 
 public class TestAnnotationsRefactor extends AbstractRefactorTest {
 
@@ -88,6 +96,60 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
             .withValue("BAR")
             .build())
           .to(AnnotationB.class.getTypeName()).build()
+      )));
+  }
+
+  @Test
+  public void testSameSimpleNameAnnotationChange() {
+    assertRefactor(
+      AnnotationChangeSameSimpleNameExample.class,
+      new HashSet<>(Arrays.asList(
+        AnnotationChangeRefactor.builder()
+          .from(AnnotationMatcher.builder()
+            .withFullyQualifiedName(AnnotationA.class.getName())
+            .withValue("")
+            .build())
+          .to(org.alfasoftware.astra.moreexampletypes.AnnotationA.class.getTypeName()).build(),
+        AnnotationChangeRefactor.builder()
+          .from(AnnotationMatcher.builder()
+            .withFullyQualifiedName(AnnotationA.class.getName())
+            .withValue("A")
+            .build())
+          .to(org.alfasoftware.astra.moreexampletypes.AnnotationA.class.getTypeName()).build(),
+        AnnotationChangeRefactor.builder()
+          .from(AnnotationMatcher.builder()
+            .withFullyQualifiedName(AnnotationA.class.getName())
+            .withValue("BAR")
+            .build())
+          .to(org.alfasoftware.astra.moreexampletypes.AnnotationA.class.getTypeName()).build()
+      )));
+  }
+
+  /**
+   * Example where we are not swapping over all instances of an annotation with the same simple name
+   * therefore we force the new annotation to be fully qualified.
+   */
+  @Test
+  public void testSameSimpleNameAnnotationChangeWithRemainder() {
+    assertRefactor(
+      AnnotationChangeSameSimpleNameWithRemainderExample.class,
+      new HashSet<>(Arrays.asList(
+        AnnotationChangeRefactor.builder()
+          .from(AnnotationMatcher.builder()
+            .withFullyQualifiedName(AnnotationA.class.getName())
+            .withValue("")
+            .build())
+          .to(org.alfasoftware.astra.moreexampletypes.AnnotationA.class.getTypeName())
+          .forceQualifiedName()
+          .build(),
+        AnnotationChangeRefactor.builder()
+          .from(AnnotationMatcher.builder()
+            .withFullyQualifiedName(AnnotationA.class.getName())
+            .withValue("BAR")
+            .build())
+          .to(org.alfasoftware.astra.moreexampletypes.AnnotationA.class.getTypeName())
+          .forceQualifiedName()
+          .build()
       )));
   }
 
