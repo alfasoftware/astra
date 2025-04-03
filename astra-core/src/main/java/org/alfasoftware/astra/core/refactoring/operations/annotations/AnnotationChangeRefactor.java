@@ -1,7 +1,6 @@
 package org.alfasoftware.astra.core.refactoring.operations.annotations;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +31,8 @@ import org.eclipse.text.edits.MalformedTreeException;
  * <pre>
  * com.google.inject.Inject -&gt; javax.inject.Inject.
  * <pre>
+ * By default the import for an annotation will be swapped over.
+ * If this is not required use {@link Builder#forceQualifiedName()}.
  */
 public class AnnotationChangeRefactor implements ASTOperation {
 
@@ -47,8 +48,11 @@ public class AnnotationChangeRefactor implements ASTOperation {
   private final Map<String, String> memberNameUpdates;
   private final Map<String, String> memberNamesToUpdateWithNewValues;
   private final Optional<Transform> transform;
+  private final boolean forceQualifiedName;
 
-  public AnnotationChangeRefactor(AnnotationMatcher fromType, String toType, Map<String, String> membersAndValuesToAdd, Map<String,String> memberAndTypesToAdd, Set<String> namesForMembersToRemove, Map<String, String> memberNameUpdates, Map<String, String> memberNamesToUpdateWithNewValues, Optional<Transform> transform) {
+  public AnnotationChangeRefactor(AnnotationMatcher fromType, String toType, Map<String, String> membersAndValuesToAdd,
+      Map<String,String> memberAndTypesToAdd, Set<String> namesForMembersToRemove, Map<String, String> memberNameUpdates,
+      Map<String, String> memberNamesToUpdateWithNewValues, Optional<Transform> transform, boolean forceQualifiedName) {
     this.fromType = fromType;
     this.toType = toType;
     this.membersAndValuesToAdd = membersAndValuesToAdd;
@@ -57,6 +61,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     this.memberNameUpdates = memberNameUpdates;
     this.memberNamesToUpdateWithNewValues = memberNamesToUpdateWithNewValues;
     this.transform = transform;
+    this.forceQualifiedName = forceQualifiedName;
   }
 
 
@@ -86,6 +91,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     private Map<String, String> memberNameUpdates = Map.of();
     private Optional<Transform> transform = Optional.empty();
     private Map<String, String> memberNamesToUpdateWithNewValues = Map.of();
+    private boolean forceQualifiedName;
 
     private Builder() {
       super();
@@ -132,6 +138,17 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return this;
     }
 
+    /**
+     * Forces use of the qualified name for the annotation.
+     * This is helpful if not all instances of an annotation are going to be replaced.
+     *
+     * @return this for method chaining
+     */
+    public Builder forceQualifiedName() {
+      this.forceQualifiedName = true;
+      return this;
+    }
+
     public AnnotationChangeRefactor build() {
       return new AnnotationChangeRefactor(fromType,
               toType,
@@ -140,8 +157,10 @@ public class AnnotationChangeRefactor implements ASTOperation {
               namesForMembersToRemove,
               memberNameUpdates,
               memberNamesToUpdateWithNewValues,
-              transform);
+              transform,
+              forceQualifiedName);
     }
+
   }
 
 
@@ -162,7 +181,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
             + "to [" + toType + "] "
             + "in [" + AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
 
-        if (! AstraUtils.getSimpleName(toType).equals(AstraUtils.getSimpleName(annotation.getTypeName().getFullyQualifiedName()))) {
+        if (!forceQualifiedName && !annotation.getTypeName().isQualifiedName()) {
           AstraUtils.updateImport(compilationUnit, fromType.getFullyQualifiedName(), toType, rewriter);
         }
 
@@ -193,7 +212,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   private Annotation changeAnnotationName(ASTRewrite rewriter, Annotation annotation) {
     Name name;
-    if (annotation.getTypeName().isQualifiedName()) {
+    if (forceQualifiedName || annotation.getTypeName().isQualifiedName()) {
       name = annotation.getAST().newName(toType);
     } else {
       name = annotation.getAST().newSimpleName(AstraUtils.getSimpleName(toType));
