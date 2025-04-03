@@ -1,14 +1,4 @@
 language: java
-before_install:
-  - sudo rm -rf /usr/local/maven-3.9.4
-  - curl -s "https://get.sdkman.io" | bash
-  - source "$HOME/.sdkman/bin/sdkman-init.sh"
-  - sdk install java 11.0.25-tem
-  - sdk use java 11.0.25-tem
-  - unset M2_HOME MAVEN_HOME
-  - sdk install maven 3.9.9
-  - sdk use maven 3.9.9
-  - export PATH="$(sdk home maven 3.9.9)/bin:$PATH"
 jobs:
   include:
    - if: repo = alfasoftware/astra AND head_repo = alfasoftware/astra AND type = pull_request
