@@ -44,6 +44,7 @@ public class UnusedImportRefactor implements ASTOperation {
 
   private static final String JAVA = "java.";
   private static final String JAVAX = "javax.";
+  private static final String JAKARTA = "jakarta.";
   private static final String ORG = "org.";
 
 
@@ -113,6 +114,7 @@ public class UnusedImportRefactor implements ASTOperation {
         .sorted(Comparator
           .comparing((ImportDeclaration i) -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVA))
           .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVAX))
+          .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAKARTA))
           .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(ORG))
           .thenComparing(i -> AstraUtils.getPackageName(i.getName().toString()))
           .thenComparing(i -> i.getName().toString()))
