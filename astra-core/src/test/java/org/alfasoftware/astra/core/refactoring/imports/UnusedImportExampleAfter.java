@@ -6,6 +6,10 @@ import static org.alfasoftware.astra.exampleTypes.C.staticTwo;
 import java.lang.Thread.State;
 import java.lang.reflect.Method;
 
+import javax.annotation.processing.Processor;
+
+import jakarta.inject.Inject;
+
 import org.alfasoftware.astra.core.refactoring.imports.ExampleTypeSamePackage.OtherInnerClass;
 import org.alfasoftware.astra.core.refactoring.imports.UnusedImportExampleAfter.InnerClassExample;
 import org.alfasoftware.astra.exampleTypes.A;
@@ -21,7 +25,9 @@ public class UnusedImportExampleAfter {
   A a = new A();
   OtherInnerClass inner = new OtherInnerClass();
   State baseState = State.RUNNABLE;
+  @Inject
   Method methodRef;
+  Processor processor;
 
   /**
    * {@link C}
