@@ -44,6 +44,7 @@ public class UnusedImportRefactor implements ASTOperation {
 
   private static final String JAVA = "java.";
   private static final String JAVAX = "javax.";
+  private static final String JAKARTA = "jakarta.";
   private static final String ORG = "org.";
 
 
@@ -91,6 +92,8 @@ public class UnusedImportRefactor implements ASTOperation {
         // - imports starting with a different first letter
         if (sortedImports.get(i).isStatic() != sortedImports.get(i + 1).isStatic() ||
             sortedImports.get(i).getName().toString().startsWith(JAVA) != sortedImports.get(i + 1).getName().toString().startsWith(JAVA) ||
+            sortedImports.get(i).getName().toString().startsWith(JAVAX) != sortedImports.get(i + 1).getName().toString().startsWith(JAVAX) ||
+            sortedImports.get(i).getName().toString().startsWith(JAKARTA) != sortedImports.get(i + 1).getName().toString().startsWith(JAKARTA) ||
             sortedImports.get(i).getName().toString().charAt(0) != sortedImports.get(i + 1).getName().toString().charAt(0)) {
           ASTNode placeholder = rewriter.createStringPlaceholder("", ASTNode.IMPORT_DECLARATION);
           newList.add((ImportDeclaration) placeholder);
@@ -113,6 +116,7 @@ public class UnusedImportRefactor implements ASTOperation {
         .sorted(Comparator
           .comparing((ImportDeclaration i) -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVA))
           .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAVAX))
+          .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(JAKARTA))
           .thenComparing(i -> ! AstraUtils.getPackageName(i.getName().toString()).startsWith(ORG))
           .thenComparing(i -> AstraUtils.getPackageName(i.getName().toString()))
           .thenComparing(i -> i.getName().toString()))

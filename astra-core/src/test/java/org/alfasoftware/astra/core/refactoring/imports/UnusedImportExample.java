@@ -19,6 +19,8 @@ import org.alfasoftware.astra.exampleTypes.C;
 import org.alfasoftware.astra.exampleTypes.D;
 import org.junit.*; 
 import org.junit.experimental.categories.Category;
+import jakarta.inject.Inject;
+import javax.annotation.processing.Processor;
 
 @SuppressWarnings("unused")
 @Category(InnerClassExample.class)
@@ -27,7 +29,9 @@ public class UnusedImportExample {
   A a = new A();
   OtherInnerClass inner = new OtherInnerClass();
   State baseState = State.RUNNABLE;
+  @Inject
   Method methodRef;
+  Processor processor;
 
   /**
    * {@link C}
