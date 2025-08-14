@@ -37,7 +37,7 @@
     <maven-plugin-annotations.version>3.11.0</maven-plugin-annotations.version>
     <maven-plugin-plugin.version>3.12.0</maven-plugin-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-    <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
+    <sonatype-central-publishing-plugin.version>0.8.0</sonatype-central-publishing-plugin.version>
     
     <!-- maven version for plugin -->
     <maven.baseVersion>3.8.2</maven.baseVersion>
@@ -260,7 +260,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.8.0</version>
+            <version>${sonatype-central-publishing-plugin.version}</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
