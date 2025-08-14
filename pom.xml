@@ -36,8 +36,8 @@
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-plugin-annotations.version>3.11.0</maven-plugin-annotations.version>
     <maven-plugin-plugin.version>3.12.0</maven-plugin-plugin.version>
-    <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
-    <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
+    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+    <sonatype-central-publishing-plugin.version>0.8.0</sonatype-central-publishing-plugin.version>
     
     <!-- maven version for plugin -->
     <maven.baseVersion>3.8.2</maven.baseVersion>
@@ -258,14 +258,13 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>${nexus-staging-maven-plugin.version}</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>${sonatype-central-publishing-plugin.version}</version>
             <extensions>true</extensions>
             <configuration>
-              <serverId>ossrh</serverId>
-              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
             </configuration>
           </plugin>
           <plugin>
@@ -296,15 +295,5 @@
     <url>https://github.com/alfasoftware/astra</url>
     <tag>HEAD</tag>
   </scm>
-  
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
+
 </project>

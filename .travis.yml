@@ -1,4 +1,6 @@
 language: java
+dist: noble
+jdk: openjdk21
 jobs:
   include:
    - if: repo = alfasoftware/astra AND head_repo = alfasoftware/astra AND type = pull_request
@@ -9,6 +11,6 @@ jobs:
    - if: repo = alfasoftware/astra AND (branch = main OR tag IS present) AND NOT type = pull_request
      name: "Deploy"
      script:
-        - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
-        - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+        - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --batch --import
+        - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --batch --import-ownertrust
         - mvn clean deploy --settings .maven-settings.xml -B -U -Prelease
