@@ -52,7 +52,7 @@ Astra can be used to make changes like these easily, and on a massive scale.
 Please see [How does Astra work?](https://github.com/alfasoftware/astra/wiki/How-does-Astra-work%3F) in the Wiki.
 
 ## Technologies
-* Java 11
+* Java 17
 * Eclipse JDT
 * JUnit
 * log4j
