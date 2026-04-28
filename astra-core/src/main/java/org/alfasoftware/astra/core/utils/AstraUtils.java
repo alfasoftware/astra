@@ -67,12 +67,12 @@ public class AstraUtils {
     return compilationUnit;
   }
 
-  private static final String JAVA_VERSION = JavaCore.VERSION_1_8;
+  private static final String JAVA_VERSION = JavaCore.VERSION_17;
 
 
   public static ASTParser createParser(String fileSource, String[] sources, String[] classPath) {
     @SuppressWarnings("deprecation") // This is just saying "use a newer Java version"
-    ASTParser parser = ASTParser.newParser(AST.JLS8);
+    ASTParser parser = ASTParser.newParser(AST.JLS17);
     parser.setResolveBindings(true);
     parser.setBindingsRecovery(true);
     parser.setStatementsRecovery(true);
