@@ -175,7 +175,7 @@ public class TestAstraUtils {
     }
 
     CompilationUnit buildCompilationUnit() {
-      return AstraUtils.readAsCompilationUnit(before, source, new String[]{SOURCE, TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+      return AstraUtils.readAsCompilationUnit(before, source, new String[]{SOURCE, TEST_SOURCE}, new String[0]);
     }
   }
 
