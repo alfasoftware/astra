@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.alfasoftware.astra.exampleTypes.A;
@@ -724,7 +723,7 @@ public class TestTypeMatcher {
 
 
   private ClassVisitor parse(String source) {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, new String[0]);
     ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
     return visitor;

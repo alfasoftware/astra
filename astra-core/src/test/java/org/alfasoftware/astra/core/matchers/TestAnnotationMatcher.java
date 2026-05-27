@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -222,7 +221,7 @@ public class TestAnnotationMatcher {
   }
 
   private ClassVisitor parse(String source) {
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, new String[0]);
     ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
     return visitor;

@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
-import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.types.UpdateTypeRefactor;
 import org.alfasoftware.astra.core.refactoring.types.newpackage.UpdatedTypeExampleAfter;
 import org.alfasoftware.astra.core.utils.ASTOperation;
@@ -67,7 +66,7 @@ public class TestUpdateTypeRefactor extends AbstractRefactorTest {
           fileContentBefore,
           operations,
           new HashSet<>(Arrays.asList(TEST_SOURCE)).toArray(new String[0]),
-          UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0])
+          new String[0]
       );
 
       expectedBefore = changesToApplyToBefore.apply(expectedBefore);

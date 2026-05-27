@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.analysis.operations.AnalysisOperation;
 import org.alfasoftware.astra.core.analysis.operations.AnalysisResult;
-import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraCore;
 import org.eclipse.jface.text.BadLocationException;
 
@@ -36,8 +35,7 @@ public abstract class AbstractAnalysisTest {
    * @param expectedResults The collection of expected analysis results for the example file
    */
   protected <T extends AnalysisResult> void assertAnalysis(Class<?> fileToAnalyse, AnalysisOperation<T> analysisOperation, Collection<T> expectedResults) {
-    // This just gets the java path.
-    assertAnalysisWithClassPath(fileToAnalyse, analysisOperation, expectedResults, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    assertAnalysisWithClassPath(fileToAnalyse, analysisOperation, expectedResults, new String[0]);
   }
 
   protected <T extends AnalysisResult> void assertAnalysisWithClassPath(Class<?> fileToAnalyse, AnalysisOperation<T> analysisOperation, Collection<T> expectedResults, String[] classPath) {

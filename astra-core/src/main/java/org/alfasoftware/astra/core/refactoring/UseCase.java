@@ -1,7 +1,5 @@
 package org.alfasoftware.astra.core.refactoring;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -39,17 +37,12 @@ public interface UseCase {
     return new HashSet<>();
   }
 
-  static final String JAVA_PATH = System.getProperty("java.home"); // The JRE
-  static final Set<String> DEFAULT_CLASSPATH_ENTRIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(JAVA_PATH)));
-
   /**
    * @return The absolute classpaths required to resolve types and bindings when running the ASTOperations specified in this use case.
+   *         The running VM's boot classpath is included automatically by the parser.
    */
   default String[] getClassPath() {
-    Set<String> classPath = new HashSet<>();
-    classPath.addAll(DEFAULT_CLASSPATH_ENTRIES);
-    classPath.addAll(getAdditionalClassPathEntries());
-    return classPath.toArray(new String[0]);
+    return getAdditionalClassPathEntries().toArray(new String[0]);
   }
 
   /**

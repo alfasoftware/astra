@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -317,7 +316,7 @@ public class TestMethodMatcher {
       fail("IOException when reading file : " + e);
     }
 
-    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), fileContentBefore, new String[]{TEST_SOURCE}, UseCase.DEFAULT_CLASSPATH_ENTRIES.toArray(new String[0]));
+    CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), fileContentBefore, new String[]{TEST_SOURCE}, new String[0]);
 
     final ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
