@@ -9,7 +9,8 @@ import java.util.stream.Collectors;
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -55,7 +56,7 @@ import org.eclipse.text.edits.MalformedTreeException;
 @SuppressWarnings("unchecked")
 public class ConstructorToBuilderRefactor implements ASTOperation {
 
-  private static final Logger log = Logger.getLogger(ConstructorToBuilderRefactor.class);
+  private static final Logger log = LoggerFactory.getLogger(ConstructorToBuilderRefactor.class);
 
   private final MethodMatcher methodMatcher;
   private final List<BuilderSection> builderParts;

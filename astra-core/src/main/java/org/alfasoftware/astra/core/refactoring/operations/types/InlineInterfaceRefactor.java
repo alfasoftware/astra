@@ -18,7 +18,8 @@ import java.util.stream.Stream;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -45,7 +46,7 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class InlineInterfaceRefactor implements ASTOperation {
 
-  private static final Logger log = Logger.getLogger(InlineInterfaceRefactor.class);
+  private static final Logger log = LoggerFactory.getLogger(InlineInterfaceRefactor.class);
 
   private final String interfaceName;
   private ClassVisitor interfaceVisitor;
@@ -62,7 +63,7 @@ public class InlineInterfaceRefactor implements ASTOperation {
       compilationUnit.accept(interfaceVisitor);
 
     } catch (IOException e) {
-      log.error(e);
+      log.error("Failed to read interface file", e);
     }
   }
 

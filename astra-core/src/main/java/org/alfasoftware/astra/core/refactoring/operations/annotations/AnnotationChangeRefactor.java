@@ -10,7 +10,8 @@ import java.util.stream.Collectors;
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -38,7 +39,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   private static final String VALUE = "value";
 
-  private static final Logger log = Logger.getLogger(AnnotationChangeRefactor.class);
+  private static final Logger log = LoggerFactory.getLogger(AnnotationChangeRefactor.class);
 
   private final AnnotationMatcher fromType;
   private final String toType;

@@ -22,7 +22,8 @@ import java.util.stream.Stream;
 
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.imports.UnusedImportRefactor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.BadLocationException;
@@ -40,7 +41,7 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class AstraCore {
 
-  protected static final Logger log = Logger.getLogger(AstraCore.class);
+  protected static final Logger log = LoggerFactory.getLogger(AstraCore.class);
 
 
   /**
@@ -128,7 +129,7 @@ public class AstraCore {
       progressMessage.append(" elapsed, estimated [" + remainingDuration.toMinutes() + "] minutes remaining");
     }
 
-    log.info(progressMessage);
+    log.info(progressMessage.toString());
   }
 
 

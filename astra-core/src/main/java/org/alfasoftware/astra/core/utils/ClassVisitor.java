@@ -7,7 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
@@ -44,7 +45,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
  */
 public class ClassVisitor extends ASTVisitor {
 
-  private static final Logger log = Logger.getLogger(ClassVisitor.class);
+  private static final Logger log = LoggerFactory.getLogger(ClassVisitor.class);
 
   private final List<AbstractTypeDeclaration> abstractTypeDeclarations = new ArrayList<>();
   private final List<TypeParameter> typeParameters = new ArrayList<>();

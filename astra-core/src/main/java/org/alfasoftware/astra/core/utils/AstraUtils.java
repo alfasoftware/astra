@@ -12,7 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
@@ -55,7 +56,7 @@ import org.eclipse.jface.text.BadLocationException;
  */
 public class AstraUtils {
 
-  private static final Logger log = Logger.getLogger(AstraUtils.class);
+  private static final Logger log = LoggerFactory.getLogger(AstraUtils.class);
   public static final String CLASSPATHS_MISSING_WARNING = "This may be a sign that classpaths for the operation need to be supplied. ";
 
   public static CompilationUnit readAsCompilationUnit(Path file, String fileSource, String[] sources, String[] classPath) {

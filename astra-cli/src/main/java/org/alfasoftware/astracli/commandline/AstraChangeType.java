@@ -10,7 +10,8 @@ import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.types.TypeReferenceRefactor;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -23,7 +24,7 @@ import picocli.CommandLine.Option;
 )
 class AstraChangeType implements Runnable {
 	
-	private static final Logger log = Logger.getLogger(AstraChangeType.class);
+	private static final Logger log = LoggerFactory.getLogger(AstraChangeType.class);
 
   @CommandLine.Parameters(
     arity = "2",

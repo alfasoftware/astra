@@ -12,7 +12,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -28,7 +29,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
  */
 public class MethodMatcher {
 
-  private static final Logger log = Logger.getLogger(MethodMatcher.class);
+  private static final Logger log = LoggerFactory.getLogger(MethodMatcher.class);
 
   private Optional<DescribedPredicate<String>> fullyQualifiedDeclaringTypePredicate = Optional.empty();
   private Optional<String> fullyQualifiedDeclaringTypeExactName = Optional.empty();
