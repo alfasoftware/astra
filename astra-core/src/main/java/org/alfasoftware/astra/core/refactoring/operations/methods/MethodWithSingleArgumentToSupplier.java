@@ -7,7 +7,8 @@ import java.io.IOException;
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.LambdaExpression;
@@ -27,7 +28,7 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class MethodWithSingleArgumentToSupplier implements ASTOperation {
 
-  private static final Logger log = Logger.getLogger(MethodInvocationRefactor.class);
+  private static final Logger log = LoggerFactory.getLogger(MethodWithSingleArgumentToSupplier.class);
 
   private final MethodMatcher before;
 

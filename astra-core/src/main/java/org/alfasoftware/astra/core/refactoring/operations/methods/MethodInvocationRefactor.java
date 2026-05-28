@@ -9,7 +9,8 @@ import java.util.Optional;
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -40,7 +41,7 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class MethodInvocationRefactor implements ASTOperation {
 
-  private static final Logger log = Logger.getLogger(MethodInvocationRefactor.class);
+  private static final Logger log = LoggerFactory.getLogger(MethodInvocationRefactor.class);
 
   private final MethodMatcher beforeMatcher;
   private final Optional<String> afterType;

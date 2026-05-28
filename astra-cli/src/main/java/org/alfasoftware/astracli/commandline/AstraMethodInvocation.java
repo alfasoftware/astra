@@ -14,7 +14,8 @@ import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.methods.MethodInvocationRefactor;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import picocli.CommandLine;
 
@@ -29,7 +30,7 @@ import picocli.CommandLine;
         description = "Finds method invocations matching given criteria, and performs a refactoring.")
 class AstraMethodInvocation implements Runnable {
 
-	private static final Logger log = Logger.getLogger(AstraMethodInvocation.class);
+	private static final Logger log = LoggerFactory.getLogger(AstraMethodInvocation.class);
 
     @CommandLine.Option(
       names = {"-t", "--fqType"},
