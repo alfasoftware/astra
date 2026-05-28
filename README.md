@@ -54,7 +54,6 @@ Please see [How does Astra work?](https://github.com/alfasoftware/astra/wiki/How
 ## Technologies
 * Java 17
 * Eclipse JDT
-* JUnit
 * SLF4J
 
 ## License
