@@ -8,9 +8,12 @@ import java.util.function.Predicate;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
@@ -46,13 +49,17 @@ public class TypeMatcher implements Matcher {
   public static class TypeBuilder implements Builder {
     private Boolean isInterface;
     private Boolean isClass;
+    private Boolean isRecord;
     private String typeName;
     private Set<String> interfaces;
     private String superClass;
+    private Set<String> permittedTypes;
     private Visibility visibility;
     private Boolean isStatic;
     private Boolean isAbstract;
     private Boolean isFinal;
+    private Boolean isSealed;
+    private Boolean isNonSealed;
     private String typeNameRegex;
     private Predicate<String> typeNamePredicate;
 
@@ -91,6 +98,16 @@ public class TypeMatcher implements Matcher {
      */
     public TypeBuilder asClass() {
       isClass = true;
+      return this;
+    }
+
+    /**
+     * Specifies the type must be a record.
+     *
+     * @return the builder
+     */
+    public TypeBuilder asRecord() {
+      isRecord = true;
       return this;
     }
 
@@ -150,6 +167,19 @@ public class TypeMatcher implements Matcher {
      */
     public TypeBuilder implementingInterfaces(Set<String> interfaceNames) {
       interfaces = interfaceNames;
+      return this;
+    }
+
+    /**
+     * Specifies fully qualified names that the type must declare in its {@code permits} clause.
+     * This can be used to match a sealed type by the subtypes it permits.
+     * All supplied names must be present in the permits clause for the type to match.
+     *
+     * @param permittedTypeNames fully qualified names the type must permit
+     * @return the builder
+     */
+    public TypeBuilder permitting(Set<String> permittedTypeNames) {
+      permittedTypes = permittedTypeNames;
       return this;
     }
 
@@ -228,6 +258,26 @@ public class TypeMatcher implements Matcher {
       isFinal = true;
       return this;
     }
+
+    /**
+     * Specifies the type must be sealed.
+     *
+     * @return the builder
+     */
+    public TypeBuilder isSealed() {
+      isSealed = true;
+      return this;
+    }
+
+    /**
+     * Specifies the type must be non-sealed.
+     *
+     * @return the builder
+     */
+    public TypeBuilder isNonSealed() {
+      isNonSealed = true;
+      return this;
+    }
   }
 
   /**
@@ -248,17 +298,27 @@ public class TypeMatcher implements Matcher {
   @Override
   public boolean matches(ASTNode node) {
 
-    if (!(node instanceof TypeDeclaration)) {
+    if (!(node instanceof AbstractTypeDeclaration)) {
       return false;
     }
-    TypeDeclaration typeDeclaration = (TypeDeclaration) node;
+    AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) node;
 
-    if (! checkIsInterface(typeDeclaration)) {
+    // Class/interface/record gates. A record only matches asRecord(), and asClass()/asInterface()
+    // only match TypeDeclarations - mirroring how enums are excluded.
+    if (! checkIsRecord(node)) {
       return false;
     }
-    if (! checkIsClass(typeDeclaration)) {
+    if (node instanceof TypeDeclaration) {
+      if (! checkIsInterface((TypeDeclaration) node)) {
+        return false;
+      }
+      if (! checkIsClass((TypeDeclaration) node)) {
+        return false;
+      }
+    } else if (Boolean.TRUE.equals(typeBuilder.isClass) || Boolean.TRUE.equals(typeBuilder.isInterface)) {
       return false;
     }
+
     if (! checkTypeName(typeDeclaration)) {
       return false;
     }
@@ -286,7 +346,60 @@ public class TypeMatcher implements Matcher {
     if (! checkIsFinal(typeDeclaration)) {
       return false;
     }
-    return checkSuperclass(typeDeclaration);
+    if (! checkIsSealed(typeDeclaration)) {
+      return false;
+    }
+    if (! checkIsNonSealed(typeDeclaration)) {
+      return false;
+    }
+    if (! checkPermittedTypes(node)) {
+      return false;
+    }
+
+    // Superclasses only apply to a TypeDeclaration. If a superclass was required, anything else fails.
+    if (node instanceof TypeDeclaration) {
+      return checkSuperclass((TypeDeclaration) node);
+    }
+    return typeBuilder.superClass == null;
+  }
+
+  private boolean checkIsRecord(ASTNode node) {
+    return typeBuilder.isRecord == null || (typeBuilder.isRecord == (node instanceof RecordDeclaration));
+  }
+
+  /**
+   * Checks the fully qualified names declared in the type's {@code permits} clause against those expected.
+   *
+   * @param node the node being checked
+   * @return true if all expected permitted types are present, false otherwise
+   */
+  private boolean checkPermittedTypes(ASTNode node) {
+    if (typeBuilder.permittedTypes == null) {
+      return true;
+    }
+    if (! (node instanceof TypeDeclaration)) {
+      return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    List<Type> declaredPermittedTypes = ((TypeDeclaration) node).permittedTypes();
+    Set<String> permittedNames = new HashSet<>();
+    for (Type permittedType : declaredPermittedTypes) {
+      ITypeBinding binding = permittedType.resolveBinding();
+      if (binding != null) {
+        permittedNames.add(binding.getQualifiedName());
+        permittedNames.add(binding.getBinaryName());
+      }
+    }
+    return permittedNames.containsAll(typeBuilder.permittedTypes);
+  }
+
+  private boolean checkIsSealed(AbstractTypeDeclaration typeDeclaration) {
+    return typeBuilder.isSealed == null || checkForModifier(typeDeclaration, Modifier::isSealed);
+  }
+
+  private boolean checkIsNonSealed(AbstractTypeDeclaration typeDeclaration) {
+    return typeBuilder.isNonSealed == null || checkForModifier(typeDeclaration, Modifier::isNonSealed);
   }
 
   private boolean checkSuperclass(TypeDeclaration typeDeclaration) {
@@ -338,7 +451,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type being checked
    * @return true if it matches, false otherwise
    */
-  private boolean checkTypeName(final TypeDeclaration typeDeclaration) {
+  private boolean checkTypeName(final AbstractTypeDeclaration typeDeclaration) {
     return typeBuilder.typeName == null ||
         typeBuilder.typeName.equals(AstraUtils.getFullyQualifiedName(typeDeclaration));
   }
@@ -349,7 +462,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type being checked
    * @return true if it matches, false otherwise
    */
-  private boolean checkClassNameRegex(final TypeDeclaration typeDeclaration) {
+  private boolean checkClassNameRegex(final AbstractTypeDeclaration typeDeclaration) {
     return typeBuilder.typeNameRegex == null ||
         AstraUtils.getFullyQualifiedName(typeDeclaration).matches(typeBuilder.typeNameRegex);
   }
@@ -360,7 +473,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type being checked
    * @return true if it matches, false otherwise
    */
-  private boolean checkTypeNamePredicate(final TypeDeclaration typeDeclaration) {
+  private boolean checkTypeNamePredicate(final AbstractTypeDeclaration typeDeclaration) {
     return typeBuilder.typeNamePredicate == null ||
         typeBuilder.typeNamePredicate.test(AstraUtils.getFullyQualifiedName(typeDeclaration));
   }
@@ -371,7 +484,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type being checked
    * @return true if all interfaces expected are present, false otherwise
    */
-  private boolean checkInterfaces(final TypeDeclaration typeDeclaration) {
+  private boolean checkInterfaces(final AbstractTypeDeclaration typeDeclaration) {
     if (typeBuilder.interfaces == null) {
       return true;
     }
@@ -394,9 +507,8 @@ public class TypeMatcher implements Matcher {
   }
 
 
-  private Set<ITypeBinding> getAllInterfaces(TypeDeclaration typeDeclaration) {
-    @SuppressWarnings("unchecked")
-    List<Type> superInterfaceTypes = typeDeclaration.superInterfaceTypes();
+  private Set<ITypeBinding> getAllInterfaces(AbstractTypeDeclaration typeDeclaration) {
+    List<Type> superInterfaceTypes = getSuperInterfaceTypes(typeDeclaration);
     Set<ITypeBinding> interfaces = new HashSet<>();
     for (Type interfaceName : superInterfaceTypes) {
       interfaces.add(interfaceName.resolveBinding());
@@ -404,6 +516,25 @@ public class TypeMatcher implements Matcher {
     }
     getSuperClassInterfaces(typeDeclaration.resolveBinding(), interfaces);
     return interfaces;
+  }
+
+
+  /**
+   * Returns the declared super-interface types for a type. Records, enums and ordinary types each
+   * expose these separately, so they are unified here.
+   */
+  @SuppressWarnings("unchecked")
+  private List<Type> getSuperInterfaceTypes(AbstractTypeDeclaration typeDeclaration) {
+    if (typeDeclaration instanceof TypeDeclaration) {
+      return ((TypeDeclaration) typeDeclaration).superInterfaceTypes();
+    }
+    if (typeDeclaration instanceof RecordDeclaration) {
+      return ((RecordDeclaration) typeDeclaration).superInterfaceTypes();
+    }
+    if (typeDeclaration instanceof EnumDeclaration) {
+      return ((EnumDeclaration) typeDeclaration).superInterfaceTypes();
+    }
+    return new ArrayList<>();
   }
 
 
@@ -434,7 +565,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type being checked
    * @return true if all annotations expected are present, false otherwise
    */
-  private boolean checkAnnotations(final TypeDeclaration typeDeclaration) {
+  private boolean checkAnnotations(final AbstractTypeDeclaration typeDeclaration) {
     if (typeBuilder.annotationBuilders == null) {
       return true;
     }
@@ -463,7 +594,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration type to check
    * @return true if the visibilty is correct, false otherwise
    */
-  private boolean checkVisibility(final TypeDeclaration typeDeclaration) {
+  private boolean checkVisibility(final AbstractTypeDeclaration typeDeclaration) {
     if (typeBuilder.visibility == null) {
       return true;
     }
@@ -481,7 +612,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type to check
    * @return true if it is static, false otherwise
    */
-  private boolean checkIsStatic(final TypeDeclaration typeDeclaration) {
+  private boolean checkIsStatic(final AbstractTypeDeclaration typeDeclaration) {
     return typeBuilder.isStatic == null || checkForModifier(typeDeclaration, Modifier::isStatic);
   }
 
@@ -491,7 +622,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type to check
    * @return true if it is abstract, false otherwise
    */
-  private boolean checkIsAbstract(final TypeDeclaration typeDeclaration) {
+  private boolean checkIsAbstract(final AbstractTypeDeclaration typeDeclaration) {
     return typeBuilder.isAbstract == null || checkForModifier(typeDeclaration, Modifier::isAbstract);
   }
 
@@ -501,7 +632,7 @@ public class TypeMatcher implements Matcher {
    * @param typeDeclaration the type to check
    * @return true if it is final, false otherwise
    */
-  private boolean checkIsFinal(final TypeDeclaration typeDeclaration) {
+  private boolean checkIsFinal(final AbstractTypeDeclaration typeDeclaration) {
     return typeBuilder.isFinal == null || checkForModifier(typeDeclaration, Modifier::isFinal);
   }
 
@@ -512,7 +643,7 @@ public class TypeMatcher implements Matcher {
    * @param check           a predicate to check on the type
    * @return the result of the predicate as applied to the type definition
    */
-  private boolean checkForModifier(final TypeDeclaration typeDeclaration, Predicate<Modifier> check) {
+  private boolean checkForModifier(final AbstractTypeDeclaration typeDeclaration, Predicate<Modifier> check) {
     for (Object modifier : typeDeclaration.modifiers()) {
       if (modifier instanceof Modifier) {
         Modifier theModifier = (Modifier) modifier;

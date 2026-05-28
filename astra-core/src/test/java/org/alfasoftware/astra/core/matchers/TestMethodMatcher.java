@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
+import org.alfasoftware.astra.exampleTypes.RecordA;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -427,6 +428,29 @@ public class TestMethodMatcher {
     checkNoMethodMatchFoundInClass(methodInvocationMatcher, ExampleClassUsingMethodWithClassParameter.class);
     checkMethodMatchFoundInClass(classInstanceCreationMatcher, ExampleClassUsingMultipleMethods.class);
     checkNoMethodMatchFoundInClass(classInstanceCreationMatcherNoMatch, ExampleClassUsingMultipleMethods.class);
+  }
+
+
+  /**
+   * Tests that a record's accessor method and its canonical constructor can be matched
+   * by their declaring type and name.
+   */
+  @Test
+  public void testMatchRecordAccessorAndConstructor() {
+
+    MethodMatcher accessorMatcher = MethodMatcher.builder()
+        .withFullyQualifiedDeclaringType(RecordA.class.getName())
+        .withMethodName("value")
+        .build();
+
+    MethodMatcher constructorMatcher = MethodMatcher.builder()
+        .withFullyQualifiedDeclaringType(RecordA.class.getName())
+        .withMethodName(RecordA.class.getSimpleName())
+        .build();
+
+    // Accessor invocation and constructor invocation are visible from the usage site
+    checkMethodMatchFoundInClass(accessorMatcher, ExampleClassUsingRecord.class);
+    checkMethodMatchFoundInClass(constructorMatcher, ExampleClassUsingRecord.class);
   }
 
 

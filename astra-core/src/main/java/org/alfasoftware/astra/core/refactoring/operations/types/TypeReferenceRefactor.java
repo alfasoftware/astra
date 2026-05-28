@@ -12,17 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IDocElement;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Javadoc;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TagElement;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
@@ -116,14 +118,15 @@ public class TypeReferenceRefactor implements ASTOperation {
 
     if (node instanceof SimpleName) {
       updateSimpleName(compilationUnit, (SimpleName) node, rewriter);
+      updateConstructorName(compilationUnit, (SimpleName) node, rewriter);
     }
 
     if (node instanceof QualifiedName) {
       updateQualifiedName(compilationUnit, (QualifiedName) node, rewriter);
     }
 
-    if (node instanceof TypeDeclaration) {
-      updateJavadocTypes(compilationUnit, (TypeDeclaration) node, rewriter);
+    if (node instanceof AbstractTypeDeclaration) {
+      updateJavadocTypes(compilationUnit, (AbstractTypeDeclaration) node, rewriter);
     }
   }
 
@@ -134,6 +137,34 @@ public class TypeReferenceRefactor implements ASTOperation {
     	binding instanceof ITypeBinding &&
     	((ITypeBinding) binding).getQualifiedName().equals(getFromType())) {
       log.info("Refactoring simple type [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
+          AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
+      rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
+    }
+  }
+
+
+  /**
+   * Renames the name of a constructor declaration where the declaring type is being renamed.
+   *
+   * <p>A constructor's name resolves to an {@link IMethodBinding} rather than an {@link ITypeBinding},
+   * so {@link #updateSimpleName} skips it. This handles both ordinary constructors and a record's
+   * compact (or canonical) constructor, e.g. the {@code Foo} in {@code record Foo(...) { Foo {...} }}.
+   */
+  private void updateConstructorName(CompilationUnit compilationUnit, SimpleName name, ASTRewrite rewriter) {
+    if (! (name.getParent() instanceof MethodDeclaration)) {
+      return;
+    }
+    MethodDeclaration methodDeclaration = (MethodDeclaration) name.getParent();
+    if (methodDeclaration.getName() != name ||
+        ! (methodDeclaration.isConstructor() || methodDeclaration.isCompactConstructor())) {
+      return;
+    }
+
+    IMethodBinding methodBinding = methodDeclaration.resolveBinding();
+    if (methodBinding != null &&
+        methodBinding.getDeclaringClass() != null &&
+        methodBinding.getDeclaringClass().getQualifiedName().equals(getFromType())) {
+      log.info("Refactoring constructor name [" + name.toString() + "] to [" + AstraUtils.getSimpleName(toType) + "] in [" +
           AstraUtils.getNameForCompilationUnit(compilationUnit) + "]");
       rewriter.set(name, SimpleName.IDENTIFIER_PROPERTY, AstraUtils.getSimpleName(toType), null);
     }
@@ -151,7 +182,7 @@ public class TypeReferenceRefactor implements ASTOperation {
   }
 
 
-  private void updateJavadocTypes(CompilationUnit compilationUnit, TypeDeclaration typeDeclaration, ASTRewrite rewriter) {
+  private void updateJavadocTypes(CompilationUnit compilationUnit, AbstractTypeDeclaration typeDeclaration, ASTRewrite rewriter) {
     if (typeDeclaration.resolveBinding() != null && ! typeDeclaration.resolveBinding().isNested()) {
       // Special handling for Javadoc references to types
       JavadocVisitor visitor = new JavadocVisitor();

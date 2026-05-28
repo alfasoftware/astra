@@ -28,8 +28,10 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.PatternInstanceofExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
@@ -61,6 +63,7 @@ public class ClassVisitor extends ASTVisitor {
   private final List<MarkerAnnotation> markerAnnotations = new ArrayList<>();
   private final List<ClassInstanceCreation> classInstanceCreations = new ArrayList<>();
   private final List<TagElement> tagElements = new ArrayList<>();
+  private final List<PatternInstanceofExpression> patternInstanceofExpressions = new ArrayList<>();
 
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
   private final List<CastExpression> castExpressions = new ArrayList<>();
@@ -105,6 +108,20 @@ public class ClassVisitor extends ASTVisitor {
   @Override
   public boolean visit(EnumDeclaration node) {
     abstractTypeDeclarations.add(node);
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(RecordDeclaration node) {
+    log.debug("Record declar: " + node);
+    abstractTypeDeclarations.add(node);
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(PatternInstanceofExpression node) {
+    log.debug("Pattern instanceof: " + node);
+    patternInstanceofExpressions.add(node);
     return super.visit(node);
   }
 
@@ -274,6 +291,17 @@ public class ClassVisitor extends ASTVisitor {
         .collect(Collectors.toList());
   }
 
+  public List<RecordDeclaration> getRecordDeclarations() {
+    return abstractTypeDeclarations.stream()
+        .filter(RecordDeclaration.class::isInstance)
+        .map(RecordDeclaration.class::cast)
+        .collect(Collectors.toList());
+  }
+
+  public List<PatternInstanceofExpression> getPatternInstanceofExpressions() {
+    return patternInstanceofExpressions;
+  }
+
   public List<ParameterizedType> getParameterizedTypes() {
     return parameterizedTypes;
   }
@@ -391,7 +419,8 @@ public class ClassVisitor extends ASTVisitor {
       getTagElements(),
       getImports(),
       getFieldAccesses(),
-      getCastExpressions())
+      getCastExpressions(),
+      getPatternInstanceofExpressions())
     .flatMap(Collection::stream)
     .collect(Collectors.toSet());
   }

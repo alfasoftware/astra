@@ -12,6 +12,8 @@ import org.alfasoftware.astra.exampleTypes.B;
 import org.alfasoftware.astra.exampleTypes.B.InnerAnnotationB;
 import org.alfasoftware.astra.exampleTypes.EnumA;
 import org.alfasoftware.astra.exampleTypes.EnumB;
+import org.alfasoftware.astra.exampleTypes.RecordA;
+import org.alfasoftware.astra.exampleTypes.RecordB;
 import org.junit.Test;
 
 public class TestTypeReferenceRefactor extends AbstractRefactorTest {
@@ -103,5 +105,51 @@ public class TestTypeReferenceRefactor extends AbstractRefactorTest {
         .fromType(InnerAnnotationA.class.getName())
         .toType(InnerAnnotationB.class.getName())
         .build())));
+  }
+
+
+  /**
+   * Changing from one record type to another, where the record is referenced
+   * as a field, parameter, return type, constructor invocation, instanceof
+   * pattern and in Javadoc.
+   */
+  @Test
+  public void testChangeRecordType() {
+    assertRefactor(TypeReferenceRecordExample.class,
+        new HashSet<>(Arrays.asList(
+          TypeReferenceRefactor.builder()
+            .fromType(RecordA.class.getName())
+            .toType(RecordB.class.getName())
+            .build())));
+  }
+
+
+  /**
+   * Renaming a record type renames its compact constructor's name as well as
+   * the declaration and any constructor invocations.
+   */
+  @Test
+  public void testChangeRecordCompactConstructorName() {
+    assertRefactor(TypeReferenceCompactConstructorExample.class,
+        new HashSet<>(Arrays.asList(
+          TypeReferenceRefactor.builder()
+            .fromType(TypeReferenceCompactConstructorExample.class.getName() + ".Inner")
+            .toType(TypeReferenceCompactConstructorExample.class.getName() + ".InnerRenamed")
+            .build())));
+  }
+
+
+  /**
+   * Changing the tested type in an instanceof pattern, leaving the binding
+   * variable untouched.
+   */
+  @Test
+  public void testChangeTypeInInstanceofPattern() {
+    assertRefactor(TypeReferenceInstanceofPatternExample.class,
+        new HashSet<>(Arrays.asList(
+          TypeReferenceRefactor.builder()
+            .fromType(A.class.getName())
+            .toType(B.class.getName())
+            .build())));
   }
 }
