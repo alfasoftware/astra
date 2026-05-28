@@ -10,10 +10,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
@@ -59,7 +64,7 @@ public class AstraCore {
       AstraCore main = new AstraCore();
       main.runOperations(targetDirectoryPath, useCase, sources, classPath);
     } catch (IOException e) {
-      log.error("ioE: " + e);
+      throw new RuntimeException("Astra run failed for directory [" + targetDirectoryPath + "]: " + e.getMessage(), e);
     }
   }
 
@@ -96,19 +101,54 @@ public class AstraCore {
         .collect(Collectors.toList());
     log.info(filteredJavaFiles.size() + " files remain after prefiltering");
 
-    Set<? extends ASTOperation> operations = useCase.getOperations();
+    if (filteredJavaFiles.isEmpty()) {
+      log.info(getPrintableDuration(Duration.between(startTime, Instant.now())));
+      return;
+    }
 
-    for (Path f : filteredJavaFiles) {
-      // TODO Naively we can multi-thread here (i.e. per file) but simple testing indicated that this slowed us down.
-      applyOperationsAndSave(f, operations, sources, classPath);
-      long newPercentage = currentFileIndex.incrementAndGet() * 100 / filteredJavaFiles.size();
-      if (newPercentage != currentPercentage.get()) {
-        currentPercentage.set(newPercentage);
-        logProgress(currentFileIndex.get(), currentPercentage.get(), startTime, filteredJavaFiles.size());
+    Set<? extends ASTOperation> operations = useCase.getOperations();
+    int parallelism = useCase.getParallelism();
+    log.info("Processing [" + filteredJavaFiles.size() + "] files with [" + parallelism + "] thread(s)");
+
+    List<Throwable> fileErrors = new ArrayList<>();
+    ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+    try {
+      List<Future<?>> futures = filteredJavaFiles.stream()
+          .map(f -> executor.submit(() -> applyOperationsAndSave(f, operations, sources, classPath)))
+          .collect(Collectors.toList());
+
+      for (Future<?> future : futures) {
+        try {
+          future.get();
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          log.error("Failed to process file: " + cause.getMessage(), cause);
+          fileErrors.add(cause);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new IOException("File processing was interrupted", e);
+        }
+        long idx = currentFileIndex.incrementAndGet();
+        long newPct = idx * 100 / filteredJavaFiles.size();
+        if (currentPercentage.getAndSet(newPct) != newPct) {
+          logProgress(idx, newPct, startTime, filteredJavaFiles.size());
+        }
+      }
+    } finally {
+      List<Runnable> notStarted = executor.shutdownNow();
+      if (!notStarted.isEmpty()) {
+        log.warn(notStarted.size() + " file(s) were not processed due to early termination");
       }
     }
 
     log.info(getPrintableDuration(Duration.between(startTime, Instant.now())));
+
+    if (!fileErrors.isEmpty()) {
+      IOException summary = new IOException(
+          fileErrors.size() + " file(s) failed during processing; see suppressed exceptions for details");
+      fileErrors.forEach(summary::addSuppressed);
+      throw summary;
+    }
   }
 
 
@@ -186,12 +226,8 @@ public class AstraCore {
         // save the file (over the original)
         Files.write(javaFile.toAbsolutePath(), fileContentAfter.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
       }
-    } catch (IOException e) {
-      log.error("ioE: " + e);
-    } catch (BadLocationException e) {
-      log.error("blE: " + e);
-    } catch (IllegalArgumentException e) {
-      log.error("IAE: " + e);
+    } catch (IOException | BadLocationException | IllegalArgumentException e) {
+      throw new RuntimeException("Failed to process file [" + javaFile + "]: " + e.getMessage(), e);
     }
   }
 

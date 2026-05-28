@@ -51,4 +51,13 @@ public interface UseCase {
   default String[] getSources() {
     return new String[] { "" };
   }
+
+  /**
+   * @return The number of threads to use when processing files in parallel.
+   *         Defaults to {@link Runtime#availableProcessors()}.
+   *         Override and return {@code 1} to force sequential processing.
+   */
+  default int getParallelism() {
+    return Runtime.getRuntime().availableProcessors();
+  }
 }
