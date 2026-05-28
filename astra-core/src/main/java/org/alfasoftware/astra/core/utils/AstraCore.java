@@ -129,7 +129,7 @@ public class AstraCore {
       progressMessage.append(" elapsed, estimated [" + remainingDuration.toMinutes() + "] minutes remaining");
     }
 
-    log.info(progressMessage);
+    log.info(progressMessage.toString());
   }
 
 
