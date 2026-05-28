@@ -55,7 +55,7 @@ Please see [How does Astra work?](https://github.com/alfasoftware/astra/wiki/How
 * Java 17
 * Eclipse JDT
 * JUnit
-* log4j
+* SLF4J
 
 ## License
 Astra is released under the [Apache 2.0 License](https://github.com/alfasoftware/astra/blob/main/LICENSE). Contributions are also made under this license, as per the GitHub [terms of service](https://docs.github.com/en/github/site-policy/github-terms-of-service#6-contributions-under-repository-license).
