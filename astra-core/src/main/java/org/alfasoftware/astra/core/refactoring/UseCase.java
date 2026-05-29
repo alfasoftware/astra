@@ -27,6 +27,33 @@ public interface UseCase {
     return s -> true; // i.e. no filter by default
   }
 
+  /**
+   * Returns a predicate applied to the raw file content (as a String) before
+   * the file is parsed into an AST. Files for which this predicate returns
+   * {@code false} are skipped entirely, avoiding the cost of AST construction.
+   *
+   * <p>The default implementation accepts every file. Override this to provide
+   * a fast content-based check — for example, a simple
+   * {@code content -> content.contains("OldTypeName")} guard reduces parse
+   * overhead substantially on large codebases when only a minority of files
+   * reference the types being refactored.
+   *
+   * <p>This predicate is applied <em>after</em> {@link #getPrefilteringPredicate()}
+   * and only when that path-level predicate has already passed.
+   *
+   * <p>Examples:
+   * <pre>
+   * // pass files that mention any of several type names:
+   * content -&gt; content.contains("OldFoo") || content.contains("OldBar");
+   *
+   * // pass files that mention all of several tokens:
+   * content -&gt; content.contains("OldFoo") &amp;&amp; content.contains("@Deprecated");
+   * </pre>
+   */
+  default Predicate<String> getContentPrefilteringPredicate() {
+    return content -> true;
+  }
+
   Set<? extends ASTOperation> getOperations();
 
   /**
