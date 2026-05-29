@@ -136,24 +136,58 @@ public class TestContentPrefilteringPredicate {
 
 
   /**
-   * Verifies the {@link UseCase#containsAnyOf(String...)} static factory method.
-   * The predicate should return {@code true} when the content contains any of the
-   * supplied tokens, and {@code false} when none are present.
+   * Verifies that an inline "any of" content predicate (passing files mentioning any one of
+   * several tokens) processes only the files that mention at least one of those tokens, and
+   * leaves the rest unchanged.
    */
   @Test
-  public void testContainsAnyOfHelper() {
-    Predicate<String> predicate = UseCase.containsAnyOf("FooBar", "BazQux");
+  public void testAnyOfContentPredicateProcessesMatchingFiles() throws IOException {
+    String firstContent = "public class HasFoo { /* FooBar */ }";
+    String secondContent = "public class HasBaz { /* BazQux */ }";
+    String nonMatchingContent = "public class HasNeither {}";
 
-    assertTrue("Should match when first token is present",
-        predicate.test("import com.example.FooBar;"));
-    assertTrue("Should match when second token is present",
-        predicate.test("import com.example.BazQux;"));
-    assertTrue("Should match when both tokens are present",
-        predicate.test("FooBar and BazQux together"));
-    assertFalse("Should not match when no token is present",
-        predicate.test("import com.example.SomethingElse;"));
-    assertFalse("Should not match empty content",
-        predicate.test(""));
+    Path firstFile = tempDir.resolve("HasFoo.java");
+    Path secondFile = tempDir.resolve("HasBaz.java");
+    Path nonMatchingFile = tempDir.resolve("HasNeither.java");
+    Files.writeString(firstFile, firstContent);
+    Files.writeString(secondFile, secondContent);
+    Files.writeString(nonMatchingFile, nonMatchingContent);
+
+    Set<Path> visitedFiles = ConcurrentHashMap.newKeySet();
+
+    UseCase useCase = new UseCase() {
+      @Override
+      public Predicate<String> getContentPrefilteringPredicate() {
+        // "any of" form, written inline without a helper
+        return content -> content.contains("FooBar") || content.contains("BazQux");
+      }
+
+      @Override
+      public Set<? extends ASTOperation> getOperations() {
+        return Set.of((compilationUnit, node, rewriter) -> {
+          Path path = (Path) compilationUnit.getProperty(CompilationUnitProperty.ABSOLUTE_PATH);
+          if (path != null) {
+            visitedFiles.add(path.getFileName());
+          }
+        });
+      }
+
+      @Override
+      public int getParallelism() {
+        return 1;
+      }
+    };
+
+    AstraCore.run(tempDir.toString(), useCase);
+
+    assertTrue("File containing the first token should have been visited",
+        visitedFiles.stream().anyMatch(p -> p.toString().equals("HasFoo.java")));
+    assertTrue("File containing the second token should have been visited",
+        visitedFiles.stream().anyMatch(p -> p.toString().equals("HasBaz.java")));
+    assertFalse("File containing neither token should have been skipped",
+        visitedFiles.stream().anyMatch(p -> p.toString().equals("HasNeither.java")));
+    assertEquals("Non-matching file content must be unchanged",
+        nonMatchingContent, Files.readString(nonMatchingFile));
   }
 
 

@@ -1,6 +1,5 @@
 package org.alfasoftware.astra.core.refactoring;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -41,21 +40,18 @@ public interface UseCase {
    *
    * <p>This predicate is applied <em>after</em> {@link #getPrefilteringPredicate()}
    * and only when that path-level predicate has already passed.
+   *
+   * <p>Examples:
+   * <pre>
+   * // pass files that mention any of several type names:
+   * content -&gt; content.contains("OldFoo") || content.contains("OldBar");
+   *
+   * // pass files that mention all of several tokens:
+   * content -&gt; content.contains("OldFoo") &amp;&amp; content.contains("@Deprecated");
+   * </pre>
    */
   default Predicate<String> getContentPrefilteringPredicate() {
     return content -> true;
-  }
-
-  /**
-   * Returns a content predicate that passes only files whose raw text contains
-   * at least one of the supplied strings. Useful as a quick guard based on
-   * type simple names or fully-qualified names.
-   *
-   * @param tokens one or more strings to search for in the file content
-   * @return a predicate that returns {@code true} when the content contains any of the tokens
-   */
-  static Predicate<String> containsAnyOf(String... tokens) {
-    return content -> Arrays.stream(tokens).anyMatch(content::contains);
   }
 
   Set<? extends ASTOperation> getOperations();
