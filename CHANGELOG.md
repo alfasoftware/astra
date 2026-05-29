@@ -1,6 +1,70 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-04-28
+### Changed
+* Updated Java compatibility to 17 (#139) in https://github.com/alfasoftware/astra/pull/140
+
+## [2.6.1] - 2025-08-15
+### Added
+* Added Jakarta import ordering support to UnusedImportRefactor in https://github.com/alfasoftware/astra/pull/137
+
+### Changed
+* Publish artifacts directly to Maven Central and fix GPG signing in the release process in https://github.com/alfasoftware/astra/pull/138
+
+## [2.6.0] - 2025-04-03
+### Fixed
+* AnnotationChangeRefactor now correctly handles changing between annotations that share a simple name but differ by package in https://github.com/alfasoftware/astra/pull/133
+
+## [2.5.0] - 2025-04-03
+### Changed
+* astra-maven-plugin now ignores additional classpath entries on the use case when run as a plugin in https://github.com/alfasoftware/astra/pull/131
+* Documented how to use the Maven plugin in https://github.com/alfasoftware/astra/pull/132
+* Cache build dependencies in the GitHub Actions workflow in https://github.com/alfasoftware/astra/pull/136
+
+### Fixed
+* astra-maven-plugin classloader now includes test dependencies (#134) in https://github.com/alfasoftware/astra/pull/135
+
+## [2.4.2] - 2024-11-25
+### Added
+* New astra-maven-plugin for applying refactors as a build step in https://github.com/alfasoftware/astra/pull/122
+
+### Changed
+* Build and release-pipeline fixes to enable deployment of the new Maven plugin (Maven 3.9.9, nexus-staging/maven-plugin-plugin updates, debug cleanup) in #124 - #129
+
+### Fixed
+* Fixed Javadoc warnings surfaced by the build in https://github.com/alfasoftware/astra/pull/123
+* Added the missing goal prefix for the Maven plugin in https://github.com/alfasoftware/astra/pull/130
+
+_Note: 2.4.0 and 2.4.1 were release-pipeline retries while stabilising deployment of the new Maven plugin; 2.4.2 was the first successful publish._
+
+## [2.3.0] - 2024-09-10
+### Added
+* AnnotationChangeRefactor can now set type literal annotation members in https://github.com/alfasoftware/astra/pull/119
+
+## [2.2.4] - 2024-04-16
+### Added
+* UpdateTypeRefactor can now move source code files, relocating a type to a new package or name in https://github.com/alfasoftware/astra/pull/118
+
+### Changed
+* Build/CI stabilisation for the release pipeline: pinned Sonar plugin and Java source versions and adjusted the coverage profile
+
+_Note: 2.2.0–2.2.3 were release-pipeline retries; 2.2.4 was the first successful publish of this content._
+
+## [2.1.3] - 2023-06-15
+### Fixed
+* Pinned dependency versions to avoid resolving version-incompatible dependencies (#115) in https://github.com/alfasoftware/astra/pull/116
+
+## [2.1.2] - 2022-10-31
+### Added
+* Added test coverage for MethodAnalysis in https://github.com/alfasoftware/astra/pull/111
+
+### Changed
+* Added code coverage reporting via Sonar in https://github.com/alfasoftware/astra/pull/110
+
+### Fixed
+* AstraUtils#getFullyQualifiedName utilities now handle type declarations with non-TypeDeclaration parents (#112) in https://github.com/alfasoftware/astra/pull/113
+
 ## [2.1.1] - 2022-07-15
 ### Changed
 * Addressing sonar issues following AnnotationChangeRefactor updates by @RadikalJin in https://github.com/alfasoftware/astra/pull/99
