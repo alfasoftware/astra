@@ -277,7 +277,7 @@ public class TestMethodMatcher {
         + "fullyQualifiedParameterNames=Optional.empty, "
         + "varArgs=Optional.empty, "
         + "parentContext=Optional.empty, "
-        + "requiredAnnotations=[]]",
+        + "requiredAnnotations=Optional.empty]",
         matcherWithDefaultPredicateDescriptions.toString());
 
     assertEquals("MethodMatcher ["
@@ -286,7 +286,7 @@ public class TestMethodMatcher {
         + "fullyQualifiedParameterNames=Optional.empty, "
         + "varArgs=Optional.empty, "
         + "parentContext=Optional.empty, "
-        + "requiredAnnotations=[]]",
+        + "requiredAnnotations=Optional.empty]",
         matcherWithDescribedPredicates.toString());
   }
 

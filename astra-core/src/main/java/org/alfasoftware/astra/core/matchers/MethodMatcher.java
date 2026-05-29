@@ -45,7 +45,7 @@ public class MethodMatcher {
   private Optional<MethodMatcher> parentContextMatcher = Optional.empty();
   private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
   private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
-  private List<String> requiredAnnotations = new ArrayList<>();
+  private Optional<List<String>> requiredAnnotations = Optional.empty();
 
 
   private MethodMatcher(Builder builder) {
@@ -58,7 +58,7 @@ public class MethodMatcher {
     this.parentContextMatcher = builder.parentContext;
     this.returnTypePredicate = builder.returnTypePredicate; // only implemented for MethodDeclarations so far
     this.customPredicate = builder.customPredicate;
-    this.requiredAnnotations = new ArrayList<>(builder.requiredAnnotations);
+    this.requiredAnnotations = builder.requiredAnnotations;
   }
 
   /**
@@ -82,7 +82,7 @@ public class MethodMatcher {
     private Optional<MethodMatcher> parentContext = Optional.empty();
     private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
     private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
-    private List<String> requiredAnnotations = new ArrayList<>();
+    private Optional<List<String>> requiredAnnotations = Optional.empty();
 
 
     /**
@@ -150,7 +150,11 @@ public class MethodMatcher {
      * @return the builder
      */
     public Builder withAnnotation(String fullyQualifiedAnnotationName) {
-      this.requiredAnnotations.add(fullyQualifiedAnnotationName.replaceAll("\\$", "."));
+    	  if (this.requiredAnnotations.isEmpty()) {
+    	    this.requiredAnnotations = Optional.of(new ArrayList<>());
+    	  }
+    	
+      this.requiredAnnotations.get().add(fullyQualifiedAnnotationName.replaceAll("\\$", "."));
       return this;
     }
 
@@ -213,7 +217,7 @@ public class MethodMatcher {
    * Returns {@code true} if no annotations were specified.
    */
   private boolean isAnnotationMatch(IAnnotationBinding[] annotations) {
-    if (requiredAnnotations.isEmpty()) {
+    if (requiredAnnotations.isEmpty() || requiredAnnotations.get().isEmpty()) {
       return true;
     }
     Set<String> presentAnnotations = Arrays.stream(annotations)
@@ -221,7 +225,7 @@ public class MethodMatcher {
         .filter(Objects::nonNull)
         .map(ITypeBinding::getQualifiedName)
         .collect(Collectors.toSet());
-    return presentAnnotations.containsAll(requiredAnnotations);
+    return presentAnnotations.containsAll(requiredAnnotations.get());
   }
 
 
@@ -231,15 +235,14 @@ public class MethodMatcher {
    * possible, or against the unresolved annotation name as a last resort.
    */
   private boolean isAnnotationMatchFromAST(MethodDeclaration methodDeclaration) {
-    if (requiredAnnotations.isEmpty()) {
+    if (requiredAnnotations.isEmpty() || requiredAnnotations.get().isEmpty()) {
       return true;
     }
     @SuppressWarnings("unchecked")
     List<Object> modifiers = methodDeclaration.modifiers();
     Set<String> presentNames = new HashSet<>();
     for (Object modifier : modifiers) {
-      if (modifier instanceof Annotation) {
-        Annotation ann = (Annotation) modifier;
+      if (modifier instanceof Annotation ann) {
         ITypeBinding typeBinding = ann.getTypeName().resolveTypeBinding();
         if (typeBinding != null) {
           presentNames.add(typeBinding.getQualifiedName());
@@ -248,7 +251,7 @@ public class MethodMatcher {
         }
       }
     }
-    return presentNames.containsAll(requiredAnnotations);
+    return presentNames.containsAll(requiredAnnotations.get());
   }
 
 
