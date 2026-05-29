@@ -26,6 +26,13 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
  * A way of matching a method by its properties.
  * Examples of method properties that can be used to match include the method name,
  * arguments, the fully qualified name of the declaring type, and the return type.
+ *
+ * <p>Return-type matching is supported across all of the matched node kinds -
+ * {@link MethodInvocation}, {@link ClassInstanceCreation}, {@link MethodDeclaration}
+ * and {@link IMethodBinding}. For the binding-based node kinds this requires the
+ * method binding to be resolvable (i.e. the appropriate sources / classpaths must be
+ * supplied); where it cannot be resolved a warning is logged and the matcher reports
+ * a non-match, in line with the handling of other binding-based criteria.</p>
  */
 public class MethodMatcher {
 
@@ -50,7 +57,7 @@ public class MethodMatcher {
     this.fullyQualifiedParameterNames = builder.fullyQualifiedParameterNames;
     this.isVarargs = builder.isVarargs;
     this.parentContextMatcher = builder.parentContext;
-    this.returnTypePredicate = builder.returnTypePredicate; // only implemented for MethodDeclarations so far
+    this.returnTypePredicate = builder.returnTypePredicate;
     this.customPredicate = builder.customPredicate;
   }
 
@@ -123,7 +130,9 @@ public class MethodMatcher {
       return this;
     }
     public Builder withfullyQualifiedReturnType(String fullyQualifiedReturnType) {
-      this.returnTypePredicate = Optional.of(describedPredicate("method return type is [" + fullyQualifiedReturnType + "]", Predicate.isEqual(fullyQualifiedReturnType)));
+      // Removing $ from inner class names as this won't match with resolved type binding names
+      String exactName = fullyQualifiedReturnType.replaceAll("\\$", ".");
+      this.returnTypePredicate = Optional.of(describedPredicate("method return type is [" + fullyQualifiedReturnType + "]", Predicate.isEqual(exactName)));
       return this;
     }
     public Builder withCustomPredicate(DescribedPredicate<? super ASTNode> customInvocationPredicate) {
@@ -284,6 +293,41 @@ public class MethodMatcher {
       .isPresent();
   }
 
+
+  /**
+   * @return true if we aren't matching on return type, or if the supplied fully qualified
+   *         return type satisfies the configured return type predicate.
+   */
+  private boolean returnTypeMatches(String fullyQualifiedReturnType) {
+    if (! returnTypePredicate.isPresent()) {
+      return true;
+    }
+    if (fullyQualifiedReturnType == null) {
+      return false;
+    }
+    // Normalise inner class names so that nested return types match, in line with the
+    // handling of declaring types and parameter types elsewhere in this matcher.
+    return returnTypePredicate.get().test(fullyQualifiedReturnType.replaceAll("\\$", "."));
+  }
+
+
+  /**
+   * @return true if we aren't matching on return type, or if the return type of the supplied
+   *         method binding satisfies the configured return type predicate. The comparison is
+   *         performed against the fully qualified name (erasure for generics) so that behaviour
+   *         is consistent with the {@link MethodDeclaration} return type matching.
+   */
+  private boolean returnTypeMatches(IMethodBinding methodBinding) {
+    if (! returnTypePredicate.isPresent()) {
+      return true;
+    }
+    final ITypeBinding returnTypeBinding = methodBinding.getReturnType();
+    if (returnTypeBinding == null) {
+      return false;
+    }
+    return returnTypeMatches(getName(returnTypeBinding));
+  }
+
   
   private boolean isSimpleNameMatch(ClassInstanceCreation cic) {
     return ! methodNamePredicate.isPresent() || methodNamePredicate.get().test(AstraUtils.getSimpleName(cic.getType().toString()));
@@ -351,7 +395,7 @@ public class MethodMatcher {
       return false;
     }
 
-    if (fullyQualifiedParameterNames.isPresent() || isVarargs.isPresent()) {
+    if (fullyQualifiedParameterNames.isPresent() || isVarargs.isPresent() || returnTypePredicate.isPresent()) {
       final Optional<IMethodBinding> binding = Optional.of(methodInvocation)
           .map(MethodInvocation::resolveMethodBinding);
 
@@ -363,6 +407,7 @@ public class MethodMatcher {
       if (! binding
           .filter(mb -> ! isVarargs.isPresent() || isMethodVarargs(mb))
           .filter(this::isMethodParameterListMatch)
+          .filter(this::returnTypeMatches)
           .isPresent()) {
         return false;
       }
@@ -382,9 +427,11 @@ public class MethodMatcher {
       // do the parameters match?
         .filter(cic -> isMethodParameterListMatch(cic.resolveConstructorBinding()))
       // if we're checking whether it's varargs, does it match our expectation?
-        .filter(cic -> 
+        .filter(cic ->
           ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding())
         )
+      // does the return type match? (constructor bindings report a void return type in JDT)
+        .filter(cic -> returnTypeMatches(cic.resolveConstructorBinding()))
       // does the classInstanceCreation match the custom predicate
         .filter(cic -> !customPredicate.isPresent() || customPredicate.get().test(cic))
         .isPresent();
@@ -403,6 +450,8 @@ public class MethodMatcher {
         .filter(imb ->
           ! isVarargs.isPresent() || isMethodVarargs(imb)
         )
+        // does the return type match?
+        .filter(this::returnTypeMatches)
         .isPresent();
   }
 
@@ -412,7 +461,7 @@ public class MethodMatcher {
       // does the method name match?
       .filter(m -> !methodNamePredicate.isPresent() || methodNamePredicate.get().test(m.getName().toString()))
       // does the return type match?
-      .filter(m -> !returnTypePredicate.isPresent() || returnTypePredicate.get().test(AstraUtils.getFullyQualifiedName(m.getReturnType2())));
+      .filter(m -> returnTypeMatches(AstraUtils.getFullyQualifiedName(m.getReturnType2())));
 
     final Optional<IMethodBinding> binding = method
       // Now on to the things that require a resolved binding
