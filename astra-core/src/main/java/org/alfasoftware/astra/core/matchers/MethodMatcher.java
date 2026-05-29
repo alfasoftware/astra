@@ -6,8 +6,11 @@ import static org.alfasoftware.astra.core.utils.AstraUtils.getName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -15,8 +18,10 @@ import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IAnnotationBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -47,6 +52,7 @@ public class MethodMatcher {
   private Optional<MethodMatcher> parentContextMatcher = Optional.empty();
   private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
   private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
+  private Optional<List<String>> requiredAnnotations = Optional.empty();
 
 
   private MethodMatcher(Builder builder) {
@@ -59,6 +65,7 @@ public class MethodMatcher {
     this.parentContextMatcher = builder.parentContext;
     this.returnTypePredicate = builder.returnTypePredicate;
     this.customPredicate = builder.customPredicate;
+    this.requiredAnnotations = builder.requiredAnnotations;
   }
 
   /**
@@ -82,6 +89,7 @@ public class MethodMatcher {
     private Optional<MethodMatcher> parentContext = Optional.empty();
     private Optional<DescribedPredicate<String>> returnTypePredicate = Optional.empty();
     private Optional<DescribedPredicate<? super ASTNode>> customPredicate = Optional.empty();
+    private Optional<List<String>> requiredAnnotations = Optional.empty();
 
 
     /**
@@ -140,6 +148,25 @@ public class MethodMatcher {
       return this;
     }
 
+    /**
+     * Specifies a fully qualified annotation name that the method must be annotated with.
+     * Can be called multiple times; all supplied annotations must be present (AND semantics).
+     * Works for method declarations and also for invocation sites (by resolving the binding
+     * to the declaring method's annotations), making it possible to find all calls to
+     * methods carrying a given annotation — e.g. {@code withAnnotation("java.lang.Deprecated")}.
+     *
+     * @param fullyQualifiedAnnotationName the fully qualified name of the required annotation
+     * @return the builder
+     */
+    public Builder withAnnotation(String fullyQualifiedAnnotationName) {
+    	  if (this.requiredAnnotations.isEmpty()) {
+    	    this.requiredAnnotations = Optional.of(new ArrayList<>());
+    	  }
+    	
+      this.requiredAnnotations.get().add(fullyQualifiedAnnotationName.replaceAll("\\$", "."));
+      return this;
+    }
+
     public MethodMatcher build() {
       return new MethodMatcher(this);
     }
@@ -193,6 +220,49 @@ public class MethodMatcher {
       .build();
   }
   
+
+  /**
+   * Checks that all required annotations are present among the provided binding annotations.
+   * Returns {@code true} if no annotations were specified.
+   */
+  private boolean isAnnotationMatch(IAnnotationBinding[] annotations) {
+    if (requiredAnnotations.isEmpty() || requiredAnnotations.get().isEmpty()) {
+      return true;
+    }
+    Set<String> presentAnnotations = Arrays.stream(annotations)
+        .map(IAnnotationBinding::getAnnotationType)
+        .filter(Objects::nonNull)
+        .map(ITypeBinding::getQualifiedName)
+        .collect(Collectors.toSet());
+    return presentAnnotations.containsAll(requiredAnnotations.get());
+  }
+
+
+  /**
+   * AST-level annotation check for {@link MethodDeclaration} nodes, used as a fallback
+   * when no binding is available. Matches against resolved annotation type names where
+   * possible, or against the unresolved annotation name as a last resort.
+   */
+  private boolean isAnnotationMatchFromAST(MethodDeclaration methodDeclaration) {
+    if (requiredAnnotations.isEmpty() || requiredAnnotations.get().isEmpty()) {
+      return true;
+    }
+    @SuppressWarnings("unchecked")
+    List<Object> modifiers = methodDeclaration.modifiers();
+    Set<String> presentNames = new HashSet<>();
+    for (Object modifier : modifiers) {
+      if (modifier instanceof Annotation ann) {
+        ITypeBinding typeBinding = ann.getTypeName().resolveTypeBinding();
+        if (typeBinding != null) {
+          presentNames.add(typeBinding.getQualifiedName());
+        } else {
+          presentNames.add(ann.getTypeName().getFullyQualifiedName());
+        }
+      }
+    }
+    return presentNames.containsAll(requiredAnnotations.get());
+  }
+
 
   private boolean isMethodNameMatch(MethodInvocation mi) {
     return ! methodNamePredicate.isPresent() || methodNamePredicate.get().test(mi.getName().toString());
@@ -395,7 +465,7 @@ public class MethodMatcher {
       return false;
     }
 
-    if (fullyQualifiedParameterNames.isPresent() || isVarargs.isPresent() || returnTypePredicate.isPresent()) {
+    if (fullyQualifiedParameterNames.isPresent() || isVarargs.isPresent() || ! requiredAnnotations.isEmpty() || returnTypePredicate.isPresent()) {
       final Optional<IMethodBinding> binding = Optional.of(methodInvocation)
           .map(MethodInvocation::resolveMethodBinding);
 
@@ -407,6 +477,7 @@ public class MethodMatcher {
       if (! binding
           .filter(mb -> ! isVarargs.isPresent() || isMethodVarargs(mb))
           .filter(this::isMethodParameterListMatch)
+          .filter(mb -> isAnnotationMatch(mb.getAnnotations()))
           .filter(this::returnTypeMatches)
           .isPresent()) {
         return false;
@@ -430,6 +501,9 @@ public class MethodMatcher {
         .filter(cic ->
           ! isVarargs.isPresent() || isMethodVarargs(cic.resolveConstructorBinding())
         )
+      // do the required annotations match?
+        .filter(cic -> cic.resolveConstructorBinding() != null &&
+            isAnnotationMatch(cic.resolveConstructorBinding().getAnnotations()))
       // does the return type match? (constructor bindings report a void return type in JDT)
         .filter(cic -> returnTypeMatches(cic.resolveConstructorBinding()))
       // does the classInstanceCreation match the custom predicate
@@ -450,6 +524,8 @@ public class MethodMatcher {
         .filter(imb ->
           ! isVarargs.isPresent() || isMethodVarargs(imb)
         )
+        // do the required annotations match?
+        .filter(imb -> isAnnotationMatch(imb.getAnnotations()))
         // does the return type match?
         .filter(this::returnTypeMatches)
         .isPresent();
@@ -476,7 +552,16 @@ public class MethodMatcher {
     if (customPredicate.isPresent() && ! customPredicate.get().test(methodDeclaration)) {
       return false;
     }
-    
+
+    // Annotation check: prefer binding-based resolution; fall back to AST modifiers
+    if (binding.isPresent()) {
+      if (! isAnnotationMatch(binding.get().getAnnotations())) {
+        return false;
+      }
+    } else if (! isAnnotationMatchFromAST(methodDeclaration)) {
+      return false;
+    }
+
     return binding
         // is that method declared on the type we're looking for?
         .filter(this::isFQDeclaringTypeNameMatch)
@@ -523,6 +608,7 @@ public class MethodMatcher {
         ", fullyQualifiedParameterNames=" + fullyQualifiedParameterNames +
         ", varArgs=" + isVarargs +
         ", parentContext=" + parentContextMatcher +
+        ", requiredAnnotations=" + requiredAnnotations +
         "]";
   }
 
