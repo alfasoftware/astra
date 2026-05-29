@@ -105,6 +105,7 @@ public class AstraCore {
 
     Set<? extends ASTOperation> operations = useCase.getOperations();
     int parallelism = useCase.getParallelism();
+    Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate();
     log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s)");
 
     List<Throwable> fileErrors = new ArrayList<>();
@@ -116,7 +117,7 @@ public class AstraCore {
       List<Future<?>> futures = new ArrayList<>();
       try (Stream<Path> walk = Files.walk(sourcePath)) {
         walk.filter(fileFilter)
-            .forEach(f -> futures.add(executor.submit(() -> applyOperationsAndSave(f, operations, sources, classPath))));
+            .forEach(f -> futures.add(executor.submit(() -> applyOperationsAndSave(f, operations, sources, classPath, contentPrefilteringPredicate))));
       }
 
       for (Future<?> future : futures) {
@@ -234,8 +235,25 @@ public class AstraCore {
    * Operations that result in an empty file, will cause the file to be deleted.
    */
   protected void applyOperationsAndSave(Path javaFile, Set<? extends ASTOperation> operations, String[] sources, String[] classpath) {
+    applyOperationsAndSave(javaFile, operations, sources, classpath, content -> true);
+  }
+
+  /**
+   * Applies the operations to a source file and then overwrites that file with the result.
+   * Files whose content does not satisfy {@code contentPrefilteringPredicate} are skipped entirely,
+   * avoiding the cost of AST construction.
+   * Operations that result in an empty file, will cause the file to be deleted.
+   */
+  protected void applyOperationsAndSave(Path javaFile, Set<? extends ASTOperation> operations, String[] sources, String[] classpath, Predicate<String> contentPrefilteringPredicate) {
     try {
       String fileContentBefore = new String(Files.readAllBytes(javaFile.toAbsolutePath()));
+
+      // Apply the content predicate before parsing — skip files that cannot be affected
+      if (!contentPrefilteringPredicate.test(fileContentBefore)) {
+        log.debug("Skipping [{}] — excluded by content pre-filtering predicate", javaFile);
+        return;
+      }
+
       // apply the operations
       final String fileContentAfter = applyOperationsToFile(javaFile, fileContentBefore, operations, sources, classpath);
 

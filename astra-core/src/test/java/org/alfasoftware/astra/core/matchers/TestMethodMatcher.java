@@ -276,7 +276,8 @@ public class TestMethodMatcher {
         + "fullyQualifiedDeclaringType=Optional[FQ type is [com.Foo]], "
         + "fullyQualifiedParameterNames=Optional.empty, "
         + "varArgs=Optional.empty, "
-        + "parentContext=Optional.empty]",
+        + "parentContext=Optional.empty, "
+        + "requiredAnnotations=Optional.empty]",
         matcherWithDefaultPredicateDescriptions.toString());
 
     assertEquals("MethodMatcher ["
@@ -284,7 +285,8 @@ public class TestMethodMatcher {
         + "fullyQualifiedDeclaringType=Optional[" + customFQTypeDescription + "], "
         + "fullyQualifiedParameterNames=Optional.empty, "
         + "varArgs=Optional.empty, "
-        + "parentContext=Optional.empty]",
+        + "parentContext=Optional.empty, "
+        + "requiredAnnotations=Optional.empty]",
         matcherWithDescribedPredicates.toString());
   }
 
@@ -427,6 +429,94 @@ public class TestMethodMatcher {
     checkNoMethodMatchFoundInClass(methodInvocationMatcher, ExampleClassUsingMethodWithClassParameter.class);
     checkMethodMatchFoundInClass(classInstanceCreationMatcher, ExampleClassUsingMultipleMethods.class);
     checkNoMethodMatchFoundInClass(classInstanceCreationMatcherNoMatch, ExampleClassUsingMultipleMethods.class);
+  }
+
+
+  /**
+   * Tests that a method declaration annotated with {@code @Deprecated} is matched
+   * when the matcher specifies that annotation.
+   */
+  @Test
+  public void testMatchMethodDeclarationByAnnotation() {
+    MethodMatcher deprecatedMatcher = MethodMatcher.builder()
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    checkMethodMatchFoundInClass(deprecatedMatcher, ExampleUsedClassWithAnnotatedMethods.class);
+  }
+
+
+  /**
+   * Tests that a non-annotated method declaration is NOT matched when the matcher
+   * requires a specific annotation that is absent.
+   */
+  @Test
+  public void testNoMatchMethodDeclarationByAnnotationWhenNotAnnotated() {
+    MethodMatcher deprecatedMatcher = MethodMatcher.builder()
+        .withMethodName("normalMethod")
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    checkNoMethodMatchFoundInClass(deprecatedMatcher, ExampleUsedClassWithAnnotatedMethods.class);
+  }
+
+
+  /**
+   * Tests that combining annotation + method-name constraints narrows the match correctly:
+   * only the deprecated method matches, not the suppressed or normal ones.
+   */
+  @Test
+  public void testMatchMethodDeclarationByAnnotationAndName() {
+    MethodMatcher deprecatedMethodMatcher = MethodMatcher.builder()
+        .withMethodName("deprecatedMethod")
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    MethodMatcher suppressedMethodMatcher = MethodMatcher.builder()
+        .withMethodName("suppressedMethod")
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    checkMethodMatchFoundInClass(deprecatedMethodMatcher, ExampleUsedClassWithAnnotatedMethods.class);
+    checkNoMethodMatchFoundInClass(suppressedMethodMatcher, ExampleUsedClassWithAnnotatedMethods.class);
+  }
+
+
+  /**
+   * Tests that method invocations of a {@code @Deprecated} method are matched at the
+   * call site by resolving the binding to the declaration's annotations.
+   */
+  @Test
+  public void testMatchMethodInvocationByAnnotation() {
+    MethodMatcher deprecatedInvocationMatcher = MethodMatcher.builder()
+        .withFullyQualifiedDeclaringType(ExampleUsedClassWithAnnotatedMethods.class.getName())
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    MethodMatcher suppressedInvocationMatcher = MethodMatcher.builder()
+        .withFullyQualifiedDeclaringType(ExampleUsedClassWithAnnotatedMethods.class.getName())
+        .withMethodName("suppressedMethod")
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    checkMethodMatchFoundInClass(deprecatedInvocationMatcher, ExampleClassCallingAnnotatedMethod.class);
+    checkNoMethodMatchFoundInClass(suppressedInvocationMatcher, ExampleClassCallingAnnotatedMethod.class);
+  }
+
+
+  /**
+   * Tests that a call to a non-annotated method is NOT matched when the matcher
+   * requires a specific annotation.
+   */
+  @Test
+  public void testNoMatchMethodInvocationByAnnotationWhenNotAnnotated() {
+    MethodMatcher deprecatedNormalMethodMatcher = MethodMatcher.builder()
+        .withFullyQualifiedDeclaringType(ExampleUsedClassWithAnnotatedMethods.class.getName())
+        .withMethodName("normalMethod")
+        .withAnnotation("java.lang.Deprecated")
+        .build();
+
+    checkNoMethodMatchFoundInClass(deprecatedNormalMethodMatcher, ExampleClassCallingAnnotatedMethod.class);
   }
 
 
