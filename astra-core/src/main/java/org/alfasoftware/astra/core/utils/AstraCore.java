@@ -22,7 +22,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.alfasoftware.astra.core.refactoring.UseCase;
@@ -82,26 +81,24 @@ public class AstraCore {
     log.info("Starting Astra run for directory: " + directoryPath);
     AtomicLong currentFileIndex = new AtomicLong();
     AtomicLong currentPercentage = new AtomicLong();
-    log.info("Counting files (this may take a few seconds)");
     Instant startTime = Instant.now();
 
-    List<Path> javaFilesInDirectory;
-    try (Stream<Path> walk = Files.walk(Paths.get(directoryPath))) {
-      javaFilesInDirectory = walk
-          .filter(f -> f.toFile().isFile())
-          .filter(f -> f.getFileName().toString().endsWith("java"))
-          .collect(Collectors.toList());
+    // The same file-selection filter (.java extension + the UseCase path prefiltering predicate)
+    // is used for both the count walk and the processing walk, so the progress denominator can
+    // never drift from the set of files actually processed.
+    Path sourcePath = Paths.get(directoryPath);
+    Predicate<Path> fileFilter = buildFileFilter(useCase);
+
+    // First walk: a cheap count pass that reads only directory metadata (not file contents) to
+    // determine the total number of files to process, which feeds the progress percentage below.
+    log.info("Counting files (this may take a few seconds)");
+    long totalFiles;
+    try (Stream<Path> walk = Files.walk(sourcePath)) {
+      totalFiles = walk.filter(fileFilter).count();
     }
-    log.info(javaFilesInDirectory.size() + " .java files in directory to review");
+    log.info(totalFiles + " files to process after prefiltering");
 
-    log.info("Applying prefilters to files in directory");
-    Predicate<String> prefilteringPredicate = useCase.getPrefilteringPredicate();
-    List<Path> filteredJavaFiles = javaFilesInDirectory.stream()
-        .filter(f -> prefilteringPredicate.test(f.toString()))
-        .collect(Collectors.toList());
-    log.info(filteredJavaFiles.size() + " files remain after prefiltering");
-
-    if (filteredJavaFiles.isEmpty()) {
+    if (totalFiles == 0) {
       log.info(getPrintableDuration(Duration.between(startTime, Instant.now())));
       return;
     }
@@ -109,14 +106,19 @@ public class AstraCore {
     Set<? extends ASTOperation> operations = useCase.getOperations();
     int parallelism = useCase.getParallelism();
     Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate();
-    log.info("Processing [" + filteredJavaFiles.size() + "] files with [" + parallelism + "] thread(s)");
+    log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s)");
 
     List<Throwable> fileErrors = new ArrayList<>();
     ExecutorService executor = Executors.newFixedThreadPool(parallelism);
     try {
-      List<Future<?>> futures = filteredJavaFiles.stream()
-          .map(f -> executor.submit(() -> applyOperationsAndSave(f, operations, sources, classPath, contentPrefilteringPredicate)))
-          .collect(Collectors.toList());
+      // Second walk: stream paths directly into the executor as they are encountered, without
+      // materialising every path into a List first. This avoids holding all paths in memory at
+      // once on very large source trees.
+      List<Future<?>> futures = new ArrayList<>();
+      try (Stream<Path> walk = Files.walk(sourcePath)) {
+        walk.filter(fileFilter)
+            .forEach(f -> futures.add(executor.submit(() -> applyOperationsAndSave(f, operations, sources, classPath, contentPrefilteringPredicate))));
+      }
 
       for (Future<?> future : futures) {
         try {
@@ -130,9 +132,9 @@ public class AstraCore {
           throw new IOException("File processing was interrupted", e);
         }
         long idx = currentFileIndex.incrementAndGet();
-        long newPct = idx * 100 / filteredJavaFiles.size();
+        long newPct = idx * 100 / totalFiles;
         if (currentPercentage.getAndSet(newPct) != newPct) {
-          logProgress(idx, newPct, startTime, filteredJavaFiles.size());
+          logProgress(idx, newPct, startTime, totalFiles);
         }
       }
     } finally {
@@ -150,6 +152,22 @@ public class AstraCore {
       fileErrors.forEach(summary::addSuppressed);
       throw summary;
     }
+  }
+
+
+  /**
+   * Builds the single, shared file-selection filter applied to every {@link Path} encountered when
+   * walking the source directory. This combines the {@code .java} file check with the path-level
+   * prefiltering predicate from the {@link UseCase} ({@link UseCase#getPrefilteringPredicate()}).
+   *
+   * <p>The same {@link Predicate} instance is used for both the count walk (which determines the
+   * total used for progress reporting) and the processing walk, ensuring the two can never diverge.
+   */
+  private Predicate<Path> buildFileFilter(UseCase useCase) {
+    Predicate<String> prefilteringPredicate = useCase.getPrefilteringPredicate();
+    return f -> f.toFile().isFile()
+        && f.getFileName().toString().endsWith("java")
+        && prefilteringPredicate.test(f.toString());
   }
 
 
