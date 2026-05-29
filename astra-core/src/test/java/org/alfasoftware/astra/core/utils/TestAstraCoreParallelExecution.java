@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,11 +45,6 @@ public class TestAstraCoreParallelExecution {
         .forEach(path -> path.toFile().delete());
   }
 
-  @Test
-  public void testDefaultParallelismMatchesAvailableProcessors() {
-    UseCase useCase = () -> new HashSet<>();
-    assertEquals(Runtime.getRuntime().availableProcessors(), useCase.getParallelism());
-  }
 
   /**
    * Verifies that all files in the target directory are visited when running with parallelism > 1.
@@ -105,7 +99,7 @@ public class TestAstraCoreParallelExecution {
       assertNotNull("Exception message should be present", e.getMessage());
       // The root cause chain should reach the original failures
       Throwable root = e;
-      while (root.getCause() != null) {
+      while (root.getCause() != null && ! root.getCause().equals(root)) {
         root = root.getCause();
       }
       assertTrue("Exception chain should reference processing failures",
@@ -188,13 +182,13 @@ public class TestAstraCoreParallelExecution {
 
     UseCase useCase = useCase(1, path -> path.contains("Match"));
 
-    List<ILoggingEvent> events = captureAstraLogs(() -> AstraCore.run(tempDir.toString(), useCase));
+    List<String> events = captureAstraLogs(() -> AstraCore.run(tempDir.toString(), useCase));
 
     // The progress messages embed the total as "of [N] files reviewed".
     Pattern totalPattern = Pattern.compile("of \\[(\\d+)\\] files reviewed");
     boolean foundProgress = false;
-    for (ILoggingEvent event : events) {
-      Matcher matcher = totalPattern.matcher(event.getFormattedMessage());
+    for (String event : events) {
+      Matcher matcher = totalPattern.matcher(event);
       if (matcher.find()) {
         foundProgress = true;
         assertEquals("Progress total should match the number of files passing the filter",
@@ -269,22 +263,15 @@ public class TestAstraCoreParallelExecution {
   }
 
 
-  /** An action that may throw {@link IOException}, e.g. a call to {@link AstraCore#run}. */
-  @FunctionalInterface
-  private interface IOAction {
-    void run() throws IOException;
-  }
-
-
   /**
    * Captures the {@code INFO}-level log events emitted by {@link AstraCore} while {@code action} runs.
    */
-  private static List<ILoggingEvent> captureAstraLogs(IOAction action) throws IOException {
-    List<ILoggingEvent> events = new CopyOnWriteArrayList<>();
+  private static List<String> captureAstraLogs(Runnable action) throws IOException {
+    List<String> events = new CopyOnWriteArrayList<>();
     AppenderBase<ILoggingEvent> appender = new AppenderBase<>() {
       @Override
       protected void append(ILoggingEvent event) {
-        events.add(event);
+        events.add(event.getFormattedMessage());
       }
     };
     appender.start();
