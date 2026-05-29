@@ -1,5 +1,6 @@
 package org.alfasoftware.astra.core.refactoring;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -25,6 +26,36 @@ public interface UseCase {
    */
   default Predicate<String> getPrefilteringPredicate() {
     return s -> true; // i.e. no filter by default
+  }
+
+  /**
+   * Returns a predicate applied to the raw file content (as a String) before
+   * the file is parsed into an AST. Files for which this predicate returns
+   * {@code false} are skipped entirely, avoiding the cost of AST construction.
+   *
+   * <p>The default implementation accepts every file. Override this to provide
+   * a fast content-based check — for example, a simple
+   * {@code content -> content.contains("OldTypeName")} guard reduces parse
+   * overhead substantially on large codebases when only a minority of files
+   * reference the types being refactored.
+   *
+   * <p>This predicate is applied <em>after</em> {@link #getPrefilteringPredicate()}
+   * and only when that path-level predicate has already passed.
+   */
+  default Predicate<String> getContentPrefilteringPredicate() {
+    return content -> true;
+  }
+
+  /**
+   * Returns a content predicate that passes only files whose raw text contains
+   * at least one of the supplied strings. Useful as a quick guard based on
+   * type simple names or fully-qualified names.
+   *
+   * @param tokens one or more strings to search for in the file content
+   * @return a predicate that returns {@code true} when the content contains any of the tokens
+   */
+  static Predicate<String> containsAnyOf(String... tokens) {
+    return content -> Arrays.stream(tokens).anyMatch(content::contains);
   }
 
   Set<? extends ASTOperation> getOperations();
