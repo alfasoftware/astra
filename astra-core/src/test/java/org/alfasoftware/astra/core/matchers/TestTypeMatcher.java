@@ -722,6 +722,86 @@ public class TestTypeMatcher {
   }
 
 
+  @Test
+  public void testTypeMatcherForRecord() {
+    Matcher matcher = TypeMatcher.builder().asRecord().build();
+    ClassVisitor visitor = parse("package x; public record Rec(int value) {}");
+    assertTrue(matcher.matches(visitor.getAbstractTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForRecordWithName() {
+    Matcher matcher = TypeMatcher.builder().asRecord().withName("x.Rec").build();
+    ClassVisitor visitor = parse("package x; public record Rec(int value) {}");
+    assertTrue(matcher.matches(visitor.getAbstractTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForRecordDoesNotMatchClass() {
+    Matcher matcher = TypeMatcher.builder().asRecord().build();
+    ClassVisitor visitor = parse(SIMPLE_CLASS);
+    assertFalse(matcher.matches(visitor.getTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForClassDoesNotMatchRecord() {
+    Matcher matcher = TypeMatcher.builder().asClass().build();
+    ClassVisitor visitor = parse("package x; public record Rec(int value) {}");
+    assertFalse(matcher.matches(visitor.getAbstractTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForSealedClass() {
+    Matcher matcher = TypeMatcher.builder().asClass().isSealed().build();
+    ClassVisitor visitor = parse("package x; sealed class Shape permits Circle {} final class Circle extends Shape {}");
+    assertTrue(matcher.matches(visitor.getTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForSealedClassWhenItIsNot() {
+    Matcher matcher = TypeMatcher.builder().asClass().isSealed().build();
+    ClassVisitor visitor = parse(SIMPLE_CLASS);
+    assertFalse(matcher.matches(visitor.getTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForNonSealedClass() {
+    Matcher matcher = TypeMatcher.builder().asClass().isNonSealed().build();
+    ClassVisitor visitor = parse("package x; sealed class Shape permits Circle {} non-sealed class Circle extends Shape {}");
+    assertTrue(matcher.matches(visitor.getTypeDeclarations().get(1)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForNonSealedClassWhenItIsNot() {
+    Matcher matcher = TypeMatcher.builder().asClass().isNonSealed().build();
+    ClassVisitor visitor = parse("package x; sealed class Shape permits Circle {} non-sealed class Circle extends Shape {}");
+    assertFalse(matcher.matches(visitor.getTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForPermittedTypes() {
+    Matcher matcher = TypeMatcher.builder().asClass().isSealed().permitting(Set.of("x.Circle")).build();
+    ClassVisitor visitor = parse("package x; sealed class Shape permits Circle {} final class Circle extends Shape {}");
+    assertTrue(matcher.matches(visitor.getTypeDeclarations().get(0)));
+  }
+
+
+  @Test
+  public void testTypeMatcherForPermittedTypesWhenNotPermitted() {
+    Matcher matcher = TypeMatcher.builder().asClass().permitting(Set.of("x.Square")).build();
+    ClassVisitor visitor = parse("package x; sealed class Shape permits Circle {} final class Circle extends Shape {}");
+    assertFalse(matcher.matches(visitor.getTypeDeclarations().get(0)));
+  }
+
+
   private ClassVisitor parse(String source) {
     CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, new String[0]);
     ClassVisitor visitor = new ClassVisitor();
