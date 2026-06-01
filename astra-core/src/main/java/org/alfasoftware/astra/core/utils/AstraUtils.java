@@ -68,12 +68,11 @@ public class AstraUtils {
     return compilationUnit;
   }
 
-  private static final String JAVA_VERSION = JavaCore.VERSION_17;
+  private static final String JAVA_VERSION = JavaCore.latestSupportedJavaVersion();
 
 
   public static ASTParser createParser(String fileSource, String[] sources, String[] classPath) {
-    @SuppressWarnings("deprecation") // This is just saying "use a newer Java version"
-    ASTParser parser = ASTParser.newParser(AST.JLS17);
+    ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
     parser.setResolveBindings(true);
     parser.setBindingsRecovery(true);
     parser.setStatementsRecovery(true);
@@ -108,8 +107,7 @@ public class AstraUtils {
    * once per file as in the single-file {@code createAST()} path.
    */
   public static ASTParser createBatchParser(String[] sources, String[] classPath) {
-    @SuppressWarnings("deprecation")
-    ASTParser parser = ASTParser.newParser(AST.JLS17);
+    ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
     parser.setResolveBindings(true);
     parser.setBindingsRecovery(true);
     parser.setStatementsRecovery(true);
