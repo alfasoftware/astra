@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IDocElement;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -67,6 +68,7 @@ public class ClassVisitor extends ASTVisitor {
 
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
   private final List<CastExpression> castExpressions = new ArrayList<>();
+  private final List<InfixExpression> infixExpressions = new ArrayList<>();
 
   private final List<ImportDeclaration> imports = new ArrayList<>();
   private final List<SimpleType> simpleTypes = new ArrayList<>();
@@ -279,6 +281,13 @@ public class ClassVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
+  @Override
+  public boolean visit(InfixExpression node) {
+    log.debug("Infix expression: " + node);
+    infixExpressions.add(node);
+    return super.visit(node);
+  }
+
 
   public List<AbstractTypeDeclaration> getAbstractTypeDeclarations() {
     return abstractTypeDeclarations;
@@ -316,6 +325,10 @@ public class ClassVisitor extends ASTVisitor {
 
   public List<CastExpression> getCastExpressions() {
     return castExpressions;
+  }
+
+  public List<InfixExpression> getInfixExpressions() {
+    return infixExpressions;
   }
 
   public List<VariableDeclarationStatement> getVariableDeclarationStatements() {
@@ -420,6 +433,7 @@ public class ClassVisitor extends ASTVisitor {
       getImports(),
       getFieldAccesses(),
       getCastExpressions(),
+      getInfixExpressions(),
       getPatternInstanceofExpressions())
     .flatMap(Collection::stream)
     .collect(Collectors.toSet());
