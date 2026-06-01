@@ -1,5 +1,6 @@
 package org.alfasoftware.astra.core.utils;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -118,8 +119,47 @@ public class AstraUtils {
 
     final String[] encodings = new String[sources.length];
     Arrays.fill(encodings, "UTF-8");
-    parser.setEnvironment(classPath, sources, encodings, true);
+    parser.setEnvironment(filterClassPath(classPath), sources, encodings, true);
     return parser;
+  }
+
+
+  /**
+   * Filters classpath entries to those that JDT can open as a JAR archive or source directory,
+   * discarding any entry that is neither.
+   *
+   * <p>The per-file {@link ASTParser#createAST} API silently ignores unreadable classpath
+   * entries, but {@link ASTParser#createASTs} initialises the entire classpath environment
+   * upfront and propagates any {@link java.util.zip.ZipException} thrown when it encounters a
+   * non-archive file (e.g. a Maven {@code .pom} BOM artifact) in the classpath.  Filtering
+   * here restores the tolerant behaviour while surfacing a warning so callers know which
+   * entries were discarded.
+   *
+   * <p>Entries that do not exist on disk are passed through unchanged; they were already
+   * validated by {@link AstraCore#validateSourceAndClasspath} and will be reported there.
+   */
+  private static String[] filterClassPath(String[] classPath) {
+    return Arrays.stream(classPath)
+        .filter(entry -> {
+          if (entry == null || entry.isEmpty()) {
+            return false;
+          }
+          File f = new File(entry);
+          if (f.isDirectory()) {
+            return true;
+          }
+          String lower = entry.toLowerCase();
+          if (lower.endsWith(".jar") || lower.endsWith(".zip")) {
+            return true;
+          }
+          if (f.exists()) {
+            log.warn("Excluding classpath entry [{}] from batch parser — not a .jar, .zip, or directory. "
+                + "POM-only dependencies and other non-archive entries cannot be opened by JDT "
+                + "and would cause a ZipException during classpath initialisation.", entry);
+          }
+          return false;
+        })
+        .toArray(String[]::new);
   }
 
 
