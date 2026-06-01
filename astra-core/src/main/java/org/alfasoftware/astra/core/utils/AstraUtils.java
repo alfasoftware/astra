@@ -94,6 +94,38 @@ public class AstraUtils {
 
 
   /**
+   * Creates an {@link ASTParser} configured for batch processing via
+   * {@link ASTParser#createASTs(String[], String[], String[], org.eclipse.jdt.core.dom.FileASTRequestor, org.eclipse.core.runtime.IProgressMonitor)}.
+   *
+   * <p>The returned parser has binding resolution, binding recovery, and statement recovery
+   * enabled, and is configured with the supplied classpath and source paths.  Unlike
+   * {@link #createParser}, it does <em>not</em> call {@code setSource()}, {@code setUnitName()},
+   * or {@code setKind()} — those are per-file settings that are ignored (and must not be set)
+   * in batch mode.
+   *
+   * <p>The shared environment set up here — classpath scanning, JAR index loading — is
+   * amortised across every file passed to {@code createASTs()}, rather than being repeated
+   * once per file as in the single-file {@code createAST()} path.
+   */
+  public static ASTParser createBatchParser(String[] sources, String[] classPath) {
+    @SuppressWarnings("deprecation")
+    ASTParser parser = ASTParser.newParser(AST.JLS17);
+    parser.setResolveBindings(true);
+    parser.setBindingsRecovery(true);
+    parser.setStatementsRecovery(true);
+
+    HashMap<String, String> javaCoreOptions = new HashMap<>(JavaCore.getOptions());
+    JavaCore.setComplianceOptions(JAVA_VERSION, javaCoreOptions);
+    parser.setCompilerOptions(javaCoreOptions);
+
+    final String[] encodings = new String[sources.length];
+    Arrays.fill(encodings, "UTF-8");
+    parser.setEnvironment(classPath, sources, encodings, true);
+    return parser;
+  }
+
+
+  /**
    * Apply the recorded changes from the ASTRewrite to the source file, and return the result.
    *
    * @param source Java source document.

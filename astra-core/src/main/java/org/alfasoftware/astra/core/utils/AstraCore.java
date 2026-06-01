@@ -12,8 +12,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,20 +29,22 @@ import java.util.stream.Stream;
 
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.imports.UnusedImportRefactor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FileASTRequestor;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- *  AstraCore operates on source files in an input directory, building an AST for each file, using any additional classpaths supplied. 
+ *  AstraCore operates on source files in an input directory, building an AST for each file, using any additional classpaths supplied.
  *  It also builds an ASTRewriter to record changes.
  *
- *  It then visits every ASTNode in the AST, passing the nodes through a set of ASTOperations.
- *  If an operation is applicable to that node, (e.g. is this a method invocation? Is it an invocation of method Y?)
- *  it can record changes in the ASTRewriter (e.g. invoke method Z instead)
+ *  It then visits every ASTNode in the AST, passing the nodes through a set of ASTOperations.
+ *  If an operation is applicable to that node, (e.g. is this a method invocation? Is it an invocation of method Y?)
+ *  it can record changes in the ASTRewriter (e.g. invoke method Z instead)
  *
  *  When all ASTNodes have been visited, any changes recorded in the ASTRewriter are written back to the source file.
  */
@@ -108,16 +113,76 @@ public class AstraCore {
     Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate();
     log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s)");
 
+    // Second walk: materialise every path that passes the file filter, then read each file's
+    // content so that the content-prefiltering predicate can be applied before batch parsing.
+    // Files that pass the content predicate are collected for the shared-environment batch parse;
+    // files that are filtered out are tracked separately so they still count toward progress.
+    //
+    // Materialising paths here (rather than streaming them directly to the executor) is a
+    // deliberate trade-off: it is required so all qualifying paths can be handed to
+    // ASTParser.createASTs() in a single call, which amortises the cost of classpath scanning
+    // (JAR index loading, type environment initialisation) across the entire run rather than
+    // paying it once per file.
+    List<Path> pathsToParse = new ArrayList<>();
+    Map<String, String> pathToContent = new LinkedHashMap<>();
+    List<Path> contentFilteredPaths = new ArrayList<>();
+    Map<Path, RuntimeException> readFailures = new LinkedHashMap<>();
+
+    try (Stream<Path> walk = Files.walk(sourcePath)) {
+      walk.filter(fileFilter).forEach(path -> {
+        try {
+          String content = new String(Files.readAllBytes(path.toAbsolutePath()));
+          if (contentPrefilteringPredicate.test(content)) {
+            pathsToParse.add(path);
+            pathToContent.put(path.toAbsolutePath().normalize().toString(), content);
+          } else {
+            log.debug("Skipping [{}] — excluded by content pre-filtering predicate", path);
+            contentFilteredPaths.add(path);
+          }
+        } catch (IOException e) {
+          readFailures.put(path, new RuntimeException(
+              "Failed to read file [" + path + "]: " + e.getMessage(), e));
+        }
+      });
+    }
+
+    // Batch-parse all files that passed the content filter using a single shared compilation
+    // environment. JDT initialises the classpath (reads JAR indices, populates the type
+    // environment) exactly once for the entire batch rather than once per file.
+    log.info("Batch parsing [" + pathsToParse.size() + "] file(s) with shared compilation environment");
+    Map<String, CompilationUnit> parsedUnits = batchParseFiles(pathsToParse, sources, classPath);
+
     List<Throwable> fileErrors = new ArrayList<>();
     ExecutorService executor = Executors.newFixedThreadPool(parallelism);
     try {
-      // Second walk: stream paths directly into the executor as they are encountered, without
-      // materialising every path into a List first. This avoids holding all paths in memory at
-      // once on very large source trees.
       List<Future<?>> futures = new ArrayList<>();
-      try (Stream<Path> walk = Files.walk(sourcePath)) {
-        walk.filter(fileFilter)
-            .forEach(f -> futures.add(executor.submit(() -> applyOperationsAndSave(f, operations, sources, classPath, contentPrefilteringPredicate))));
+
+      // Submit work futures for files that were batch-parsed.
+      for (Path path : pathsToParse) {
+        String key = path.toAbsolutePath().normalize().toString();
+        CompilationUnit cu = parsedUnits.get(key);
+        String content = pathToContent.get(key);
+        if (cu != null && content != null) {
+          futures.add(executor.submit(() ->
+              applyOperationsAndSaveWithPreParsedCU(path, content, cu, operations, sources, classPath)));
+        } else {
+          // Defensive fallback: batch parse did not return a CU (should not happen with JDT).
+          log.warn("Batch parse produced no CompilationUnit for [{}]; falling back to per-file parse", path);
+          futures.add(executor.submit(() ->
+              applyOperationsAndSave(path, operations, sources, classPath, s -> true)));
+        }
+      }
+
+      // Submit failure futures for files that could not be read (surfaces them via future.get()).
+      for (Map.Entry<Path, RuntimeException> entry : readFailures.entrySet()) {
+        RuntimeException ex = entry.getValue();
+        futures.add(executor.submit((Runnable) () -> { throw ex; }));
+      }
+
+      // Submit no-op futures for content-filtered files so that they count toward the progress
+      // denominator, preserving the same progress behaviour as the previous per-file code path.
+      for (int i = 0; i < contentFilteredPaths.size(); i++) {
+        futures.add(executor.submit(() -> {}));
       }
 
       for (Future<?> future : futures) {
@@ -151,6 +216,104 @@ public class AstraCore {
           fileErrors.size() + " file(s) failed during processing; see suppressed exceptions for details");
       fileErrors.forEach(summary::addSuppressed);
       throw summary;
+    }
+  }
+
+
+  /**
+   * Batch-parses all of the supplied source files using a single shared JDT compilation
+   * environment.
+   *
+   * <p>A single {@link ASTParser} is configured with the supplied classpath and source paths,
+   * and {@link ASTParser#createASTs} is called with all file paths in one shot.  JDT
+   * initialises its internal {@code LookupEnvironment} — which involves scanning every JAR
+   * and source root on the classpath — exactly once for the whole batch rather than once per
+   * file, which is the primary cost saving over the per-file {@code createAST()} API.
+   *
+   * <p><strong>Thread safety:</strong> {@code createASTs()} processes files sequentially on
+   * the calling thread, calling back into {@code acceptAST()} for each one.  Bindings are
+   * resolved eagerly during parsing; by the time this method returns the returned
+   * {@link CompilationUnit} objects are fully resolved and can be read safely from multiple
+   * worker threads in the subsequent parallel operation-application phase — provided those
+   * threads do not themselves trigger new binding lookups that write to the shared
+   * {@code LookupEnvironment}.  In practice, all Astra operations only <em>read</em>
+   * already-resolved bindings, so concurrent operation application is safe.
+   *
+   * @return a map from normalised absolute path string to {@link CompilationUnit}; the path
+   *         strings are exactly those returned by
+   *         {@link Path#toAbsolutePath()}{@code .normalize().toString()} for each input path.
+   */
+  private static Map<String, CompilationUnit> batchParseFiles(
+      List<Path> paths, String[] sources, String[] classPath) {
+
+    Map<String, CompilationUnit> result = new HashMap<>(paths.size() * 2);
+
+    if (paths.isEmpty()) {
+      return result;
+    }
+
+    ASTParser parser = AstraUtils.createBatchParser(sources, classPath);
+
+    String[] absolutePaths = paths.stream()
+        .map(p -> p.toAbsolutePath().normalize().toString())
+        .toArray(String[]::new);
+    String[] fileEncodings = new String[absolutePaths.length];
+    Arrays.fill(fileEncodings, "UTF-8");
+
+    parser.createASTs(absolutePaths, fileEncodings, new String[0],
+        new FileASTRequestor() {
+          @Override
+          public void acceptAST(String sourceFilePath, CompilationUnit ast) {
+            // sourceFilePath is exactly what we passed in (absolute + normalised).
+            ast.setProperty(CompilationUnitProperty.ABSOLUTE_PATH,
+                Paths.get(sourceFilePath).toAbsolutePath());
+            ast.recordModifications();
+            result.put(sourceFilePath, ast);
+          }
+        }, null);
+
+    return result;
+  }
+
+
+  /**
+   * Applies {@code operations} to a file whose {@link CompilationUnit} was already produced by
+   * the batch parse, then runs import cleanup and writes the file back if content changed.
+   *
+   * <p>This mirrors the logic in {@link #applyOperationsAndSave} but skips the per-file
+   * {@link ASTParser} / {@link AstraUtils#readAsCompilationUnit} call that would otherwise
+   * re-initialise the JDT classpath environment for this individual file.
+   *
+   * <p>This method is designed to be called from multiple worker threads in parallel; each
+   * invocation operates exclusively on its own {@link CompilationUnit} and {@link ASTRewrite},
+   * so there is no shared mutable state between threads.
+   */
+  private void applyOperationsAndSaveWithPreParsedCU(
+      Path javaFile,
+      String fileContentBefore,
+      CompilationUnit preParseUnit,
+      Set<? extends ASTOperation> operations,
+      String[] sources,
+      String[] classpath) {
+    try {
+      ASTRewrite rewriter = runOperations(operations, preParseUnit);
+      String fileContentAfter = makeChangesFromAST(fileContentBefore, rewriter);
+
+      if (fileContentAfter.equals(fileContentBefore)) {
+        return;
+      }
+
+      // File was changed: run import cleanup and write back.
+      fileContentAfter = applyOperationsToSource(
+          new HashSet<>(Arrays.asList(new UnusedImportRefactor())),
+          sources, classpath, javaFile, fileContentAfter);
+
+      if (!fileContentAfter.equals(fileContentBefore)) {
+        Files.write(javaFile.toAbsolutePath(), fileContentAfter.getBytes(),
+            StandardOpenOption.TRUNCATE_EXISTING);
+      }
+    } catch (IOException | BadLocationException | IllegalArgumentException e) {
+      throw new RuntimeException("Failed to process file [" + javaFile + "]: " + e.getMessage(), e);
     }
   }
 
