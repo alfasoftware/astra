@@ -88,19 +88,22 @@ public class AstraCore {
     AtomicLong currentPercentage = new AtomicLong();
     Instant startTime = Instant.now();
 
-    // The same file-selection filter (.java extension + the UseCase path prefiltering predicate)
-    // is used for both the count walk and the processing walk, so the progress denominator can
-    // never drift from the set of files actually processed.
+    // Build the single file-selection filter used for path scanning, progress tracking, and
+    // chunk partitioning. Using one shared Predicate instance ensures the progress denominator
+    // can never drift from the set of files actually processed.
     Path sourcePath = Paths.get(directoryPath);
     Predicate<Path> fileFilter = buildFileFilter(useCase);
 
-    // First walk: a cheap count pass that reads only directory metadata (not file contents) to
-    // determine the total number of files to process, which feeds the progress percentage below.
-    log.info("Counting files (this may take a few seconds)");
-    long totalFiles;
+    // Single walk: collect all matching paths so we can (a) derive the progress denominator
+    // without a second walk and (b) partition the list into fixed-size chunks for
+    // bounded-memory batch parsing. Only Path objects are materialised here — file contents
+    // are read lazily, one chunk at a time.
+    log.info("Scanning for files (this may take a few seconds)");
+    List<Path> allPaths = new ArrayList<>();
     try (Stream<Path> walk = Files.walk(sourcePath)) {
-      totalFiles = walk.filter(fileFilter).count();
+      walk.filter(fileFilter).forEach(allPaths::add);
     }
+    long totalFiles = allPaths.size();
     log.info(totalFiles + " files to process after prefiltering");
 
     if (totalFiles == 0) {
@@ -110,96 +113,107 @@ public class AstraCore {
 
     Set<? extends ASTOperation> operations = useCase.getOperations();
     int parallelism = useCase.getParallelism();
+    int batchSize = useCase.getBatchSize();
     Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate();
-    log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s)");
+    log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s), batch size [" + batchSize + "]");
 
-    // Second walk: materialise every path that passes the file filter, then read each file's
-    // content so that the content-prefiltering predicate can be applied before batch parsing.
-    // Files that pass the content predicate are collected for the shared-environment batch parse;
-    // files that are filtered out are tracked separately so they still count toward progress.
-    //
-    // Materialising paths here (rather than streaming them directly to the executor) is a
-    // deliberate trade-off: it is required so all qualifying paths can be handed to
-    // ASTParser.createASTs() in a single call, which amortises the cost of classpath scanning
-    // (JAR index loading, type environment initialisation) across the entire run rather than
-    // paying it once per file.
-    List<Path> pathsToParse = new ArrayList<>();
-    Map<String, String> pathToContent = new LinkedHashMap<>();
-    List<Path> contentFilteredPaths = new ArrayList<>();
-    Map<Path, RuntimeException> readFailures = new LinkedHashMap<>();
-
-    try (Stream<Path> walk = Files.walk(sourcePath)) {
-      walk.filter(fileFilter).forEach(path -> {
-        try {
-          String content = new String(Files.readAllBytes(path.toAbsolutePath()));
-          if (contentPrefilteringPredicate.test(content)) {
-            pathsToParse.add(path);
-            pathToContent.put(path.toAbsolutePath().normalize().toString(), content);
-          } else {
-            log.debug("Skipping [{}] — excluded by content pre-filtering predicate", path);
-            contentFilteredPaths.add(path);
-          }
-        } catch (IOException e) {
-          readFailures.put(path, new RuntimeException(
-              "Failed to read file [" + path + "]: " + e.getMessage(), e));
-        }
-      });
-    }
-
-    // Batch-parse all files that passed the content filter using a single shared compilation
-    // environment. JDT initialises the classpath (reads JAR indices, populates the type
-    // environment) exactly once for the entire batch rather than once per file.
-    log.info("Batch parsing [" + pathsToParse.size() + "] file(s) with shared compilation environment");
-    Map<String, CompilationUnit> parsedUnits = batchParseFiles(pathsToParse, sources, classPath);
-
+    // Process files in fixed-size chunks to keep peak heap bounded. For each chunk we read
+    // content, apply the content-prefiltering predicate, and batch-parse only the files that
+    // pass. The per-chunk Maps and CompilationUnit objects are eligible for GC as soon as the
+    // chunk's futures have been waited on, so peak heap scales with batchSize — not totalFiles.
     List<Throwable> fileErrors = new ArrayList<>();
     ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+    int numChunks = (int) Math.ceil((double) allPaths.size() / batchSize);
+    if (numChunks > 1) {
+      log.info("Processing in [" + numChunks + "] chunk(s) of up to [" + batchSize + "] file(s) each");
+    }
+
     try {
-      List<Future<?>> futures = new ArrayList<>();
+      for (int chunkIdx = 0; chunkIdx < numChunks; chunkIdx++) {
+        int chunkStart = chunkIdx * batchSize;
+        int chunkEnd = Math.min(chunkStart + batchSize, allPaths.size());
+        List<Path> chunk = allPaths.subList(chunkStart, chunkEnd);
 
-      // Submit work futures for files that were batch-parsed.
-      for (Path path : pathsToParse) {
-        String key = path.toAbsolutePath().normalize().toString();
-        CompilationUnit cu = parsedUnits.get(key);
-        String content = pathToContent.get(key);
-        if (cu != null && content != null) {
-          futures.add(executor.submit(() ->
-              applyOperationsAndSaveWithPreParsedCU(path, content, cu, operations, sources, classPath)));
+        // Read and content-prefilter only this chunk's files. Limiting content reads to one
+        // chunk at a time keeps peak heap proportional to batchSize rather than totalFiles.
+        List<Path> chunkToParse = new ArrayList<>();
+        Map<String, String> chunkContent = new LinkedHashMap<>();
+        List<Path> chunkContentFiltered = new ArrayList<>();
+        Map<Path, RuntimeException> chunkReadFailures = new LinkedHashMap<>();
+
+        for (Path path : chunk) {
+          try {
+            String content = new String(Files.readAllBytes(path.toAbsolutePath()));
+            if (contentPrefilteringPredicate.test(content)) {
+              chunkToParse.add(path);
+              chunkContent.put(path.toAbsolutePath().normalize().toString(), content);
+            } else {
+              log.debug("Skipping [{}] — excluded by content pre-filtering predicate", path);
+              chunkContentFiltered.add(path);
+            }
+          } catch (IOException e) {
+            chunkReadFailures.put(path, new RuntimeException(
+                "Failed to read file [" + path + "]: " + e.getMessage(), e));
+          }
+        }
+
+        if (numChunks > 1) {
+          log.info("Batch parsing chunk [" + (chunkIdx + 1) + "/" + numChunks + "] — " + chunkToParse.size() + " file(s)");
         } else {
-          // Defensive fallback: batch parse did not return a CU (should not happen with JDT).
-          log.warn("Batch parse produced no CompilationUnit for [{}]; falling back to per-file parse", path);
-          futures.add(executor.submit(() ->
-              applyOperationsAndSave(path, operations, sources, classPath, s -> true)));
+          log.info("Batch parsing [" + chunkToParse.size() + "] file(s) with shared compilation environment");
         }
-      }
 
-      // Submit failure futures for files that could not be read (surfaces them via future.get()).
-      for (Map.Entry<Path, RuntimeException> entry : readFailures.entrySet()) {
-        RuntimeException ex = entry.getValue();
-        futures.add(executor.submit((Runnable) () -> { throw ex; }));
-      }
+        Map<String, CompilationUnit> parsedUnits = batchParseFiles(chunkToParse, sources, classPath);
 
-      // Submit no-op futures for content-filtered files so that they count toward the progress
-      // denominator, preserving the same progress behaviour as the previous per-file code path.
-      for (int i = 0; i < contentFilteredPaths.size(); i++) {
-        futures.add(executor.submit(() -> {}));
-      }
+        List<Future<?>> chunkFutures = new ArrayList<>();
 
-      for (Future<?> future : futures) {
-        try {
-          future.get();
-        } catch (ExecutionException e) {
-          Throwable cause = e.getCause();
-          log.error("Failed to process file: " + cause.getMessage(), cause);
-          fileErrors.add(cause);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new IOException("File processing was interrupted", e);
+        // Submit work futures for files that were batch-parsed.
+        for (Path path : chunkToParse) {
+          String key = path.toAbsolutePath().normalize().toString();
+          CompilationUnit cu = parsedUnits.get(key);
+          String content = chunkContent.get(key);
+          if (cu != null && content != null) {
+            chunkFutures.add(executor.submit(() ->
+                applyOperationsAndSaveWithPreParsedCU(path, content, cu, operations, sources, classPath)));
+          } else {
+            // Defensive fallback: batch parse did not return a CU (should not happen with JDT).
+            log.warn("Batch parse produced no CompilationUnit for [{}]; falling back to per-file parse", path);
+            chunkFutures.add(executor.submit(() ->
+                applyOperationsAndSave(path, operations, sources, classPath, s -> true)));
+          }
         }
-        long idx = currentFileIndex.incrementAndGet();
-        long newPct = idx * 100 / totalFiles;
-        if (currentPercentage.getAndSet(newPct) != newPct) {
-          logProgress(idx, newPct, startTime, totalFiles);
+
+        // Submit failure futures for files that could not be read (surfaces them via future.get()).
+        for (Map.Entry<Path, RuntimeException> entry : chunkReadFailures.entrySet()) {
+          RuntimeException ex = entry.getValue();
+          chunkFutures.add(executor.submit((Runnable) () -> { throw ex; }));
+        }
+
+        // Submit no-op futures for content-filtered files so that they count toward the progress
+        // denominator, preserving the same progress behaviour as the previous per-file code path.
+        for (int i = 0; i < chunkContentFiltered.size(); i++) {
+          chunkFutures.add(executor.submit(() -> {}));
+        }
+
+        // Wait for all futures in this chunk before parsing the next chunk. This ensures that
+        // the CompilationUnit objects captured by the submitted tasks can be garbage-collected
+        // before the next chunk is loaded, keeping peak heap proportional to batchSize.
+        for (Future<?> future : chunkFutures) {
+          try {
+            future.get();
+          } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            log.error("Failed to process file: " + cause.getMessage(), cause);
+            fileErrors.add(cause);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("File processing was interrupted", e);
+          }
+          long idx = currentFileIndex.incrementAndGet();
+          long newPct = idx * 100 / totalFiles;
+          if (currentPercentage.getAndSet(newPct) != newPct) {
+            logProgress(idx, newPct, startTime, totalFiles);
+          }
         }
       }
     } finally {
@@ -221,13 +235,14 @@ public class AstraCore {
 
 
   /**
-   * Batch-parses all of the supplied source files using a single shared JDT compilation
-   * environment.
+   * Batch-parses one chunk of source files using a single shared JDT compilation environment.
+   * Called once per chunk during a run; the number of paths is bounded by
+   * {@link UseCase#getBatchSize()}.
    *
    * <p>A single {@link ASTParser} is configured with the supplied classpath and source paths,
-   * and {@link ASTParser#createASTs} is called with all file paths in one shot.  JDT
+   * and {@link ASTParser#createASTs} is called with the chunk's file paths in one shot.  JDT
    * initialises its internal {@code LookupEnvironment} — which involves scanning every JAR
-   * and source root on the classpath — exactly once for the whole batch rather than once per
+   * and source root on the classpath — exactly once for the chunk rather than once per
    * file, which is the primary cost saving over the per-file {@code createAST()} API.
    *
    * <p><strong>Thread safety:</strong> {@code createASTs()} processes files sequentially on

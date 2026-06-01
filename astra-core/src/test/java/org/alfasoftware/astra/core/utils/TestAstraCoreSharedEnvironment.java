@@ -275,6 +275,43 @@ public class TestAstraCoreSharedEnvironment {
 
 
   /**
+   * Verifies that files are processed correctly when the file count exceeds the batch size,
+   * exercising the multi-chunk code path. The test overrides {@link UseCase#getBatchSize()} to
+   * return {@code 3} and creates {@code 7} files, forcing three chunks (3 + 3 + 1). All seven
+   * files should be visited exactly once.
+   */
+  @Test
+  public void testChunkedBatchingVisitsAllFiles() throws IOException {
+    int fileCount = 7;
+    for (int i = 1; i <= fileCount; i++) {
+      Files.writeString(tempDir.resolve("Chunked" + i + ".java"),
+          "public class Chunked" + i + " {}");
+    }
+
+    Set<Path> visited = ConcurrentHashMap.newKeySet();
+
+    AstraCore.run(tempDir.toString(), new UseCase() {
+      @Override
+      public Set<? extends ASTOperation> getOperations() {
+        return Set.of((cu, node, rewriter) -> {
+          Path p = (Path) cu.getProperty(CompilationUnitProperty.ABSOLUTE_PATH);
+          if (p != null) {
+            visited.add(p);
+          }
+        });
+      }
+
+      @Override
+      public int getBatchSize() {
+        return 3; // force multiple chunks: ceil(7/3) = 3 chunks
+      }
+    });
+
+    assertEquals("All files should be visited across multiple chunks", fileCount, visited.size());
+  }
+
+
+  /**
    * Verifies that a run with zero files after content prefiltering (all files excluded) completes
    * cleanly without errors, and the batch parse is not called with an empty file list.
    */
