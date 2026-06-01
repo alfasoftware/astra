@@ -68,12 +68,11 @@ public class AstraUtils {
     return compilationUnit;
   }
 
-  private static final String JAVA_VERSION = JavaCore.VERSION_17;
+  private static final String JAVA_VERSION = JavaCore.latestSupportedJavaVersion();
 
 
   public static ASTParser createParser(String fileSource, String[] sources, String[] classPath) {
-    @SuppressWarnings("deprecation") // This is just saying "use a newer Java version"
-    ASTParser parser = ASTParser.newParser(AST.JLS17);
+    ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
     parser.setResolveBindings(true);
     parser.setBindingsRecovery(true);
     parser.setStatementsRecovery(true);
@@ -88,6 +87,37 @@ public class AstraUtils {
     final String[] encodings = new String[sources.length];
     Arrays.fill(encodings, "UTF-8");
 
+    parser.setEnvironment(classPath, sources, encodings, true);
+    return parser;
+  }
+
+
+  /**
+   * Creates an {@link ASTParser} configured for batch processing via
+   * {@link ASTParser#createASTs(String[], String[], String[], org.eclipse.jdt.core.dom.FileASTRequestor, org.eclipse.core.runtime.IProgressMonitor)}.
+   *
+   * <p>The returned parser has binding resolution, binding recovery, and statement recovery
+   * enabled, and is configured with the supplied classpath and source paths.  Unlike
+   * {@link #createParser}, it does <em>not</em> call {@code setSource()}, {@code setUnitName()},
+   * or {@code setKind()} — those are per-file settings that are ignored (and must not be set)
+   * in batch mode.
+   *
+   * <p>The shared environment set up here — classpath scanning, JAR index loading — is
+   * amortised across every file passed to {@code createASTs()}, rather than being repeated
+   * once per file as in the single-file {@code createAST()} path.
+   */
+  public static ASTParser createBatchParser(String[] sources, String[] classPath) {
+    ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
+    parser.setResolveBindings(true);
+    parser.setBindingsRecovery(true);
+    parser.setStatementsRecovery(true);
+
+    HashMap<String, String> javaCoreOptions = new HashMap<>(JavaCore.getOptions());
+    JavaCore.setComplianceOptions(JAVA_VERSION, javaCoreOptions);
+    parser.setCompilerOptions(javaCoreOptions);
+
+    final String[] encodings = new String[sources.length];
+    Arrays.fill(encodings, "UTF-8");
     parser.setEnvironment(classPath, sources, encodings, true);
     return parser;
   }
