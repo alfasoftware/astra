@@ -64,6 +64,7 @@ public class AstraUtils {
 
     CompilationUnit compilationUnit = (CompilationUnit) parser.createAST(null);
     compilationUnit.setProperty(CompilationUnitProperty.ABSOLUTE_PATH, file.toAbsolutePath());
+    compilationUnit.setProperty(CompilationUnitProperty.SOURCE, fileSource);
     compilationUnit.recordModifications();
     return compilationUnit;
   }

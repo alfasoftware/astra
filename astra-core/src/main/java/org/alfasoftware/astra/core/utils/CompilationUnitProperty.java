@@ -15,4 +15,10 @@ public final class CompilationUnitProperty {
    * Return Type: {@link String}.
    */
   public static final String ABSOLUTE_PATH = "absolute_path";
+
+  /**
+   * The original source text used to parse the respective {@link CompilationUnit}.
+   * Return Type: {@link String}.
+   */
+  public static final String SOURCE = "source";
 }
