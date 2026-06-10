@@ -33,10 +33,10 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *  AstraCore operates on source files in an input directory, building an AST for each file, using any additional classpaths supplied. 
@@ -66,7 +66,7 @@ public class AstraCore {
     validateSourceAndClasspath(sources, classPath);
     try {
       AstraCore main = new AstraCore();
-      main.runOperations(targetDirectoryPath, useCase, sources, classPath);
+      main.runOperations(targetDirectoryPath, useCase, sources, AstraUtils.filterClassPath(classPath));
     } catch (IOException e) {
       throw new RuntimeException("Astra run failed for directory [" + targetDirectoryPath + "]: " + e.getMessage(), e);
     }
@@ -104,7 +104,7 @@ public class AstraCore {
       walk.filter(fileFilter).forEach(allPaths::add);
     }
     long totalFiles = allPaths.size();
-    log.info(totalFiles + " files to process after prefiltering");
+    log.info(totalFiles + " files to process after path based prefiltering");
 
     if (totalFiles == 0) {
       log.info(getPrintableDuration(Duration.between(startTime, Instant.now())));

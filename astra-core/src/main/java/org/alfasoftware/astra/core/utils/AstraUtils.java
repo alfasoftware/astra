@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
@@ -50,6 +48,8 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jface.text.BadLocationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility functions for working with ASTs including creation of ASTs from source files, writing changes back to the source file,
@@ -138,7 +138,7 @@ public class AstraUtils {
    * <p>Entries that do not exist on disk are passed through unchanged; they were already
    * validated by {@link AstraCore#validateSourceAndClasspath} and will be reported there.
    */
-  private static String[] filterClassPath(String[] classPath) {
+  public static String[] filterClassPath(String[] classPath) {
     return Arrays.stream(classPath)
         .filter(entry -> {
           if (entry == null || entry.isEmpty()) {
@@ -153,7 +153,7 @@ public class AstraUtils {
             return true;
           }
           if (f.exists()) {
-            log.warn("Excluding classpath entry [{}] from batch parser — not a .jar, .zip, or directory. "
+            log.debug("Excluding classpath entry [{}] from batch parser — not a .jar, .zip, or directory. "
                 + "POM-only dependencies and other non-archive entries cannot be opened by JDT "
                 + "and would cause a ZipException during classpath initialisation.", entry);
           }
