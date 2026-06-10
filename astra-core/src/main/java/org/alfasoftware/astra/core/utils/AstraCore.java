@@ -311,6 +311,10 @@ public class AstraCore {
       String[] sources,
       String[] classpath) {
     try {
+      // Ensure SOURCE is available on pre-parsed units (batch path), mirroring readAsCompilationUnit.
+      if (preParseUnit.getProperty(CompilationUnitProperty.SOURCE) == null) {
+        preParseUnit.setProperty(CompilationUnitProperty.SOURCE, fileContentBefore);
+      }
       ASTRewrite rewriter = runOperations(operations, preParseUnit);
       String fileContentAfter = makeChangesFromAST(fileContentBefore, rewriter);
 
