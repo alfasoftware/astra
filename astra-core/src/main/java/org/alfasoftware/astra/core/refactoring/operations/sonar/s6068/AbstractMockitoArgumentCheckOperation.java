@@ -80,8 +80,8 @@ public abstract class AbstractMockitoArgumentCheckOperation implements ASTOperat
       return;
     }
     Expression arg = skipParentheses(whenArgs.get(0));
-    if (arg instanceof MethodInvocation) {
-      visitArguments(((MethodInvocation) arg).arguments(), compilationUnit, rewriter);
+    if (arg instanceof MethodInvocation mi) {
+      visitArguments(mi.arguments(), compilationUnit, rewriter);
     }
   }
 
@@ -96,26 +96,24 @@ public abstract class AbstractMockitoArgumentCheckOperation implements ASTOperat
       throws IOException, MalformedTreeException, BadLocationException {
 
     ASTNode parent = invocation.getParent();
-    if (parent instanceof MethodInvocation) {
-      MethodInvocation chainedCall = (MethodInvocation) parent;
-      // Confirm this invocation is the receiver of the chained call, not an argument to it.
-      if (chainedCall.getExpression() == invocation) {
-        visitArguments(chainedCall.arguments(), compilationUnit, rewriter);
-      }
+    if (parent instanceof MethodInvocation chainedCall &&
+        // Confirm this invocation is the receiver of the chained call, not an argument to it.
+        chainedCall.getExpression() == invocation) {
+      visitArguments(chainedCall.arguments(), compilationUnit, rewriter);
     }
   }
 
 
   private boolean isWhenOrGiven(String declaringType, String methodName) {
-    return (MOCKITO.equals(declaringType) && "when".equals(methodName))
-        || (BDD_MOCKITO.equals(declaringType) && "given".equals(methodName));
+    return MOCKITO.equals(declaringType) && "when".equals(methodName)
+        || BDD_MOCKITO.equals(declaringType) && "given".equals(methodName);
   }
 
 
   private boolean isVerifyOrStubberWhen(String declaringType, String methodName) {
-    return (MOCKITO.equals(declaringType) && "verify".equals(methodName))
-        || (INORDER.equals(declaringType) && "verify".equals(methodName))
-        || (STUBBER.equals(declaringType) && "when".equals(methodName));
+    return MOCKITO.equals(declaringType) && "verify".equals(methodName)
+        || INORDER.equals(declaringType) && "verify".equals(methodName)
+        || STUBBER.equals(declaringType) && "when".equals(methodName);
   }
 
 
@@ -125,8 +123,8 @@ public abstract class AbstractMockitoArgumentCheckOperation implements ASTOperat
    */
   protected static Expression skipParentheses(Expression expression) {
     Expression expr = expression;
-    while (expr instanceof ParenthesizedExpression) {
-      expr = ((ParenthesizedExpression) expr).getExpression();
+    while (expr instanceof ParenthesizedExpression parExpr) {
+      expr = parExpr.getExpression();
     }
     return expr;
   }

@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
 
@@ -64,9 +64,9 @@ public class MockitoEqSimplificationRefactor extends AbstractMockitoArgumentChec
 
     for (Expression arg : arguments) {
       Expression unwrapped = skipParentheses(arg);
-      if (unwrapped instanceof MethodInvocation && isMockitoEq((MethodInvocation) unwrapped)) {
+      if (unwrapped instanceof MethodInvocation mi && isMockitoEq(mi)) {
         argNodes.add(arg);
-        eqCalls.add((MethodInvocation) unwrapped);
+        eqCalls.add(mi);
       } else {
         // At least one argument is not eq() — mixing matchers with plain values would
         // break Mockito at runtime, so we must leave the whole call unchanged.
