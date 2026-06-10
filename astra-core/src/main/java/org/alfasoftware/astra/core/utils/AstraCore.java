@@ -123,14 +123,14 @@ public class AstraCore {
     // chunk's futures have been waited on, so peak heap scales with batchSize — not totalFiles.
     List<Throwable> fileErrors = new ArrayList<>();
     ExecutorService executor = Executors.newFixedThreadPool(parallelism);
-    int numChunks = (int) Math.ceil((double) allPaths.size() / batchSize);
-    if (numChunks > 1) {
-      log.info("Processing in [" + numChunks + "] chunk(s) of up to [" + batchSize + "] file(s) each");
+    int numberOfChunks = (int) Math.ceil((double) allPaths.size() / batchSize);
+    if (numberOfChunks > 1) {
+      log.info("Processing in [" + numberOfChunks + "] chunk(s) of up to [" + batchSize + "] file(s) each");
     }
 
     try {
-      for (int chunkIdx = 0; chunkIdx < numChunks; chunkIdx++) {
-        int chunkStart = chunkIdx * batchSize;
+      for (int chunkIndex = 0; chunkIndex < numberOfChunks; chunkIndex++) {
+        int chunkStart = chunkIndex * batchSize;
         int chunkEnd = Math.min(chunkStart + batchSize, allPaths.size());
         List<Path> chunk = allPaths.subList(chunkStart, chunkEnd);
 
@@ -157,8 +157,8 @@ public class AstraCore {
           }
         }
 
-        if (numChunks > 1) {
-          log.info("Batch parsing chunk [" + (chunkIdx + 1) + "/" + numChunks + "] — " + chunkToParse.size() + " file(s)");
+        if (numberOfChunks > 1) {
+          log.info("Batch parsing chunk [" + (chunkIndex + 1) + "/" + numberOfChunks + "] — " + chunkToParse.size() + " file(s)");
         } else {
           log.info("Batch parsing [" + chunkToParse.size() + "] file(s) with shared compilation environment");
         }
@@ -174,7 +174,7 @@ public class AstraCore {
           String content = chunkContent.get(key);
           if (cu != null && content != null) {
             chunkFutures.add(executor.submit(() ->
-                applyOperationsAndSaveWithPreParsedCU(path, content, cu, operations, sources, classPath)));
+                applyOperationsAndSaveWithPreParsedCompilationUnit(path, content, cu, operations, sources, classPath)));
           } else {
             // Defensive fallback: batch parse did not return a CU (should not happen with JDT).
             log.warn("Batch parse produced no CompilationUnit for [{}]; falling back to per-file parse", path);
@@ -303,7 +303,7 @@ public class AstraCore {
    * invocation operates exclusively on its own {@link CompilationUnit} and {@link ASTRewrite},
    * so there is no shared mutable state between threads.
    */
-  private void applyOperationsAndSaveWithPreParsedCU(
+  private void applyOperationsAndSaveWithPreParsedCompilationUnit(
       Path javaFile,
       String fileContentBefore,
       CompilationUnit preParseUnit,
