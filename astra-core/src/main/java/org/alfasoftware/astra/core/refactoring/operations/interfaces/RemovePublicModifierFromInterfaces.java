@@ -8,6 +8,7 @@ import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.ClassVisitor;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -31,7 +32,9 @@ public class RemovePublicModifierFromInterfaces implements ASTOperation {
       .stream()
       // find any public modifiers
       .map(MethodDeclaration::modifiers)
-      .flatMap(List<Modifier>::stream)
+      .flatMap(List<IExtendedModifier>::stream)
+      .filter(Modifier.class::isInstance)
+      .map(Modifier.class::cast)
       .filter(Modifier::isPublic)
       // remove them
       .forEach(m -> rewriter.remove(m, null));

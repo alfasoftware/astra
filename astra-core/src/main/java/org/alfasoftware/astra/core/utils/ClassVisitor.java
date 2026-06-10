@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
@@ -22,6 +20,7 @@ import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IDocElement;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -41,6 +40,8 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tracks what is seen when visiting all nodes in a compilation unit.
@@ -63,6 +64,7 @@ public class ClassVisitor extends ASTVisitor {
   private final List<MarkerAnnotation> markerAnnotations = new ArrayList<>();
   private final List<ClassInstanceCreation> classInstanceCreations = new ArrayList<>();
   private final List<TagElement> tagElements = new ArrayList<>();
+  private final List<InfixExpression> infixExpressions = new ArrayList<>();
   private final List<PatternInstanceofExpression> patternInstanceofExpressions = new ArrayList<>();
 
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
@@ -115,6 +117,13 @@ public class ClassVisitor extends ASTVisitor {
   public boolean visit(RecordDeclaration node) {
     log.debug("Record declar: " + node);
     abstractTypeDeclarations.add(node);
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(InfixExpression node) {
+    log.debug("Infix: " + node);
+    infixExpressions.add(node);
     return super.visit(node);
   }
 
@@ -298,6 +307,10 @@ public class ClassVisitor extends ASTVisitor {
         .collect(Collectors.toList());
   }
 
+  public List<InfixExpression> getInfixExpressions() {
+    return infixExpressions;
+  }
+
   public List<PatternInstanceofExpression> getPatternInstanceofExpressions() {
     return patternInstanceofExpressions;
   }
@@ -420,6 +433,7 @@ public class ClassVisitor extends ASTVisitor {
       getImports(),
       getFieldAccesses(),
       getCastExpressions(),
+      getInfixExpressions(),
       getPatternInstanceofExpressions())
     .flatMap(Collection::stream)
     .collect(Collectors.toSet());
