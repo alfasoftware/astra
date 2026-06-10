@@ -166,12 +166,23 @@ public class TestImportsRefactor extends AbstractRefactorTest {
   
   /**
    * Tests that static imports of methods named solely '$' are not removed.
-   * Methods should not be named this way by convention (JLS 3.8), 
+   * Methods should not be named this way by convention (JLS 3.8),
    * but they are sometimes, such as JUnit's 'JUnitParamsRunner.$'.
    */
   @Test
   public void testDollarSignStaticImportsNotRemoved() {
     assertRefactor(StaticImportDollarSignExample.class,
+      new HashSet<>(Arrays.asList(new UnusedImportRefactor())));
+  }
+
+  /**
+   * Tests that used imports with trailing same-line comments (e.g. // NOPMD, // NOSONAR) have
+   * their comment preserved in the sorted output. Also verifies that unused imports are removed
+   * regardless of whether they carry a trailing comment.
+   */
+  @Test
+  public void testTrailingCommentImportsPreserved() {
+    assertRefactor(ImportWithTrailingCommentExample.class,
       new HashSet<>(Arrays.asList(new UnusedImportRefactor())));
   }
 }

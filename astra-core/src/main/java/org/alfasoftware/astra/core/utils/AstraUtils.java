@@ -1,5 +1,6 @@
 package org.alfasoftware.astra.core.utils;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -12,8 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
@@ -49,6 +48,8 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jface.text.BadLocationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility functions for working with ASTs including creation of ASTs from source files, writing changes back to the source file,
@@ -64,16 +65,16 @@ public class AstraUtils {
 
     CompilationUnit compilationUnit = (CompilationUnit) parser.createAST(null);
     compilationUnit.setProperty(CompilationUnitProperty.ABSOLUTE_PATH, file.toAbsolutePath());
+    compilationUnit.setProperty(CompilationUnitProperty.SOURCE, fileSource);
     compilationUnit.recordModifications();
     return compilationUnit;
   }
 
-  private static final String JAVA_VERSION = JavaCore.VERSION_17;
+  private static final String JAVA_VERSION = JavaCore.latestSupportedJavaVersion();
 
 
   public static ASTParser createParser(String fileSource, String[] sources, String[] classPath) {
-    @SuppressWarnings("deprecation") // This is just saying "use a newer Java version"
-    ASTParser parser = ASTParser.newParser(AST.JLS17);
+    ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
     parser.setResolveBindings(true);
     parser.setBindingsRecovery(true);
     parser.setStatementsRecovery(true);
@@ -90,6 +91,76 @@ public class AstraUtils {
 
     parser.setEnvironment(classPath, sources, encodings, true);
     return parser;
+  }
+
+
+  /**
+   * Creates an {@link ASTParser} configured for batch processing via
+   * {@link ASTParser#createASTs(String[], String[], String[], org.eclipse.jdt.core.dom.FileASTRequestor, org.eclipse.core.runtime.IProgressMonitor)}.
+   *
+   * <p>The returned parser has binding resolution, binding recovery, and statement recovery
+   * enabled, and is configured with the supplied classpath and source paths.  Unlike
+   * {@link #createParser}, it does <em>not</em> call {@code setSource()}, {@code setUnitName()},
+   * or {@code setKind()} — those are per-file settings that are ignored (and must not be set)
+   * in batch mode.
+   *
+   * <p>The shared environment set up here — classpath scanning, JAR index loading — is
+   * amortised across every file passed to {@code createASTs()}, rather than being repeated
+   * once per file as in the single-file {@code createAST()} path.
+   */
+  public static ASTParser createBatchParser(String[] sources, String[] classPath) {
+    ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
+    parser.setResolveBindings(true);
+    parser.setBindingsRecovery(true);
+    parser.setStatementsRecovery(true);
+
+    HashMap<String, String> javaCoreOptions = new HashMap<>(JavaCore.getOptions());
+    JavaCore.setComplianceOptions(JAVA_VERSION, javaCoreOptions);
+    parser.setCompilerOptions(javaCoreOptions);
+
+    final String[] encodings = new String[sources.length];
+    Arrays.fill(encodings, "UTF-8");
+    parser.setEnvironment(filterClassPath(classPath), sources, encodings, true);
+    return parser;
+  }
+
+
+  /**
+   * Filters classpath entries to those that JDT can open as a JAR archive or source directory,
+   * discarding any entry that is neither.
+   *
+   * <p>The per-file {@link ASTParser#createAST} API silently ignores unreadable classpath
+   * entries, but {@link ASTParser#createASTs} initialises the entire classpath environment
+   * upfront and propagates any {@link java.util.zip.ZipException} thrown when it encounters a
+   * non-archive file (e.g. a Maven {@code .pom} BOM artifact) in the classpath.  Filtering
+   * here restores the tolerant behaviour while surfacing a warning so callers know which
+   * entries were discarded.
+   *
+   * <p>Entries that do not exist on disk are passed through unchanged; they were already
+   * validated by {@link AstraCore#validateSourceAndClasspath} and will be reported there.
+   */
+  public static String[] filterClassPath(String[] classPath) {
+    return Arrays.stream(classPath)
+        .filter(entry -> {
+          if (entry == null || entry.isEmpty()) {
+            return false;
+          }
+          File f = new File(entry);
+          if (f.isDirectory()) {
+            return true;
+          }
+          String lower = entry.toLowerCase();
+          if (lower.endsWith(".jar") || lower.endsWith(".zip")) {
+            return true;
+          }
+          if (f.exists()) {
+            log.debug("Excluding classpath entry [{}] from batch parser — not a .jar, .zip, or directory. "
+                + "POM-only dependencies and other non-archive entries cannot be opened by JDT "
+                + "and would cause a ZipException during classpath initialisation.", entry);
+          }
+          return false;
+        })
+        .toArray(String[]::new);
   }
 
 
