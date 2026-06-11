@@ -1,0 +1,68 @@
+package org.alfasoftware.astra.core.refactoring.operations.sonar.s5785;
+
+import java.util.Objects;
+import org.junit.jupiter.api.Assertions;
+
+public class AssertTrueJUnit5Example {
+
+  // assertTrue(a == null) → assertNull(a)
+  void trueNullCheck(Object a) {
+    Assertions.assertTrue(a == null);
+  }
+
+  // assertTrue(a != null) → assertNotNull(a)
+  void trueNotNullCheck(Object a) {
+    Assertions.assertTrue(a != null);
+  }
+
+  // assertFalse(a == null) → assertNotNull(a)
+  void falseNullCheck(Object a) {
+    Assertions.assertFalse(a == null);
+  }
+
+  // assertTrue(a.equals(b)) → assertEquals(a, b)
+  void trueEqualsMethod(String a, String b) {
+    Assertions.assertTrue(a.equals(b));
+  }
+
+  // assertFalse(a.equals(b)) → assertNotEquals(a, b)
+  void falseEqualsMethod(String a, String b) {
+    Assertions.assertFalse(a.equals(b));
+  }
+
+  // assertTrue(Objects.equals(a, b)) → assertEquals(a, b)
+  void trueObjectsEquals(Object a, Object b) {
+    Assertions.assertTrue(Objects.equals(a, b));
+  }
+
+  // assertTrue(a == b) with primitives → assertEquals(a, b)
+  void truePrimitiveEquals(int a, int b) {
+    Assertions.assertTrue(a == b);
+  }
+
+  // assertTrue(a == b) with objects → assertSame(a, b)
+  void trueObjectSame(Object a, Object b) {
+    Assertions.assertTrue(a == b);
+  }
+
+  // assertTrue(!a.equals(b)) → assertNotEquals(a, b)
+  void trueNegatedEquals(String a, String b) {
+    Assertions.assertTrue(!a.equals(b));
+  }
+
+  // JUnit 5: message is the LAST argument
+  // assertTrue(a == null, "msg") → assertNull(a, "msg")
+  void trueWithMessage(Object a) {
+    Assertions.assertTrue(a == null, "should be null");
+  }
+
+  // assertTrue(a.equals(b), "msg") → assertEquals(a, b, "msg")
+  void trueEqualsWithMessage(String a, String b) {
+    Assertions.assertTrue(a.equals(b), "should be equal");
+  }
+
+  // assertFalse(a.equals(b), "msg") → assertNotEquals(a, b, "msg")
+  void falseEqualsWithMessage(String a, String b) {
+    Assertions.assertFalse(a.equals(b), "should not be equal");
+  }
+}

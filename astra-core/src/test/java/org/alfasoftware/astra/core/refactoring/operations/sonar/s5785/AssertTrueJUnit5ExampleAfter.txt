@@ -1,0 +1,67 @@
+package org.alfasoftware.astra.core.refactoring.operations.sonar.s5785;
+
+import org.junit.jupiter.api.Assertions;
+
+public class AssertTrueJUnit5ExampleAfter {
+
+  // assertTrue(a == null) → assertNull(a)
+  void trueNullCheck(Object a) {
+    Assertions.assertNull(a);
+  }
+
+  // assertTrue(a != null) → assertNotNull(a)
+  void trueNotNullCheck(Object a) {
+    Assertions.assertNotNull(a);
+  }
+
+  // assertFalse(a == null) → assertNotNull(a)
+  void falseNullCheck(Object a) {
+    Assertions.assertNotNull(a);
+  }
+
+  // assertTrue(a.equals(b)) → assertEquals(a, b)
+  void trueEqualsMethod(String a, String b) {
+    Assertions.assertEquals(a, b);
+  }
+
+  // assertFalse(a.equals(b)) → assertNotEquals(a, b)
+  void falseEqualsMethod(String a, String b) {
+    Assertions.assertNotEquals(a, b);
+  }
+
+  // assertTrue(Objects.equals(a, b)) → assertEquals(a, b)
+  void trueObjectsEquals(Object a, Object b) {
+    Assertions.assertEquals(a, b);
+  }
+
+  // assertTrue(a == b) with primitives → assertEquals(a, b)
+  void truePrimitiveEquals(int a, int b) {
+    Assertions.assertEquals(a, b);
+  }
+
+  // assertTrue(a == b) with objects → assertSame(a, b)
+  void trueObjectSame(Object a, Object b) {
+    Assertions.assertSame(a, b);
+  }
+
+  // assertTrue(!a.equals(b)) → assertNotEquals(a, b)
+  void trueNegatedEquals(String a, String b) {
+    Assertions.assertNotEquals(a, b);
+  }
+
+  // JUnit 5: message is the LAST argument
+  // assertTrue(a == null, "msg") → assertNull(a, "msg")
+  void trueWithMessage(Object a) {
+    Assertions.assertNull(a, "should be null");
+  }
+
+  // assertTrue(a.equals(b), "msg") → assertEquals(a, b, "msg")
+  void trueEqualsWithMessage(String a, String b) {
+    Assertions.assertEquals(a, b, "should be equal");
+  }
+
+  // assertFalse(a.equals(b), "msg") → assertNotEquals(a, b, "msg")
+  void falseEqualsWithMessage(String a, String b) {
+    Assertions.assertNotEquals(a, b, "should not be equal");
+  }
+}

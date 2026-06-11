@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Added
+* Added `AssertTrueInsteadOfDedicatedAssertOperation` implementing SonarQube rule java:S5785 — rewrites `assertTrue`/`assertFalse` calls to dedicated assertion methods (`assertNull`, `assertNotNull`, `assertEquals`, `assertNotEquals`, `assertSame`, `assertNotSame`) for JUnit 4 and JUnit 5
+
 ## [2.7.0] - 2026-04-28
 ### Changed
 * Updated Java compatibility to 17 (#139) in https://github.com/alfasoftware/astra/pull/140
