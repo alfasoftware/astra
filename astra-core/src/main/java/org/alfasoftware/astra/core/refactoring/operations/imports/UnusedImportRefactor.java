@@ -3,9 +3,12 @@ package org.alfasoftware.astra.core.refactoring.operations.imports;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,8 +17,10 @@ import java.util.stream.Stream;
 import org.alfasoftware.astra.core.matchers.MethodMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
+import org.alfasoftware.astra.core.utils.CompilationUnitProperty;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -38,7 +43,9 @@ import org.eclipse.text.edits.MalformedTreeException;
  *
  * This refactor can be run standalone, but will also be run as part of cleanup after any operation has altered a file.
  *
- * This refactor currently loses comments that are on the import lines e.g. // NOPMD.
+ * Used imports that carry a trailing same-line comment (e.g. {@code // NOPMD}, {@code // NOSONAR}) have their
+ * comment preserved in the output: on re-insertion the verbatim source text is emitted via a string placeholder
+ * so the comment survives the sort. Unused imports are always removed, regardless of any trailing comment.
  */
 public class UnusedImportRefactor implements ASTOperation {
 
@@ -52,26 +59,45 @@ public class UnusedImportRefactor implements ASTOperation {
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter)
       throws IOException, MalformedTreeException, BadLocationException {
 
+    // Import processing (removal and sorting) is a compilation-unit-level concern.
+    // Guard against being called for inner types, methods, and other nested nodes —
+    // only the top-level type declaration triggers a full pass.
+    if (!(node instanceof AbstractTypeDeclaration) || !(node.getParent() instanceof CompilationUnit)) {
+      return;
+    }
+
     final ListRewrite importListRewrite = rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY);
-    
+
     // remove unnecessary imports
     removeUnnecessaryImports(compilationUnit, node, rewriter);
 
     @SuppressWarnings("unchecked")
     List<ImportDeclaration> currentList = importListRewrite.getRewrittenList();
 
-    // clear down existing list
+    // Build a map of imports that carry a trailing same-line comment → raw comment text.
+    // Comment-bearing imports participate in normal sort order; on re-insertion they are emitted
+    // as a string placeholder so the comment text is preserved verbatim.
+    Map<ImportDeclaration, String> trailingComments = buildTrailingCommentMap(compilationUnit, currentList);
+
+    // clear down all imports
     currentList.forEach(i -> importListRewrite.remove(i, null));
 
-    // Sort the imports
+    // Sort all imports (comment-bearing ones sort the same as others)
     List<ImportDeclaration> sortedImports = sortImports(currentList);
 
     // Add in blank line separators, if needed
     List<ImportDeclaration> sortedImportsWithSeparators = addSeparatorsToImportList(rewriter, sortedImports);
 
-    // Write in the (now sorted) imports with blank line separators
+    // Write in the sorted imports; comment-bearing ones are emitted as verbatim placeholders
     for (int i = 0; i < sortedImportsWithSeparators.size(); i++) {
-      importListRewrite.insertAt(sortedImportsWithSeparators.get(i), i, null);
+      ImportDeclaration importDecl = sortedImportsWithSeparators.get(i);
+      String commentText = trailingComments.get(importDecl);
+      if (commentText != null) {
+        String importText = renderImport(importDecl) + " " + commentText;
+        importListRewrite.insertAt(rewriter.createStringPlaceholder(importText, ASTNode.IMPORT_DECLARATION), i, null);
+      } else {
+        importListRewrite.insertAt(importDecl, i, null);
+      }
     }
   }
 
@@ -140,10 +166,10 @@ public class UnusedImportRefactor implements ASTOperation {
       Set<String> remainingImports = new HashSet<>();
 
       for (ImportDeclaration importDeclaration : imports) {
-        
-        // Remove unnecessary imports
+
+        // Remove unnecessary imports.
         // Can't easily tell if on-demand imports are actually needed so best to leave them in place.
-        if (! isImportOnDemand(importDeclaration) && 
+        if (! isImportOnDemand(importDeclaration) &&
             (isImportDuplicate(remainingImports, importDeclaration) ||
              ! isImportUsed(visitor, importDeclaration, compilationUnit) ||
              isImportFromSamePackageAndNotStatic(compilationUnit, importDeclaration) ||
@@ -214,6 +240,60 @@ public class UnusedImportRefactor implements ASTOperation {
 
   private boolean isImportOnDemand(ImportDeclaration importDeclaration) {
     return importDeclaration.isOnDemand();
+  }
+
+
+  private Map<ImportDeclaration, String> buildTrailingCommentMap(CompilationUnit compilationUnit,
+      List<ImportDeclaration> imports) {
+    String source = (String) compilationUnit.getProperty(CompilationUnitProperty.SOURCE);
+    if (source == null) {
+      return Collections.emptyMap();
+    }
+    Map<ImportDeclaration, String> result = new HashMap<>();
+    for (ImportDeclaration importDecl : imports) {
+      String commentText = trailingLineCommentText(source, importDecl);
+      if (commentText != null) {
+        result.put(importDecl, commentText);
+      }
+    }
+    return result;
+  }
+
+
+  /**
+   * Returns the trimmed text of a trailing same-line {@code //} comment after the given import, or
+   * null if no such comment exists. Handles both LF and CRLF line endings.
+   */
+  private String trailingLineCommentText(String source, ImportDeclaration importDeclaration) {
+    int startPos = importDeclaration.getStartPosition();
+    if (startPos < 0) {
+      return null; // synthetic/placeholder node
+    }
+    int importEnd = startPos + importDeclaration.getLength();
+    if (importEnd > source.length()) {
+      return null;
+    }
+    int lineEnd = source.indexOf('\n', importEnd);
+    if (lineEnd < 0) {
+      lineEnd = source.length();
+    }
+    String afterImport = source.substring(importEnd, lineEnd).stripTrailing();
+    String trimmed = afterImport.trim();
+    return trimmed.startsWith("//") ? trimmed : null;
+  }
+
+
+  private String renderImport(ImportDeclaration importDecl) {
+    StringBuilder sb = new StringBuilder("import ");
+    if (importDecl.isStatic()) {
+      sb.append("static ");
+    }
+    sb.append(importDecl.getName().toString());
+    if (importDecl.isOnDemand()) {
+      sb.append(".*");
+    }
+    sb.append(";");
+    return sb.toString();
   }
 
 
