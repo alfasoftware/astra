@@ -87,4 +87,17 @@ public interface UseCase {
   default int getParallelism() {
     return Runtime.getRuntime().availableProcessors();
   }
+
+  /**
+   * @return The number of source files to include in each batch when parsing with a shared
+   *         compilation environment. A larger batch size amortises the cost of classpath
+   *         initialisation over more files but increases the peak heap required during the
+   *         parse phase; a smaller value reduces peak heap at the cost of more initialisations.
+   *         The default of {@code 500} suits a 512 MB heap and typical-sized Java source
+   *         files. Reduce this value if you encounter {@link OutOfMemoryError} on a large
+   *         codebase, or increase it if you have a generous heap budget.
+   */
+  default int getBatchSize() {
+    return 500;
+  }
 }
