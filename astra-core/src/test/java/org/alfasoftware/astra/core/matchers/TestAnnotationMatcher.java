@@ -219,6 +219,21 @@ public class TestAnnotationMatcher {
     List<NormalAnnotation> annotations = visitor.getNormalAnnotations();
     Assert.assertTrue(matcher.matches(annotations.get(0)));
   }
+  @Test
+    public void testToStringIncludesAnnotationNameAndProperties() {
+    // Given
+    AnnotationMatcher matcher = AnnotationMatcher.builder()
+        .withFullyQualifiedName("org.mockito.Mock")
+        .withWithMemberAndValue("stubOnly", true)
+        .build();
+
+    // When
+    String result = matcher.toString();
+
+    // Then
+    Assert.assertTrue(result.contains("org.mockito.Mock"));
+    Assert.assertTrue(result.contains("stubOnly"));
+    }
 
   private ClassVisitor parse(String source) {
     CompilationUnit compilationUnit = AstraUtils.readAsCompilationUnit(Path.of(""), source, new String[]{TEST_SOURCE}, new String[0]);

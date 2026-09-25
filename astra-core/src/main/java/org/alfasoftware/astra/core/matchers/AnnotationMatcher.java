@@ -106,6 +106,13 @@ public class AnnotationMatcher implements Matcher {
   public String getFullyQualifiedName() {
     return this.annotationBuilder.annotationName;
   }
+  @Override
+  public String toString() {
+    return "AnnotationMatcher{" +
+        "annotationName='" + annotationBuilder.annotationName + '\'' +
+        ", properties=" + annotationBuilder.properties +
+        '}';
+  }
 
   @Override
   public boolean matches(ASTNode node) {
