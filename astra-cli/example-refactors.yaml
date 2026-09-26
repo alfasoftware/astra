@@ -1,0 +1,80 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Astra YAML refactor configuration
+#
+# Run with:
+#   astra yaml --config example-refactors.yaml \
+#              --dir    /path/to/source/checkout \
+#              --cp     /path/to/dep.jar,/path/to/other-dep.jar
+#
+# Supported types: typeReference, methodInvocation
+# ──────────────────────────────────────────────────────────────────────────────
+
+refactors:
+
+  # ── typeReference ────────────────────────────────────────────────────────────
+  # Changes every reference to the old fully-qualified type to the new one,
+  # including imports, variable declarations, Javadoc, and qualified names.
+
+  - type: typeReference
+    from: com.example.legacy.OldService
+    to:   com.example.services.NewService
+
+  # Inner class references: use dot notation (not dollar sign)
+  - type: typeReference
+    from: com.example.Outer.OldInner
+    to:   com.example.NewInner
+
+  # ── methodInvocation ─────────────────────────────────────────────────────────
+  # Matches method invocations and applies rename / type-change transforms.
+  #
+  # Required in 'from': qualifiedClass, method
+  # Optional in 'from': parameters (list of FQNs), isVarargs (boolean)
+  # Required in 'to':   at least one of: method, qualifiedClass
+
+  # Rename a method (keep same class)
+  - type: methodInvocation
+    from:
+      qualifiedClass: com.example.OldClass
+      method: oldMethod
+    to:
+      method: newMethod
+
+  # Move a method to a different class (keep same name)
+  - type: methodInvocation
+    from:
+      qualifiedClass: com.example.OldService
+      method: processRequest
+    to:
+      qualifiedClass: com.example.NewService
+
+  # Rename and move simultaneously
+  - type: methodInvocation
+    from:
+      qualifiedClass: com.example.OldClass
+      method: doSomething
+    to:
+      qualifiedClass: com.example.NewClass
+      method: execute
+
+  # Match by exact parameter types to disambiguate overloads
+  - type: methodInvocation
+    from:
+      qualifiedClass: com.example.Processor
+      method: process
+      parameters:
+        - java.lang.String
+        - int
+    to:
+      method: handle
+
+  # Match a varargs method specifically
+  - type: methodInvocation
+    from:
+      qualifiedClass: com.example.Logger
+      method: log
+      parameters:
+        - java.lang.String
+        - java.lang.Object
+      isVarargs: true
+    to:
+      method: logFormatted
