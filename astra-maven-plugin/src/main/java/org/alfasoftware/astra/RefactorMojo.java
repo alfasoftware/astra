@@ -125,8 +125,23 @@ public class RefactorMojo extends AbstractMojo {
         // This is a Maven plugin that can access the full classpath required for the source code Astra is running over
         // test classpath entries need to be added
         return new HashSet<>(testClasspathElements);
-
       }
+
+      @Override
+      public Predicate<String> getContentPrefilteringPredicate() {
+        return useCaseInstance.getContentPrefilteringPredicate();
+      }
+
+      @Override
+      public int getParallelism() {
+        return useCaseInstance.getParallelism();
+      }
+
+      @Override
+      public int getBatchSize() {
+        return useCaseInstance.getBatchSize();
+      }
+
     });
 
   }
