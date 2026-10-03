@@ -257,6 +257,13 @@ class JavaPatternASTMatcher {
       }
       MethodInvocation o = (MethodInvocation) matchCandidate;
 
+      // Comparing the names of the methods is cheap, whereas the checks below resolve bindings and match the arguments,
+      // so reject an invocation of a method with a different name first, unless the name is captured rather than compared.
+      if (! methodInvocationFromJavaPattern.getName().getIdentifier().equals(o.getName().getIdentifier())
+          && ! isMethodNameCaptured(methodInvocationFromJavaPattern)) {
+        return false;
+      }
+
       if (! safeSubtreeListMatch(methodInvocationFromJavaPattern.typeArguments(), o.typeArguments())) {
         return false;
       }
@@ -465,6 +472,19 @@ class JavaPatternASTMatcher {
     private boolean methodInvocationMatchesSubstituteMethod(MethodInvocation o) {
       return substituteMethods.stream().anyMatch(methodDeclaration ->
               o.resolveMethodBinding().getMethodDeclaration().isEqualTo(methodDeclaration.resolveBinding()));
+    }
+
+
+    /**
+     * @param methodInvocationFromJavaPattern a MethodInvocation from the {@link JavaPattern}
+     * @return false if a matching MethodInvocation must invoke a method with the same name: true if the method is a
+     *         {@link Substitute} method, or the name is that of a pattern parameter, as these are captured rather than
+     *         compared. Also true if the method's binding cannot be resolved, leaving that case to the full match.
+     */
+    private boolean isMethodNameCaptured(MethodInvocation methodInvocationFromJavaPattern) {
+      return methodInvocationFromJavaPattern.resolveMethodBinding() == null
+          || findPatternParameterFromSimpleName(methodInvocationFromJavaPattern.getName()).isPresent()
+          || methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern);
     }
 
 
