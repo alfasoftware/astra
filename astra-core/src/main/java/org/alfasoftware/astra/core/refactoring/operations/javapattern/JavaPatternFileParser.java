@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
@@ -132,6 +133,21 @@ class JavaPatternFileParser {
 
   public JavaPatternASTMatcher getParsedExpressionMatchers() {
     return new JavaPatternASTMatcher(patternsToMatch, substituteMethods);
+  }
+
+  /**
+   * @return a predicate which rejects source code that none of the java patterns can match,
+   *         because it does not contain all of the identifiers required by any one of the patterns.
+   * @see JavaPatternRequiredIdentifiers
+   */
+  public Predicate<String> getContentPrefilteringPredicate() {
+    final List<Set<String>> requiredIdentifiersOfEachPattern = patternsToMatch.stream()
+        .map(pattern -> JavaPatternRequiredIdentifiers.of(pattern.getJavaPatternToMatch(), pattern.getSingleVariableDeclarations(), substituteMethods))
+        .collect(Collectors.toList());
+    return content ->
+        // identifiers can be written using unicode escapes, which a plain text search would not find
+        content.contains("\\u") ||
+        requiredIdentifiersOfEachPattern.stream().anyMatch(requiredIdentifiers -> requiredIdentifiers.stream().allMatch(content::contains));
   }
 
   /**

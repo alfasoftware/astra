@@ -3,6 +3,7 @@ package org.alfasoftware.astra.core.refactoring.operations.javapattern;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
@@ -70,6 +71,16 @@ public class JavaPatternASTOperation implements ASTOperation {
     if (javaPatternASTMatcher.matchAndCapture(node)) {
       rewriteTarget(rewriter, javaPatternASTMatcher, javaPatternFileParser.getPatternToRefactorTo(), compilationUnit);
     }
+  }
+
+  /**
+   * Source code can only be matched by a {@link JavaPattern} if it contains the names of the methods that the pattern
+   * invokes and the types that it instantiates, other than those it captures. Files which don't contain them for any
+   * of the patterns are rejected, so that they don't need to be parsed.
+   */
+  @Override
+  public Predicate<String> getContentPrefilteringPredicate() {
+    return javaPatternFileParser.getContentPrefilteringPredicate();
   }
 
   /**

@@ -41,6 +41,11 @@ public interface UseCase {
    * <p>This predicate is applied <em>after</em> {@link #getPrefilteringPredicate()}
    * and only when that path-level predicate has already passed.
    *
+   * <p>Files must also be accepted by the
+   * {@link ASTOperation#getContentPrefilteringPredicate() content prefiltering predicate}
+   * of at least one of the {@link #getOperations() operations}. Some operations, such as java patterns,
+   * provide such a predicate themselves, so this only needs to be overridden to filter files further.
+   *
    * <p>Examples:
    * <pre>
    * // pass files that mention any of several type names:

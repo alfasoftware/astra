@@ -114,7 +114,8 @@ public class AstraCore {
     Set<? extends ASTOperation> operations = useCase.getOperations();
     int parallelism = useCase.getParallelism();
     int batchSize = useCase.getBatchSize();
-    Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate();
+    Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate()
+        .and(anyOperationMayApply(operations));
     log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s), batch size [" + batchSize + "]");
 
     // Process files in fixed-size chunks to keep peak heap bounded. For each chunk we read
@@ -350,6 +351,21 @@ public class AstraCore {
     return f -> f.toFile().isFile()
         && f.getFileName().toString().endsWith("java")
         && prefilteringPredicate.test(f.toString());
+  }
+
+
+  /**
+   * Builds a predicate over file content which only accepts files that at least one of the operations might apply to.
+   * Files rejected by every operation are not parsed.
+   *
+   * @see ASTOperation#getContentPrefilteringPredicate()
+   */
+  private static Predicate<String> anyOperationMayApply(Set<? extends ASTOperation> operations) {
+    List<Predicate<String>> operationPredicates = new ArrayList<>();
+    for (ASTOperation operation : operations) {
+      operationPredicates.add(operation.getContentPrefilteringPredicate());
+    }
+    return content -> operationPredicates.stream().anyMatch(predicate -> predicate.test(content));
   }
 
 
