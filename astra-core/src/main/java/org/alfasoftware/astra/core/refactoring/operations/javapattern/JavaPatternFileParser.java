@@ -17,6 +17,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
@@ -168,6 +169,18 @@ class JavaPatternFileParser {
 
     public ASTNode getJavaPatternToMatch() {
       return patternToMatch;
+    }
+
+    /**
+     * Every node type is matched by the ASTMatcher method for that type, which only matches nodes of the same type,
+     * so a candidate of a different type can be rejected without creating a matcher. The exception is names, which
+     * {@link JavaPatternASTMatcher} matches more leniently.
+     *
+     * @param matchCandidate the ASTNode we are testing for a match
+     * @return false if the pattern cannot match the candidate, because it is a different type of node
+     */
+    boolean canMatchNodeType(ASTNode matchCandidate) {
+      return patternToMatch instanceof Name || patternToMatch.getClass().isInstance(matchCandidate);
     }
   }
 }
