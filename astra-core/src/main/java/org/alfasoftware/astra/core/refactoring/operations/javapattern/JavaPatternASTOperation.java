@@ -67,6 +67,10 @@ public class JavaPatternASTOperation implements ASTOperation {
 
   @Override
   public void run(CompilationUnit compilationUnit, ASTNode node, ASTRewrite rewriter) {
+    // most nodes can be ruled out cheaply, without creating a matcher for them
+    if (! javaPatternFileParser.couldAnyPatternMatch(node)) {
+      return;
+    }
     final JavaPatternASTMatcher javaPatternASTMatcher = javaPatternFileParser.getParsedExpressionMatchers();
     if (javaPatternASTMatcher.matchAndCapture(node)) {
       rewriteTarget(rewriter, javaPatternASTMatcher, javaPatternFileParser.getPatternToRefactorTo(), compilationUnit);

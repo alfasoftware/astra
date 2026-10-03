@@ -146,6 +146,20 @@ class JavaPatternFileParser {
   }
 
   /**
+   * @param matchCandidate the ASTNode we are testing for a match
+   * @return false if none of the patterns can match the candidate, as determined by cheap checks
+   * @see SingleASTNodePatternMatcher#couldMatch(ASTNode)
+   */
+  public boolean couldAnyPatternMatch(ASTNode matchCandidate) {
+    for (SingleASTNodePatternMatcher pattern : patternsToMatch) {
+      if (pattern.couldMatch(matchCandidate)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * @return a predicate which rejects source code that none of the java patterns can match,
    *         because it does not contain all of the identifiers required by any one of the patterns.
    * @see JavaPatternRequiredIdentifiers
@@ -232,15 +246,25 @@ class JavaPatternFileParser {
     }
 
     /**
-     * Every node type is matched by the ASTMatcher method for that type, which only matches nodes of the same type,
-     * so a candidate of a different type can be rejected without creating a matcher. The exception is names, which
-     * {@link JavaPatternASTMatcher} matches more leniently.
+     * Rejects candidates which the pattern cannot match, using only cheap checks, so that no matcher needs to be created
+     * for them. Every node type is matched by the ASTMatcher method for that type, which only matches nodes of the same
+     * type, except for names, which {@link JavaPatternASTMatcher} matches more leniently. A pattern which is a
+     * MethodInvocation also needs the same method name, unless that is captured.
      *
      * @param matchCandidate the ASTNode we are testing for a match
-     * @return false if the pattern cannot match the candidate, because it is a different type of node
+     * @return false if the pattern cannot match the candidate
      */
-    boolean canMatchNodeType(ASTNode matchCandidate) {
-      return patternToMatch instanceof Name || patternToMatch.getClass().isInstance(matchCandidate);
+    boolean couldMatch(ASTNode matchCandidate) {
+      if (patternToMatch instanceof Name) {
+        return true;
+      }
+      if (! patternToMatch.getClass().isInstance(matchCandidate)) {
+        return false;
+      }
+      if (patternToMatch instanceof MethodInvocation && ! isMethodNameCaptured((MethodInvocation) patternToMatch)) {
+        return ((MethodInvocation) patternToMatch).getName().getIdentifier().equals(((MethodInvocation) matchCandidate).getName().getIdentifier());
+      }
+      return true;
     }
   }
 }

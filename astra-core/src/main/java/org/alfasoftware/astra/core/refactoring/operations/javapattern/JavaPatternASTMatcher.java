@@ -43,7 +43,7 @@ class JavaPatternASTMatcher {
    */
   boolean matchAndCapture(ASTNode matchCandidate){
     for (JavaPatternFileParser.SingleASTNodePatternMatcher javaPatternToMatch: javaPatternsToMatch) {
-      if (! javaPatternToMatch.canMatchNodeType(matchCandidate)) {
+      if (! javaPatternToMatch.couldMatch(matchCandidate)) {
         continue;
       }
       final JavaPatternMatcher javaPatternMatcher = new JavaPatternMatcher(javaPatternToMatch);
