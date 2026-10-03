@@ -82,21 +82,21 @@ public class ClassVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ImportDeclaration node) {
-    log.debug("Import: " + node);
+    log.debug("Import: {}", node);
     imports.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(SimpleType node) {
-    log.debug("SimpleType: " + node);
+    log.debug("SimpleType: {}", node);
     simpleTypes.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(TypeDeclaration node) {
-    log.debug("Type declar: " + node);
+    log.debug("Type declar: {}", node);
     abstractTypeDeclarations.add(node);
     return super.visit(node);
   }
@@ -115,21 +115,21 @@ public class ClassVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(RecordDeclaration node) {
-    log.debug("Record declar: " + node);
+    log.debug("Record declar: {}", node);
     abstractTypeDeclarations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(InfixExpression node) {
-    log.debug("Infix: " + node);
+    log.debug("Infix: {}", node);
     infixExpressions.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(PatternInstanceofExpression node) {
-    log.debug("Pattern instanceof: " + node);
+    log.debug("Pattern instanceof: {}", node);
     patternInstanceofExpressions.add(node);
     return super.visit(node);
   }
@@ -139,91 +139,91 @@ public class ClassVisitor extends ASTVisitor {
    */
   @Override
   public boolean visit(TypeParameter node) {
-    log.debug("Type param: " + node);
+    log.debug("Type param: {}", node);
     typeParameters.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(ParameterizedType node) {
-    log.debug("Parameterised type: " + node);
+    log.debug("Parameterised type: {}", node);
     parameterizedTypes.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(VariableDeclarationStatement node) {
-    log.debug("Variable declaration statement: " + node);
+    log.debug("Variable declaration statement: {}", node);
     variableDeclarationStatements.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(FieldDeclaration node) {
-    log.debug("Field declaration: " + node);
+    log.debug("Field declaration: {}", node);
     fieldDeclarations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(MethodDeclaration node) {
-    log.debug("Method declaration: " + node);
+    log.debug("Method declaration: {}", node);
     methodDeclarations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(MethodInvocation node) {
-    log.debug("Method invocation: " + node);
+    log.debug("Method invocation: {}", node);
     methodInvocations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(Assignment node) {
-    log.debug("Assignment: " + node);
+    log.debug("Assignment: {}", node);
     assignments.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(NormalAnnotation node) {
-    log.debug("Normal annotation: " + node);
+    log.debug("Normal annotation: {}", node);
     normalAnnotations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(SingleMemberAnnotation node) {
-    log.debug("Single member annotation: " + node);
+    log.debug("Single member annotation: {}", node);
     singleMemberAnnotations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(MarkerAnnotation node) {
-    log.debug("Marker annotation: " + node);
+    log.debug("Marker annotation: {}", node);
     markerAnnotations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(VariableDeclarationFragment node) {
-    log.debug("Variable declaration fragment: " + node);
+    log.debug("Variable declaration fragment: {}", node);
     variableDeclarationFragments.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(SingleVariableDeclaration node) {
-    log.debug("Single variable declaration: " + node);
+    log.debug("Single variable declaration: {}", node);
     this.singleVariableDeclarations.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(ClassInstanceCreation node) {
-    log.debug("Class instance creation: " + node);
+    log.debug("Class instance creation: {}", node);
     this.classInstanceCreations.add(node);
     return super.visit(node);
   }
@@ -248,42 +248,42 @@ public class ClassVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(SimpleName node) {
-    log.debug("Simple name: " + node);
+    log.debug("Simple name: {}", node);
     this.simpleNames.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(QualifiedName node) {
-    log.debug("Qualified name: " + node);
+    log.debug("Qualified name: {}", node);
     this.qualifiedNames.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(FieldAccess node) {
-    log.debug("Field access: " + node);
+    log.debug("Field access: {}", node);
     fieldAccesses.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(ArrayType node) {
-    log.debug("Array type: " + node);
+    log.debug("Array type: {}", node);
     arrayTypes.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(QualifiedType node) {
-    log.debug("Qual type: " + node);
+    log.debug("Qual type: {}", node);
     qualifiedTypes.add(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(CastExpression node) {
-    log.debug("Cast exp: " + node);
+    log.debug("Cast exp: {}", node);
     castExpressions.add(node);
     return super.visit(node);
   }
