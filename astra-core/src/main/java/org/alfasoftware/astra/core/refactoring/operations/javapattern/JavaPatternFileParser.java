@@ -6,7 +6,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -14,11 +19,15 @@ import java.util.stream.Collectors;
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.MethodDeclarationVisitor;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 
@@ -103,7 +112,7 @@ class JavaPatternFileParser {
 
         List<SingleVariableDeclaration> singleVariableDeclarations = methodDeclaration.parameters();
 
-        nodesToMatch.add(new SingleASTNodePatternMatcher(expressionToMatch, singleVariableDeclarations));
+        nodesToMatch.add(new SingleASTNodePatternMatcher(expressionToMatch, singleVariableDeclarations, substituteMethods));
       });
     });
     return nodesToMatch;
@@ -133,7 +142,7 @@ class JavaPatternFileParser {
   }
 
   public JavaPatternASTMatcher getParsedExpressionMatchers() {
-    return new JavaPatternASTMatcher(patternsToMatch, substituteMethods);
+    return new JavaPatternASTMatcher(patternsToMatch);
   }
 
   /**
@@ -152,19 +161,70 @@ class JavaPatternFileParser {
   }
 
   /**
-   * Contains the information required to match against an ASTNode
+   * Contains the information required to match against an ASTNode.
+   *
+   * <p>Facts about the pattern which the matcher needs for every candidate node are worked out once, here,
+   * rather than for every candidate. This also avoids resolving the pattern's bindings repeatedly, which
+   * synchronizes on the pattern's binding resolver, shared by all threads.
    */
   static class SingleASTNodePatternMatcher {
     ASTNode patternToMatch;
     Collection<SingleVariableDeclaration> singleVariableDeclarations;
+    private final Map<String, SingleVariableDeclaration> singleVariableDeclarationsByName = new HashMap<>();
+    private final Set<MethodInvocation> substituteMethodInvocations = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<MethodInvocation> methodInvocationsWithCapturedNames = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    public SingleASTNodePatternMatcher(ASTNode patternToMatch, List<SingleVariableDeclaration> singleVariableDeclarations) {
+    public SingleASTNodePatternMatcher(ASTNode patternToMatch, List<SingleVariableDeclaration> singleVariableDeclarations,
+        Collection<MethodDeclaration> substituteMethods) {
       this.patternToMatch = patternToMatch;
       this.singleVariableDeclarations = singleVariableDeclarations;
+      singleVariableDeclarations.forEach(singleVariableDeclaration ->
+          singleVariableDeclarationsByName.putIfAbsent(singleVariableDeclaration.getName().getIdentifier(), singleVariableDeclaration));
+      patternToMatch.accept(new ASTVisitor() {
+        @Override
+        public boolean visit(MethodInvocation methodInvocation) {
+          IMethodBinding methodBinding = methodInvocation.resolveMethodBinding();
+          boolean isSubstitute = methodBinding != null && substituteMethods.stream().anyMatch(substituteMethod ->
+              methodBinding.getMethodDeclaration().isEqualTo(substituteMethod.resolveBinding()));
+          if (isSubstitute) {
+            substituteMethodInvocations.add(methodInvocation);
+          }
+          if (methodBinding == null || isSubstitute || singleVariableDeclarationsByName.containsKey(methodInvocation.getName().getIdentifier())) {
+            methodInvocationsWithCapturedNames.add(methodInvocation);
+          }
+          return true;
+        }
+      });
     }
 
     public Collection<SingleVariableDeclaration> getSingleVariableDeclarations() {
       return singleVariableDeclarations;
+    }
+
+    /**
+     * @param name a name from the pattern
+     * @return the parameter of the {@link JavaPattern} annotated method with that name, if there is one
+     */
+    Optional<SingleVariableDeclaration> findSingleVariableDeclaration(SimpleName name) {
+      return Optional.ofNullable(singleVariableDeclarationsByName.get(name.getIdentifier()));
+    }
+
+    /**
+     * @param methodInvocationFromJavaPattern a MethodInvocation from the pattern
+     * @return true if it invokes a {@link Substitute} annotated method
+     */
+    boolean isSubstituteMethodInvocation(MethodInvocation methodInvocationFromJavaPattern) {
+      return substituteMethodInvocations.contains(methodInvocationFromJavaPattern);
+    }
+
+    /**
+     * @param methodInvocationFromJavaPattern a MethodInvocation from the pattern
+     * @return false if a matching MethodInvocation must invoke a method with the same name: true if the method is a
+     *         {@link Substitute} method, or the name is that of a pattern parameter, as these are captured rather than
+     *         compared. Also true if the method's binding cannot be resolved, leaving that case to the full match.
+     */
+    boolean isMethodNameCaptured(MethodInvocation methodInvocationFromJavaPattern) {
+      return methodInvocationsWithCapturedNames.contains(methodInvocationFromJavaPattern);
     }
 
     public ASTNode getJavaPatternToMatch() {

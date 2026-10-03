@@ -14,7 +14,6 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -30,13 +29,11 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
  */
 class JavaPatternASTMatcher {
 
-  private final Collection<MethodDeclaration> substituteMethods;
   private final Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch;
   private final Collection<ASTNodeMatchInformation> foundMatches = new ArrayList<>();
 
-  public JavaPatternASTMatcher(Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch, Collection<MethodDeclaration> substituteMethods) {
+  public JavaPatternASTMatcher(Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch) {
     this.javaPatternsToMatch = javaPatternsToMatch;
-    this.substituteMethods = substituteMethods;
   }
 
   /**
@@ -170,9 +167,7 @@ class JavaPatternASTMatcher {
      * Checks whether a simpleName from the JavaPattern is one that is a Parameter and should therefore capture match information
      */
     private Optional<SingleVariableDeclaration> findPatternParameterFromSimpleName(SimpleName simpleNameFromPatternMatcher) {
-      return patternToMatch.getSingleVariableDeclarations().stream()
-          .filter(singleVariableDeclaration -> singleVariableDeclaration.getName().toString().equals(simpleNameFromPatternMatcher.toString()))
-          .findAny();
+      return patternToMatch.findSingleVariableDeclaration(simpleNameFromPatternMatcher);
     }
 
 
@@ -473,21 +468,15 @@ class JavaPatternASTMatcher {
      * @return true, if the method invocation matches the declaration of an @Substitute annotated method
      */
     private boolean methodInvocationMatchesSubstituteMethod(MethodInvocation o) {
-      return substituteMethods.stream().anyMatch(methodDeclaration ->
-              o.resolveMethodBinding().getMethodDeclaration().isEqualTo(methodDeclaration.resolveBinding()));
+      return patternToMatch.isSubstituteMethodInvocation(o);
     }
 
 
     /**
-     * @param methodInvocationFromJavaPattern a MethodInvocation from the {@link JavaPattern}
-     * @return false if a matching MethodInvocation must invoke a method with the same name: true if the method is a
-     *         {@link Substitute} method, or the name is that of a pattern parameter, as these are captured rather than
-     *         compared. Also true if the method's binding cannot be resolved, leaving that case to the full match.
+     * @see JavaPatternFileParser.SingleASTNodePatternMatcher#isMethodNameCaptured(MethodInvocation)
      */
     private boolean isMethodNameCaptured(MethodInvocation methodInvocationFromJavaPattern) {
-      return methodInvocationFromJavaPattern.resolveMethodBinding() == null
-          || findPatternParameterFromSimpleName(methodInvocationFromJavaPattern.getName()).isPresent()
-          || methodInvocationMatchesSubstituteMethod(methodInvocationFromJavaPattern);
+      return patternToMatch.isMethodNameCaptured(methodInvocationFromJavaPattern);
     }
 
 
