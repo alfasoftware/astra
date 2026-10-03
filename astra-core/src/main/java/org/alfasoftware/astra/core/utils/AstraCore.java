@@ -490,7 +490,7 @@ public class AstraCore {
    * @param compilationUnit The compilation unit - expected to be a whole Java source file
    * @return ASTRewrite, a collection of changes to make to the source file
    */
-  private static ASTRewrite runOperations(Set<? extends ASTOperation> operations, final CompilationUnit compilationUnit) {
+  protected static ASTRewrite runOperations(Set<? extends ASTOperation> operations, final CompilationUnit compilationUnit) {
 
     // Create the re-writer for modifying the code
     final ASTRewrite rewriter = ASTRewrite.create(compilationUnit.getAST());
