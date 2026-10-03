@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.imports.UnusedImportRefactor;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
@@ -513,11 +514,13 @@ public class AstraCore {
 
     final ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
+    // Collected once, rather than for each operation, as this builds a new set each time
+    final Set<ASTNode> visitedNodes = visitor.getVisitedNodes();
 
     for (ASTOperation operation : operations) {
 
       // For every ASTNode we've visited
-      visitor.getVisitedNodes()
+      visitedNodes
       .forEach(node -> {
         try {
           // Pass them to the operation
