@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 * Added `AssertTrueInsteadOfDedicatedAssertOperation` implementing SonarQube rule java:S5785 — rewrites `assertTrue`/`assertFalse` calls to dedicated assertion methods (`assertNull`, `assertNotNull`, `assertEquals`, `assertNotEquals`, `assertSame`, `assertNotSame`) for JUnit 4 and JUnit 5
+* `ASTOperation.getContentPrefilteringPredicate()`, which lets an operation say which files it could apply to, from their raw content. A file is only parsed if the use case's content prefiltering predicate accepts it and at least one operation's predicate does. The default accepts every file, so existing operations are unaffected. See [Skipping files that can't be changed](./astra-core/README.md#skipping-files-that-cant-be-changed)
+* `JavaPatternASTOperation` skips parsing files which don't contain the names of the methods and types its patterns require
+* A performance benchmark for `JavaPatternASTOperation` (`TestJavaPatternPerformance`)
+
+### Changed
+* Faster matching in `JavaPatternASTOperation`: method names are compared before bindings are resolved, patterns are only tried against nodes of the same type, facts about each pattern are worked out once when it is parsed, and matchers are only created for nodes that could match. Output is unchanged
+* `AstraCore` collects each file's visited nodes once, rather than once per operation
+* `ClassVisitor` only builds its debug log messages when debug logging is enabled. Previously every visited node was converted back to source text, for every file processed by any use case
 
 ### Fixed
 * `JavaPatternASTOperation` (the Java Pattern refactor engine) now fails fast instead of silently producing incorrect output in two cases: a `@JavaPatternReplacement` method body with more than one statement (previously all but the first statement were silently dropped), and a candidate AST node matching more than one `@JavaPattern` in the same matcher file (previously this could cause the same node to be rewritten twice)

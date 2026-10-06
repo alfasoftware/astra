@@ -71,6 +71,8 @@ public class MyJavaPatternUseCase implements UseCase {
 
 `MyMatcher.java` is the matcher file: a small Java file (not necessarily compiled/on any runtime classpath other than at parse time) with one method annotated `@JavaPattern` describing the code to find, and exactly one method annotated `@JavaPatternReplacement` describing what to replace it with. See `astra-core`'s tests under `astra-core/src/test/java/org/alfasoftware/astra/core/refactoring/javapattern/` for worked examples.
 
+`JavaPatternASTOperation` only parses the files which could match its patterns, so running it over a large source tree is much quicker than parsing every file. See [Skipping files that can't be changed](../astra-core/README.md#skipping-files-that-cant-be-changed).
+
 Package `MyJavaPatternUseCase` the same way as any other use case (its own module, or a dependency added to the plugin as shown above), then run:
 `mvn astra:refactor -Dastra.usecase=com.example.MyJavaPatternUseCase`
 
