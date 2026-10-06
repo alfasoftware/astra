@@ -41,6 +41,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  *  AstraCore operates on source files in an input directory, building an AST for each file, using any additional classpaths supplied. 
+ *  Files which no operation can apply to are skipped without being parsed: a file is only parsed if its content is accepted by
+ *  the use case's {@link UseCase#getContentPrefilteringPredicate() content prefiltering predicate}, and by that of at least
+ *  one of its operations ({@link ASTOperation#getContentPrefilteringPredicate()}).
  *  It also builds an ASTRewriter to record changes.
  *
  *  It then visits every ASTNode in the AST, passing the nodes through a set of ASTOperations.

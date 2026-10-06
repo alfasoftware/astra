@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 * Added `AssertTrueInsteadOfDedicatedAssertOperation` implementing SonarQube rule java:S5785 — rewrites `assertTrue`/`assertFalse` calls to dedicated assertion methods (`assertNull`, `assertNotNull`, `assertEquals`, `assertNotEquals`, `assertSame`, `assertNotSame`) for JUnit 4 and JUnit 5
-* `ASTOperation.getContentPrefilteringPredicate()`, which lets an operation say which files it could apply to, from their raw content. A file is only parsed if the use case's content prefiltering predicate accepts it and at least one operation's predicate does. The default accepts every file, so existing operations are unaffected. See [Skipping files that can't be changed](./astra-core/README.md#skipping-files-that-cant-be-changed)
+* `ASTOperation.getContentPrefilteringPredicate()`, which lets an operation say which files it could apply to, from their raw content. A file is only parsed if the use case's content prefiltering predicate accepts it and at least one operation's predicate does. The default accepts every file, so existing operations are unaffected. [Read more in the wiki](https://github.com/alfasoftware/astra/wiki/UseCases#skipping-files-that-cant-be-changed)
 * `JavaPatternASTOperation` skips parsing files which don't contain the names of the methods and types its patterns require
 * A performance benchmark for `JavaPatternASTOperation` (`TestJavaPatternPerformance`)
 

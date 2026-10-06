@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
  * This is a specific ASTOperation with support for parsing Matcher files using the
  * {@link JavaPattern} and {@link JavaPatternReplacement} annotations to describe an AST refactor.
  *
+ * <p>Files which can't contain a match are not parsed: see {@link #getContentPrefilteringPredicate()}.
  */
 public class JavaPatternASTOperation implements ASTOperation {
 
