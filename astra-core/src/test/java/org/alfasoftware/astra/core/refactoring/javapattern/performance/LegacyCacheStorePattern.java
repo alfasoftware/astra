@@ -1,9 +1,9 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.performance;
 
-import org.alfasoftware.astra.core.refactoring.javapattern.performance.lib.LegacyCache;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPattern;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.Substitute;
+import org.alfasoftware.astra.exampleTypes.LegacyCache;
 
 /**
  * Benchmark pattern: migrates {@link LegacyCache#store(Object, Object)} to {@link LegacyCache#put(Object, Object)}

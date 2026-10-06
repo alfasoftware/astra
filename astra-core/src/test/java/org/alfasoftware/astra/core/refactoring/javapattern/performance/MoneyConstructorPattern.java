@@ -1,8 +1,8 @@
 package org.alfasoftware.astra.core.refactoring.javapattern.performance;
 
-import org.alfasoftware.astra.core.refactoring.javapattern.performance.lib.Money;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPattern;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternReplacement;
+import org.alfasoftware.astra.exampleTypes.Money;
 
 /**
  * Benchmark pattern: replaces the legacy {@link Money} constructor with the {@link Money#of(long, String)} factory.

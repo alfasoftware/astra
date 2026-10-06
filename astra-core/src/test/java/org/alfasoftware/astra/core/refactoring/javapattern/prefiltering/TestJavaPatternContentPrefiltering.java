@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -15,9 +16,9 @@ import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.javapattern.JavaPatternASTOperation;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraCore;
-import org.junit.Rule;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests the content prefiltering predicate of {@link JavaPatternASTOperation}, which rejects source code that
@@ -25,15 +26,28 @@ import org.junit.rules.TemporaryFolder;
  */
 public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  private Path tempDir;
+
+
+  @Before
+  public void setUp() throws IOException {
+    tempDir = Files.createTempDirectory("astra-java-pattern-prefiltering-test");
+  }
+
+
+  @After
+  public void tearDown() throws IOException {
+    Files.walk(tempDir)
+        .sorted(Comparator.reverseOrder())
+        .forEach(path -> path.toFile().delete());
+  }
 
 
   /**
    * See {@link MethodNamesPattern}.
    */
   @Test
-  public void requiresTheNamesOfInvokedMethodsButNotOfParameters() throws IOException {
+  public void testRequiresTheNamesOfInvokedMethodsButNotOfParameters() throws IOException {
     Predicate<String> predicate = predicateFor(MethodNamesPattern.class);
     assertTrue(predicate.test("lookup.get(id).toString().equals(name)"));
     assertFalse(predicate.test("lookup.get(id).equals(name)"));
@@ -45,7 +59,7 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
    * See {@link SubstituteMethodPattern}.
    */
   @Test
-  public void doesNotRequireTheNamesOfSubstituteMethods() throws IOException {
+  public void testDoesNotRequireTheNamesOfSubstituteMethods() throws IOException {
     Predicate<String> predicate = predicateFor(SubstituteMethodPattern.class);
     assertTrue(predicate.test("names.add(String.valueOf(value).trim());"));
     assertFalse(predicate.test("names.add(String.valueOf(value));"));
@@ -56,7 +70,7 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
    * See {@link SubstituteOnlyPattern}.
    */
   @Test
-  public void acceptsEverythingWhenNoIdentifiersAreRequired() throws IOException {
+  public void testAcceptsEverythingWhenNoIdentifiersAreRequired() throws IOException {
     assertTrue(predicateFor(SubstituteOnlyPattern.class).test("class Empty {}"));
   }
 
@@ -65,7 +79,7 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
    * See {@link ConstructorsPattern}.
    */
   @Test
-  public void requiresTheIdentifiersOfAnyOnePattern() throws IOException {
+  public void testRequiresTheIdentifiersOfAnyOnePattern() throws IOException {
     Predicate<String> predicate = predicateFor(ConstructorsPattern.class);
     assertTrue(predicate.test("new StringBuilder(text).reverse()"));
     assertTrue(predicate.test("new ArrayList<>(values)"));
@@ -78,7 +92,7 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
    * See {@link VarargsPattern}.
    */
   @Test
-  public void doesNotRequireArgumentsCapturedByAnArrayParameter() throws IOException {
+  public void testDoesNotRequireArgumentsCapturedByAnArrayParameter() throws IOException {
     Predicate<String> predicate = predicateFor(VarargsPattern.class);
     assertTrue(predicate.test("System.arraycopy(source, 0, target, 0, length);"));
     assertFalse(predicate.test("Arrays.fill(values, null);"));
@@ -89,7 +103,7 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
    * Identifiers written with unicode escapes are not found by a text search, so such content is always accepted.
    */
   @Test
-  public void acceptsContentWithUnicodeEscapes() throws IOException {
+  public void testAcceptsContentWithUnicodeEscapes() throws IOException {
     assertTrue(predicateFor(MethodNamesPattern.class).test("lookup.\\u0067et(id).toString().equals(name)"));
   }
 
@@ -98,8 +112,7 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
    * Files which can't be matched are skipped, and files which can are still refactored.
    */
   @Test
-  public void refactorsFilesWhichCanBeMatched() throws IOException {
-    Path directory = temporaryFolder.newFolder().toPath();
+  public void testRefactorsFilesWhichCanBeMatched() throws IOException {
     String matching = "package example;\n"
         + "import java.util.Map;\n"
         + "class Matching {\n"
@@ -114,19 +127,19 @@ public class TestJavaPatternContentPrefiltering extends AbstractRefactorTest {
         + "    return map.get(\"a\").equals(\"b\");\n"
         + "  }\n"
         + "}\n";
-    Files.writeString(directory.resolve("Matching.java"), matching);
-    Files.writeString(directory.resolve("NotMatching.java"), notMatching);
+    Files.writeString(tempDir.resolve("Matching.java"), matching);
+    Files.writeString(tempDir.resolve("NotMatching.java"), notMatching);
 
     JavaPatternASTOperation operation = operationFor(MethodNamesPattern.class);
-    AstraCore.run(directory.toString(), new UseCase() {
+    AstraCore.run(tempDir.toString(), new UseCase() {
       @Override
       public Set<? extends ASTOperation> getOperations() {
         return Set.of(operation);
       }
     });
 
-    assertTrue(Files.readString(directory.resolve("Matching.java")).contains("\"b\".equals(String.valueOf(map.get(\"a\")))"));
-    assertEquals(notMatching, Files.readString(directory.resolve("NotMatching.java")));
+    assertTrue(Files.readString(tempDir.resolve("Matching.java")).contains("\"b\".equals(String.valueOf(map.get(\"a\")))"));
+    assertEquals(notMatching, Files.readString(tempDir.resolve("NotMatching.java")));
   }
 
 

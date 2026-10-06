@@ -1,4 +1,4 @@
-package org.alfasoftware.astra.core.refactoring.javapattern.performance.lib;
+package org.alfasoftware.astra.exampleTypes;
 
 /**
  * Declares a {@link #lookup(String)} method with the same name as {@link LegacyCache#lookup(Object)},

@@ -1,4 +1,4 @@
-package org.alfasoftware.astra.core.refactoring.javapattern.performance.lib;
+package org.alfasoftware.astra.exampleTypes;
 
 import java.util.HashMap;
 import java.util.Map;

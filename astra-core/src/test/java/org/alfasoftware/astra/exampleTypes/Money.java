@@ -1,4 +1,4 @@
-package org.alfasoftware.astra.core.refactoring.javapattern.performance.lib;
+package org.alfasoftware.astra.exampleTypes;
 
 /**
  * A value type whose legacy constructor the performance benchmark's java patterns replace

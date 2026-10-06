@@ -14,14 +14,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import org.alfasoftware.astra.core.refactoring.javapattern.performance.lib.LegacyCache;
-import org.alfasoftware.astra.core.refactoring.javapattern.performance.lib.Money;
-import org.alfasoftware.astra.core.refactoring.javapattern.performance.lib.ServiceRegistry;
+import org.alfasoftware.astra.exampleTypes.LegacyCache;
+import org.alfasoftware.astra.exampleTypes.Money;
+import org.alfasoftware.astra.exampleTypes.ServiceRegistry;
 
 /**
- * Generates a deterministic synthetic codebase for {@link TestJavaPatternPerformance}.
+ * Generates the example source files for {@link TestJavaPatternPerformance}: the same files every time,
+ * with a known set of matches for the benchmark patterns.
  *
- * <p>Every file is a class whose methods are made of everyday JDK code. That code contains near misses for the
+ * <p>Every example is a class whose methods are made of everyday JDK code. That code contains near misses for the
  * benchmark patterns (invocations with the same method names, but a different shape or types), but no matches.
  * In addition:
  * <ul>
@@ -31,10 +32,10 @@ import org.alfasoftware.astra.core.refactoring.javapattern.performance.lib.Servi
  *   <li>every 5th file, offset by 2, uses the idioms replaced by the "jdk-idioms" patterns.</li>
  * </ul>
  */
-final class BenchmarkCorpus {
+final class PerformanceExampleGenerator {
 
-  private static final String LIB_PACKAGE = LegacyCache.class.getPackageName();
-  private static final String PACKAGE = "bench.app";
+  private static final String EXAMPLE_TYPES_PACKAGE = LegacyCache.class.getPackageName();
+  private static final String PACKAGE = "org.alfasoftware.astra.performance";
   private static final int METHODS_PER_FILE = 12;
   private static final int SNIPPETS_PER_METHOD = 5;
   private static final long SEED = 20261003L;
@@ -132,14 +133,14 @@ final class BenchmarkCorpus {
   private final int jdkIdiomFileCount;
 
 
-  private BenchmarkCorpus(Map<String, String> files, int apiMigrationFileCount, int jdkIdiomFileCount) {
+  private PerformanceExampleGenerator(Map<String, String> files, int apiMigrationFileCount, int jdkIdiomFileCount) {
     this.files = files;
     this.apiMigrationFileCount = apiMigrationFileCount;
     this.jdkIdiomFileCount = jdkIdiomFileCount;
   }
 
 
-  static BenchmarkCorpus generate(int fileCount) {
+  static PerformanceExampleGenerator generate(int fileCount) {
     Random random = new Random(SEED);
     Map<String, String> files = new TreeMap<>();
     int apiMigrationFileCount = 0;
@@ -170,11 +171,11 @@ final class BenchmarkCorpus {
         jdkIdiomFileCount++;
       }
 
-      String className = String.format("Component%04d", index);
+      String className = String.format("PerformanceExample%04d", index);
       files.put(PACKAGE.replace('.', '/') + "/" + className + ".java",
           renderClass(className, methods, usesLegacyApi, usesRegistry));
     }
-    return new BenchmarkCorpus(files, apiMigrationFileCount, jdkIdiomFileCount);
+    return new PerformanceExampleGenerator(files, apiMigrationFileCount, jdkIdiomFileCount);
   }
 
 
@@ -197,11 +198,11 @@ final class BenchmarkCorpus {
     }
     source.append("\n");
     if (usesLegacyApi) {
-      source.append("import ").append(LIB_PACKAGE).append(".LegacyCache;\n");
-      source.append("import ").append(LIB_PACKAGE).append(".Money;\n");
+      source.append("import ").append(EXAMPLE_TYPES_PACKAGE).append(".LegacyCache;\n");
+      source.append("import ").append(EXAMPLE_TYPES_PACKAGE).append(".Money;\n");
     }
     if (usesRegistry) {
-      source.append("import ").append(LIB_PACKAGE).append(".ServiceRegistry;\n");
+      source.append("import ").append(EXAMPLE_TYPES_PACKAGE).append(".ServiceRegistry;\n");
     }
     source.append("\n");
     source.append("public class ").append(className).append(" {\n\n");
@@ -237,7 +238,7 @@ final class BenchmarkCorpus {
 
 
   /**
-   * Writes (or re-writes) every file of the corpus into the given directory.
+   * Writes (or re-writes) every example file into the given directory.
    */
   void writeTo(Path directory) throws IOException {
     for (Map.Entry<String, String> file : files.entrySet()) {
@@ -249,7 +250,7 @@ final class BenchmarkCorpus {
 
 
   /**
-   * @return the current content of the corpus files in the given directory, keyed by relative path
+   * @return the current content of the example files in the given directory, keyed by relative path
    */
   Map<String, String> readFrom(Path directory) throws IOException {
     Map<String, String> content = new TreeMap<>();

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,10 +16,9 @@ import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests that {@link AstraCore} only parses files accepted by the
@@ -26,22 +26,27 @@ import org.junit.rules.TemporaryFolder;
  */
 public class TestAstraCoreOperationContentPrefiltering {
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
   private Path directory;
 
 
   @Before
   public void setUp() throws IOException {
-    directory = temporaryFolder.newFolder().toPath();
+    directory = Files.createTempDirectory("astra-operation-prefiltering-test");
     Files.writeString(directory.resolve("Included.java"), "public class Included {}");
     Files.writeString(directory.resolve("Excluded.java"), "public class Excluded {}");
   }
 
 
+  @After
+  public void tearDown() throws IOException {
+    Files.walk(directory)
+        .sorted(Comparator.reverseOrder())
+        .forEach(path -> path.toFile().delete());
+  }
+
+
   @Test
-  public void filesRejectedByEveryOperationAreNotParsed() {
+  public void testFilesRejectedByEveryOperationAreNotParsed() {
     Set<String> visited = ConcurrentHashMap.newKeySet();
 
     run(content -> true, recordingOperation(visited, content -> content.contains("Included")));
@@ -51,7 +56,7 @@ public class TestAstraCoreOperationContentPrefiltering {
 
 
   @Test
-  public void filesAcceptedByAnyOperationAreParsed() {
+  public void testFilesAcceptedByAnyOperationAreParsed() {
     Set<String> visitedByFilteringOperation = ConcurrentHashMap.newKeySet();
     Set<String> visitedByOtherOperation = ConcurrentHashMap.newKeySet();
 
@@ -66,7 +71,7 @@ public class TestAstraCoreOperationContentPrefiltering {
 
 
   @Test
-  public void operationsAcceptEveryFileByDefault() {
+  public void testOperationsAcceptEveryFileByDefault() {
     Set<String> visited = ConcurrentHashMap.newKeySet();
 
     run(content -> true, (compilationUnit, node, rewriter) -> visited.add(fileName(compilationUnit)));
@@ -76,7 +81,7 @@ public class TestAstraCoreOperationContentPrefiltering {
 
 
   @Test
-  public void theUseCasePredicateMustAlsoAcceptTheFile() {
+  public void testTheUseCasePredicateMustAlsoAcceptTheFile() {
     Set<String> visited = ConcurrentHashMap.newKeySet();
 
     run(content -> ! content.contains("Excluded"), recordingOperation(visited, content -> true));
