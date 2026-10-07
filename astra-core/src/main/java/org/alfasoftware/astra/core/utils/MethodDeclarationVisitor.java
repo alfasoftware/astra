@@ -20,7 +20,7 @@ public class MethodDeclarationVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodDeclaration node) {
-    log.debug("Method declaration: " + node);
+    log.debug("Method declaration: {}", node);
     methodDeclarations.add(node);
     return super.visit(node);
   }

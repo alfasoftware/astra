@@ -14,7 +14,6 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -30,13 +29,11 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
  */
 class JavaPatternASTMatcher {
 
-  private final Collection<MethodDeclaration> substituteMethods;
   private final Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch;
   private final Collection<ASTNodeMatchInformation> foundMatches = new ArrayList<>();
 
-  public JavaPatternASTMatcher(Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch, Collection<MethodDeclaration> substituteMethods) {
+  public JavaPatternASTMatcher(Collection<JavaPatternFileParser.SingleASTNodePatternMatcher> javaPatternsToMatch) {
     this.javaPatternsToMatch = javaPatternsToMatch;
-    this.substituteMethods = substituteMethods;
   }
 
   /**
@@ -46,6 +43,9 @@ class JavaPatternASTMatcher {
    */
   boolean matchAndCapture(ASTNode matchCandidate){
     for (JavaPatternFileParser.SingleASTNodePatternMatcher javaPatternToMatch: javaPatternsToMatch) {
+      if (! javaPatternToMatch.couldMatch(matchCandidate)) {
+        continue;
+      }
       final JavaPatternMatcher javaPatternMatcher = new JavaPatternMatcher(javaPatternToMatch);
       if (javaPatternMatcher.match(javaPatternToMatch.getJavaPatternToMatch(), matchCandidate)) {
         foundMatches.add(javaPatternMatcher.getNodeMatch());
@@ -167,9 +167,7 @@ class JavaPatternASTMatcher {
      * Checks whether a simpleName from the JavaPattern is one that is a Parameter and should therefore capture match information
      */
     private Optional<SingleVariableDeclaration> findPatternParameterFromSimpleName(SimpleName simpleNameFromPatternMatcher) {
-      return patternToMatch.getSingleVariableDeclarations().stream()
-          .filter(singleVariableDeclaration -> singleVariableDeclaration.getName().toString().equals(simpleNameFromPatternMatcher.toString()))
-          .findAny();
+      return patternToMatch.findSingleVariableDeclaration(simpleNameFromPatternMatcher);
     }
 
 
@@ -256,6 +254,13 @@ class JavaPatternASTMatcher {
         return false;
       }
       MethodInvocation o = (MethodInvocation) matchCandidate;
+
+      // Comparing the names of the methods is cheap, whereas the checks below resolve bindings and match the arguments,
+      // so reject an invocation of a method with a different name first, unless the name is captured rather than compared.
+      if (! methodInvocationFromJavaPattern.getName().getIdentifier().equals(o.getName().getIdentifier())
+          && ! isMethodNameCaptured(methodInvocationFromJavaPattern)) {
+        return false;
+      }
 
       if (! safeSubtreeListMatch(methodInvocationFromJavaPattern.typeArguments(), o.typeArguments())) {
         return false;
@@ -463,8 +468,15 @@ class JavaPatternASTMatcher {
      * @return true, if the method invocation matches the declaration of an @Substitute annotated method
      */
     private boolean methodInvocationMatchesSubstituteMethod(MethodInvocation o) {
-      return substituteMethods.stream().anyMatch(methodDeclaration ->
-              o.resolveMethodBinding().getMethodDeclaration().isEqualTo(methodDeclaration.resolveBinding()));
+      return patternToMatch.isSubstituteMethodInvocation(o);
+    }
+
+
+    /**
+     * @see JavaPatternFileParser.SingleASTNodePatternMatcher#isMethodNameCaptured(MethodInvocation)
+     */
+    private boolean isMethodNameCaptured(MethodInvocation methodInvocationFromJavaPattern) {
+      return patternToMatch.isMethodNameCaptured(methodInvocationFromJavaPattern);
     }
 
 
