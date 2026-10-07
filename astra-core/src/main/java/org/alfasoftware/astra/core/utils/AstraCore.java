@@ -365,11 +365,9 @@ public class AstraCore {
    * @see ASTOperation#getContentPrefilteringPredicate()
    */
   private static Predicate<String> anyOperationMayApply(Set<? extends ASTOperation> operations) {
-    List<Predicate<String>> operationPredicates = new ArrayList<>();
-    for (ASTOperation operation : operations) {
-      operationPredicates.add(operation.getContentPrefilteringPredicate());
-    }
-    return content -> operationPredicates.stream().anyMatch(predicate -> predicate.test(content));
+    return content -> operations.stream()
+            .map(ASTOperation::getContentPrefilteringPredicate)
+            .anyMatch(predicate -> predicate.test(content));
   }
 
 
