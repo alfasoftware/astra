@@ -27,6 +27,7 @@ import picocli.CommandLine.Spec;
         subcommands = {
                 AstraMethodInvocation.class,
                 AstraChangeType.class,
+                AstraYamlRefactor.class,
                 CommandLine.HelpCommand.class
         })
 public class AstraCli implements Runnable {
