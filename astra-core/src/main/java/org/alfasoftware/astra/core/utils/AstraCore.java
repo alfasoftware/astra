@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 
 import org.alfasoftware.astra.core.refactoring.UseCase;
 import org.alfasoftware.astra.core.refactoring.operations.imports.UnusedImportRefactor;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
@@ -40,6 +41,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  *  AstraCore operates on source files in an input directory, building an AST for each file, using any additional classpaths supplied. 
+ *  Files which no operation can apply to are skipped without being parsed: a file is only parsed if its content is accepted by
+ *  the use case's {@link UseCase#getContentPrefilteringPredicate() content prefiltering predicate}, and by that of at least
+ *  one of its operations ({@link ASTOperation#getContentPrefilteringPredicate()}).
  *  It also builds an ASTRewriter to record changes.
  *
  *  It then visits every ASTNode in the AST, passing the nodes through a set of ASTOperations.
@@ -114,7 +118,8 @@ public class AstraCore {
     Set<? extends ASTOperation> operations = useCase.getOperations();
     int parallelism = useCase.getParallelism();
     int batchSize = useCase.getBatchSize();
-    Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate();
+    Predicate<String> contentPrefilteringPredicate = useCase.getContentPrefilteringPredicate()
+        .and(anyOperationMayApply(operations));
     log.info("Processing [" + totalFiles + "] files with [" + parallelism + "] thread(s), batch size [" + batchSize + "]");
 
     // Process files in fixed-size chunks to keep peak heap bounded. For each chunk we read
@@ -353,6 +358,19 @@ public class AstraCore {
   }
 
 
+  /**
+   * Builds a predicate over file content which only accepts files that at least one of the operations might apply to.
+   * Files rejected by every operation are not parsed.
+   *
+   * @see ASTOperation#getContentPrefilteringPredicate()
+   */
+  private static Predicate<String> anyOperationMayApply(Set<? extends ASTOperation> operations) {
+    return content -> operations.stream()
+            .map(ASTOperation::getContentPrefilteringPredicate)
+            .anyMatch(predicate -> predicate.test(content));
+  }
+
+
   private void logProgress(long currentFileIndex, long currentPercentage, Instant startTime, long totalNumberOfFiles) {
     Duration elapsedDuration = Duration.between(startTime, Instant.now());
     Duration estimatedDuration = elapsedDuration.multipliedBy(totalNumberOfFiles).dividedBy(currentFileIndex);
@@ -490,18 +508,20 @@ public class AstraCore {
    * @param compilationUnit The compilation unit - expected to be a whole Java source file
    * @return ASTRewrite, a collection of changes to make to the source file
    */
-  private static ASTRewrite runOperations(Set<? extends ASTOperation> operations, final CompilationUnit compilationUnit) {
+  protected static ASTRewrite runOperations(Set<? extends ASTOperation> operations, final CompilationUnit compilationUnit) {
 
     // Create the re-writer for modifying the code
     final ASTRewrite rewriter = ASTRewrite.create(compilationUnit.getAST());
 
     final ClassVisitor visitor = new ClassVisitor();
     compilationUnit.accept(visitor);
+    // Collected once, rather than for each operation, as this builds a new set each time
+    final Set<ASTNode> visitedNodes = visitor.getVisitedNodes();
 
     for (ASTOperation operation : operations) {
 
       // For every ASTNode we've visited
-      visitor.getVisitedNodes()
+      visitedNodes
       .forEach(node -> {
         try {
           // Pass them to the operation

@@ -6,17 +6,28 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.alfasoftware.astra.core.utils.AstraUtils;
 import org.alfasoftware.astra.core.utils.MethodDeclarationVisitor;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 
@@ -101,7 +112,7 @@ class JavaPatternFileParser {
 
         List<SingleVariableDeclaration> singleVariableDeclarations = methodDeclaration.parameters();
 
-        nodesToMatch.add(new SingleASTNodePatternMatcher(expressionToMatch, singleVariableDeclarations));
+        nodesToMatch.add(new SingleASTNodePatternMatcher(expressionToMatch, singleVariableDeclarations, substituteMethods));
       });
     });
     return nodesToMatch;
@@ -131,27 +142,129 @@ class JavaPatternFileParser {
   }
 
   public JavaPatternASTMatcher getParsedExpressionMatchers() {
-    return new JavaPatternASTMatcher(patternsToMatch, substituteMethods);
+    return new JavaPatternASTMatcher(patternsToMatch);
   }
 
   /**
-   * Contains the information required to match against an ASTNode
+   * @param matchCandidate the ASTNode we are testing for a match
+   * @return false if none of the patterns can match the candidate, as determined by cheap checks
+   * @see SingleASTNodePatternMatcher#couldMatch(ASTNode)
+   */
+  public boolean couldAnyPatternMatch(ASTNode matchCandidate) {
+    for (SingleASTNodePatternMatcher pattern : patternsToMatch) {
+      if (pattern.couldMatch(matchCandidate)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @return a predicate which rejects source code that none of the java patterns can match,
+   *         because it does not contain all of the identifiers required by any one of the patterns.
+   * @see JavaPatternRequiredIdentifiers
+   */
+  public Predicate<String> getContentPrefilteringPredicate() {
+    final List<Set<String>> requiredIdentifiersOfEachPattern = patternsToMatch.stream()
+        .map(pattern -> JavaPatternRequiredIdentifiers.of(pattern.getJavaPatternToMatch(), pattern.getSingleVariableDeclarations(), substituteMethods))
+        .collect(Collectors.toList());
+    return content ->
+        // identifiers can be written using unicode escapes, which a plain text search would not find
+        content.contains("\\u") ||
+        requiredIdentifiersOfEachPattern.stream().anyMatch(requiredIdentifiers -> requiredIdentifiers.stream().allMatch(content::contains));
+  }
+
+  /**
+   * Contains the information required to match against an ASTNode.
+   *
+   * <p>Facts about the pattern which the matcher needs for every candidate node are worked out once, here,
+   * rather than for every candidate. This also avoids resolving the pattern's bindings repeatedly, which
+   * synchronizes on the pattern's binding resolver, shared by all threads.
    */
   static class SingleASTNodePatternMatcher {
     ASTNode patternToMatch;
     Collection<SingleVariableDeclaration> singleVariableDeclarations;
+    private final Map<String, SingleVariableDeclaration> singleVariableDeclarationsByName = new HashMap<>();
+    private final Set<MethodInvocation> substituteMethodInvocations = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<MethodInvocation> methodInvocationsWithCapturedNames = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    public SingleASTNodePatternMatcher(ASTNode patternToMatch, List<SingleVariableDeclaration> singleVariableDeclarations) {
+    public SingleASTNodePatternMatcher(ASTNode patternToMatch, List<SingleVariableDeclaration> singleVariableDeclarations,
+        Collection<MethodDeclaration> substituteMethods) {
       this.patternToMatch = patternToMatch;
       this.singleVariableDeclarations = singleVariableDeclarations;
+      singleVariableDeclarations.forEach(singleVariableDeclaration ->
+          singleVariableDeclarationsByName.putIfAbsent(singleVariableDeclaration.getName().getIdentifier(), singleVariableDeclaration));
+      patternToMatch.accept(new ASTVisitor() {
+        @Override
+        public boolean visit(MethodInvocation methodInvocation) {
+          IMethodBinding methodBinding = methodInvocation.resolveMethodBinding();
+          boolean isSubstitute = methodBinding != null && substituteMethods.stream().anyMatch(substituteMethod ->
+              methodBinding.getMethodDeclaration().isEqualTo(substituteMethod.resolveBinding()));
+          if (isSubstitute) {
+            substituteMethodInvocations.add(methodInvocation);
+          }
+          if (methodBinding == null || isSubstitute || singleVariableDeclarationsByName.containsKey(methodInvocation.getName().getIdentifier())) {
+            methodInvocationsWithCapturedNames.add(methodInvocation);
+          }
+          return true;
+        }
+      });
     }
 
     public Collection<SingleVariableDeclaration> getSingleVariableDeclarations() {
       return singleVariableDeclarations;
     }
 
+    /**
+     * @param name a name from the pattern
+     * @return the parameter of the {@link JavaPattern} annotated method with that name, if there is one
+     */
+    Optional<SingleVariableDeclaration> findSingleVariableDeclaration(SimpleName name) {
+      return Optional.ofNullable(singleVariableDeclarationsByName.get(name.getIdentifier()));
+    }
+
+    /**
+     * @param methodInvocationFromJavaPattern a MethodInvocation from the pattern
+     * @return true if it invokes a {@link Substitute} annotated method
+     */
+    boolean isSubstituteMethodInvocation(MethodInvocation methodInvocationFromJavaPattern) {
+      return substituteMethodInvocations.contains(methodInvocationFromJavaPattern);
+    }
+
+    /**
+     * @param methodInvocationFromJavaPattern a MethodInvocation from the pattern
+     * @return false if a matching MethodInvocation must invoke a method with the same name: true if the method is a
+     *         {@link Substitute} method, or the name is that of a pattern parameter, as these are captured rather than
+     *         compared. Also true if the method's binding cannot be resolved, leaving that case to the full match.
+     */
+    boolean isMethodNameCaptured(MethodInvocation methodInvocationFromJavaPattern) {
+      return methodInvocationsWithCapturedNames.contains(methodInvocationFromJavaPattern);
+    }
+
     public ASTNode getJavaPatternToMatch() {
       return patternToMatch;
+    }
+
+    /**
+     * Rejects candidates which the pattern cannot match, using only cheap checks, so that no matcher needs to be created
+     * for them. Every node type is matched by the ASTMatcher method for that type, which only matches nodes of the same
+     * type, except for names, which {@link JavaPatternASTMatcher} matches more leniently. A pattern which is a
+     * MethodInvocation also needs the same method name, unless that is captured.
+     *
+     * @param matchCandidate the ASTNode we are testing for a match
+     * @return false if the pattern cannot match the candidate
+     */
+    boolean couldMatch(ASTNode matchCandidate) {
+      if (patternToMatch instanceof Name) {
+        return true;
+      }
+      if (! patternToMatch.getClass().isInstance(matchCandidate)) {
+        return false;
+      }
+      if (patternToMatch instanceof MethodInvocation && ! isMethodNameCaptured((MethodInvocation) patternToMatch)) {
+        return ((MethodInvocation) patternToMatch).getName().getIdentifier().equals(((MethodInvocation) matchCandidate).getName().getIdentifier());
+      }
+      return true;
     }
   }
 }
